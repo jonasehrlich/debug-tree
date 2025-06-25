@@ -1,60 +1,11 @@
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::path::PathBuf;
-use tree_ds::prelude::*;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
-pub struct GitMetadata {
-    pub revision: String,
-}
+use tree::{TreeType, get_dummy_tree};
 
-#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
-pub struct StateMetadata {
-    pub title: String,
-    pub git: Option<GitMetadata>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, Eq, PartialEq)]
-pub struct ActionMetadata {
-    pub title: String,
-}
-
-#[derive(Debug, Clone, Serialize, Eq, PartialEq, Deserialize)]
-pub enum Metadata {
-    Action(ActionMetadata),
-    State(StateMetadata),
-}
-
-type NodeType = Node<AutomatedId, Metadata>;
-type TreeType = Tree<AutomatedId, Metadata>;
-
-fn add_action_node(
-    tree: &mut TreeType,
-    parent_id: &AutomatedId,
-    title: &str,
-) -> Result<AutomatedId> {
-    tree.add_node(
-        NodeType::new_with_auto_id(Some(Metadata::Action(ActionMetadata {
-            title: title.to_string(),
-        }))),
-        Some(parent_id),
-    )
-}
-
-fn add_state_node(
-    tree: &mut TreeType,
-    parent_id: &AutomatedId,
-    title: &str,
-    git_metadata: Option<GitMetadata>,
-) -> Result<AutomatedId> {
-    tree.add_node(
-        NodeType::new_with_auto_id(Some(Metadata::State(StateMetadata {
-            title: title.to_string(),
-            git: git_metadata,
-        }))),
-        Some(parent_id),
-    )
-}
+mod tree;
+mod utils;
 
 #[derive(thiserror::Error, Debug)]
 enum LoadSaveError {
@@ -83,26 +34,6 @@ fn save_tree_to_file(
     Ok(())
 }
 
-fn get_dummy_tree(project_name: &str) -> Result<TreeType> {
-    let mut tree: TreeType = Tree::new(Some(project_name));
-
-    let root_state = StateMetadata {
-        title: "Toilet clogged".to_string(),
-        git: None,
-    };
-    let root = tree.add_node(
-        NodeType::new_with_auto_id(Some(Metadata::State(root_state))),
-        None,
-    )?;
-
-    let flush = add_action_node(&mut tree, &root, "Flush toilet")?;
-    let _overflow = add_state_node(&mut tree, &flush, "overflow", None)?;
-
-    let pump = add_action_node(&mut tree, &root, "pump it up")?;
-    let _unclogged = add_state_node(&mut tree, &pump, "unclogged", None)?;
-    Ok(tree)
-}
-
 /// Debug Tree CLI
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -114,16 +45,17 @@ struct Cli {
 #[derive(Parser, Debug)]
 struct ProjectArgs {
     /// Projects directory
-    #[arg(long, default_value = "./debug-tree")]
+    #[arg(long, default_value = "./.debug-tree")]
     dir: PathBuf,
     /// Project name
-    project: String,
+    #[arg(name = "project", value_name = "PROJECT")]
+    name: String,
 }
 
 impl ProjectArgs {
-    fn get_project_path(&self) -> PathBuf {
+    fn get_path(&self) -> PathBuf {
         let mut path = self.dir.clone();
-        path.push(to_kebab_case(self.project.as_str()));
+        path.push(utils::to_kebab_case(self.name.as_str()));
         path.with_extension("json")
     }
 }
@@ -141,60 +73,56 @@ struct PrintJsonArgs {
     min: bool,
 }
 
+#[derive(Parser)]
+struct NewArgs {
+    #[clap(flatten)]
+    project: ProjectArgs,
+    /// Create a project with dummy data
+    #[arg(long)]
+    dummy: bool,
+    /// Overwrite an existing project
+    #[arg(long)]
+    force: bool,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Create a new project
-    New(ProjectArgs),
-    CreateDummy(ProjectArgs),
+    New(NewArgs),
+    /// Run the TUI for a project
     Tui(ProjectArgs),
+    /// Print the project tree as JSON
     PrintJson(PrintJsonArgs),
-}
-
-fn to_kebab_case(s: &str) -> String {
-    s.to_lowercase().replace(' ', "-").replace("_", "-")
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_to_kebab_case() {
-        assert_eq!(to_kebab_case("Hello World"), "hello-world");
-        assert_eq!(to_kebab_case("hello_world"), "hello-world");
-        assert_eq!(to_kebab_case("Rust Programming"), "rust-programming");
-        assert_eq!(to_kebab_case("Debug Tree CLI"), "debug-tree-cli");
-    }
 }
 
 fn main() {
     let args = Cli::parse();
     match &args.command {
         Commands::New(args) => {
-            let tree: TreeType = Tree::new(Some(args.project.as_str()));
-            let project_path = args.get_project_path();
-            if project_path.exists() {
+            let project_path = args.project.get_path();
+            if !args.force && project_path.exists() {
                 println!("Project already exists at {}", project_path.display());
                 return;
             }
-
+            let tree = match args.dummy {
+                true => get_dummy_tree(&args.project.name).expect("Failed to create dummy tree"),
+                false => TreeType::new(Some(args.project.name.as_str())),
+            };
             save_tree_to_file(&tree, &project_path).expect("Failed to save new project tree");
-            println!("Created empty project at {}", project_path.display());
-        }
-        Commands::CreateDummy(args) => {
-            let project_path = args.get_project_path();
-            if project_path.exists() {
-                println!("Project already exists at {}", project_path.display());
-                return;
-            }
-            let tree = get_dummy_tree(&args.project).expect("Failed to create dummy tree");
-            save_tree_to_file(&tree, &project_path).expect("Failed to save dummy project tree");
-            println!("Created dummy project at {}", project_path.display());
+
+            let project_type = match args.dummy {
+                true => "dummy",
+                false => "empty",
+            };
+            println!(
+                "Created {} project at {}",
+                project_type,
+                project_path.display()
+            );
         }
         Commands::PrintJson(args) => {
-            let tree = load_tree_from_file(&args.project.get_project_path())
-                .expect("Failed to load project tree");
+            let tree =
+                load_tree_from_file(&args.project.get_path()).expect("Failed to load project tree");
             if args.min {
                 println!("{}", serde_json::to_string(&tree).unwrap());
             } else {
