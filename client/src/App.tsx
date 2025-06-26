@@ -19,7 +19,7 @@ import {
 } from '@xyflow/react';
 import { SunMoon, Map } from "lucide-react";
 import { useCallback, useEffect, useState } from 'react';
-import ActionNode from "./components/header-node";
+import { ActionNode } from "./components/nodes";
 import { Toaster } from './components/ui/sonner';
 
 import '@xyflow/react/dist/style.css';
@@ -29,8 +29,8 @@ const nodeTypes = {
 };
 
 const initialNodes: Node[] = [
-  { id: '1', type: "actionNode", data: { label: 'Node 1' }, position: { x: 5, y: 5 } },
-  { id: '2', type: "actionNode", data: { label: 'Node 2' }, position: { x: 5, y: 100 } },
+  { id: '1', type: "actionNode", data: { title: 'Node 1' }, position: { x: 5, y: 5 } },
+  { id: '2', type: "actionNode", data: { title: 'Node 2' }, position: { x: 5, y: 100 } },
   { id: '3', data: { label: 'Node 2' }, position: { x: 10, y: 200 } },
 ];
 
