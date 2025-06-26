@@ -1,21 +1,22 @@
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
+import { useNodeId, useReactFlow } from "@xyflow/react";
+import { type VariantProps } from "class-variance-authority";
+import { EllipsisVertical, Pencil, Trash } from "lucide-react";
 import {
   forwardRef,
   useCallback,
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { useNodeId, useReactFlow } from "@xyflow/react";
-import { EllipsisVertical, Pencil, Trash } from "lucide-react";
-
-import { cn } from "@/lib/utils";
-import { Slot } from "@radix-ui/react-slot";
-import { Button, ButtonProps } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { buttonVariants } from "./ui/button-variants";
 
 /* NODE HEADER -------------------------------------------------------------- */
 
@@ -111,6 +112,12 @@ export const NodeHeaderActions = forwardRef<
 NodeHeaderActions.displayName = "NodeHeaderActions";
 
 /* NODE HEADER ACTION ------------------------------------------------------- */
+
+// This seems to be used to be part of @/components/ui/button, but let's define it here
+type ButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+  };
 
 export type NodeHeaderActionProps = ButtonProps & {
   label: string;
