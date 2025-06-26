@@ -3,7 +3,6 @@ import {
   Controls,
   ControlButton,
   MiniMap,
-  Panel,
   ReactFlow,
   addEdge,
   applyEdgeChanges,
@@ -20,12 +19,18 @@ import {
 } from '@xyflow/react';
 import { SunMoon } from "lucide-react";
 import { useCallback, useState } from 'react';
+import ActionNode from "./components/header-node";
 
 import '@xyflow/react/dist/style.css';
 
+const nodeTypes = {
+  actionNode: ActionNode,
+};
+
 const initialNodes: Node[] = [
-  { id: '1', data: { label: 'Node 1' }, position: { x: 5, y: 5 } },
-  { id: '2', data: { label: 'Node 2' }, position: { x: 5, y: 100 } },
+  { id: '1', type: "actionNode", data: { label: 'Node 1' }, position: { x: 5, y: 5 } },
+  { id: '2', type: "actionNode", data: { label: 'Node 2' }, position: { x: 5, y: 100 } },
+  { id: '3', data: { label: 'Node 2' }, position: { x: 10, y: 200 } },
 ];
 
 const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }];
@@ -79,6 +84,7 @@ export default function App() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
