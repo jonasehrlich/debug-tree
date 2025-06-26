@@ -15,13 +15,13 @@ import {
   type OnEdgesChange,
   type OnNodeDrag,
   type OnNodesChange,
-} from '@xyflow/react';
+} from "@xyflow/react";
 import { Sun, Moon, Map } from "lucide-react";
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import { ActionNode, StatusNode } from "./components/nodes";
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from "./components/ui/sonner";
 
-import '@xyflow/react/dist/style.css';
+import "@xyflow/react/dist/style.css";
 
 const nodeTypes = {
   actionNode: ActionNode,
@@ -29,20 +29,34 @@ const nodeTypes = {
 };
 
 const initialNodes: Node[] = [
-  { id: '1', type: "actionNode", data: { title: 'Node 1', state: "not started" }, position: { x: 5, y: 5 } },
-  { id: '2', type: "statusNode", data: { title: 'Node 2', state: "unknown", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " }, position: { x: 250, y: 5 } },
-  { id: '3', data: { label: 'Node 2' }, position: { x: 10, y: 200 } },
+  {
+    id: "1",
+    type: "actionNode",
+    data: { title: "Node 1", state: "not started" },
+    position: { x: 5, y: 5 },
+  },
+  {
+    id: "2",
+    type: "statusNode",
+    data: {
+      title: "Node 2",
+      state: "unknown",
+      description:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla ",
+    },
+    position: { x: 250, y: 5 },
+  },
+  { id: "3", data: { label: "Node 2" }, position: { x: 10, y: 200 } },
 ];
 
-const initialEdges: Edge[] = [{ id: 'e1-2', source: '1', target: '2' }];
+const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
 
-
 const onNodeDrag: OnNodeDrag = (_, node) => {
-  console.log('drag event', node.data);
+  console.log("drag event", node.data);
 };
 
 export default function App() {
@@ -50,52 +64,66 @@ export default function App() {
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => { setNodes((nds) => applyNodeChanges(changes, nds)); },
+    (changes) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
     [setNodes],
   );
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => { setEdges((eds) => applyEdgeChanges(changes, eds)); },
+    (changes) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+    },
     [setEdges],
   );
   const onConnect: OnConnect = useCallback(
-    (connection) => { setEdges((eds) => addEdge(connection, eds)); },
+    (connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+    },
     [setEdges],
   );
 
   const [colorMode, setColorMode] = useState<ColorModeClass>(() => {
-    if (typeof window !== 'undefined') { // Check if window is defined (for SSR safety)
+    if (typeof window !== "undefined") {
+      // Check if window is defined (for SSR safety)
       // Check the local storage for a theme
-      const storedTheme = localStorage.getItem('app-theme') as ColorModeClass | undefined;
+      const storedTheme = localStorage.getItem("app-theme") as
+        | ColorModeClass
+        | undefined;
       // Get the theme that matches the system theme
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorModeClass;
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : ("light" as ColorModeClass);
       // If no theme is stored, use the system theme
       return storedTheme ?? systemTheme;
     }
 
-    return 'light'; // Default for SSR or if window is not available
+    return "light"; // Default for SSR or if window is not available
   });
   useEffect(() => {
-    localStorage.setItem('app-theme', colorMode);
-  }, [colorMode])
+    localStorage.setItem("app-theme", colorMode);
+  }, [colorMode]);
 
   const toggleColorMode = () => {
-    const newTheme = colorMode === 'light' ? 'dark' : 'light';
+    const newTheme = colorMode === "light" ? "dark" : "light";
     setColorMode(newTheme);
-  }
+  };
 
   const [isMiniMapVisible, setIsMiniMapVisible] = useState<boolean>(() => {
-    return localStorage.getItem('app-minimap-visible') === 'false' ? false : true;
-  })
+    return localStorage.getItem("app-minimap-visible") === "false"
+      ? false
+      : true;
+  });
   useEffect(() => {
-    localStorage.setItem('app-minimap-visible', String(isMiniMapVisible));
+    localStorage.setItem("app-minimap-visible", String(isMiniMapVisible));
   }, [isMiniMapVisible]);
 
   const toggleMiniMap = () => {
     setIsMiniMapVisible(!isMiniMapVisible);
-  }
+  };
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: "100vw", height: "100vh" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -108,22 +136,23 @@ export default function App() {
         fitView
         fitViewOptions={fitViewOptions}
       >
-        {isMiniMapVisible && (
-          <MiniMap position="top-right" />
-        )}
+        {isMiniMapVisible && <MiniMap position="top-right" />}
         <Background />
         <Controls>
           <ControlButton onClick={toggleColorMode}>
-            {colorMode === "dark" ? (
-              <Sun />
-            ) : (<Moon />)}
+            {colorMode === "dark" ? <Sun /> : <Moon />}
           </ControlButton>
           <ControlButton onClick={toggleMiniMap}>
             <Map />
           </ControlButton>
         </Controls>
       </ReactFlow>
-      <Toaster position="bottom-right" richColors expand={true} theme={colorMode} />
+      <Toaster
+        position="bottom-right"
+        richColors
+        expand={true}
+        theme={colorMode}
+      />
     </div>
   );
 }

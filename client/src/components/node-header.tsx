@@ -1,4 +1,9 @@
-import { forwardRef, useCallback, type HTMLAttributes, type ReactNode } from "react";
+import {
+  forwardRef,
+  useCallback,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import { EllipsisVertical, Pencil, Trash } from "lucide-react";
 
@@ -10,7 +15,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner"
+import { toast } from "sonner";
 
 /* NODE HEADER -------------------------------------------------------------- */
 
@@ -193,9 +198,7 @@ export const NodeHeaderDeleteAction = () => {
 
 NodeHeaderDeleteAction.displayName = "NodeHeaderDeleteAction";
 
-
 export const NodeHeaderEditAction = () => {
-
   const handleClick = () => {
     toast.warning("Node editing is not implemented yet");
   };
@@ -205,6 +208,6 @@ export const NodeHeaderEditAction = () => {
       <Pencil />
     </NodeHeaderAction>
   );
-}
+};
 
 NodeHeaderEditAction.displayName = "NodeHeaderEditAction";
