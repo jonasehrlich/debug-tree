@@ -56,7 +56,7 @@ const statusNodeIconMap: IconMap<StatusNodeState> = {
   unknown: (
     <CircleQuestionMark
       size={16}
-      className="stroke-gray-400 dark:stroke-gray-300"
+      className="stroke-gray-400"
     />
   ),
   progress: <TrendingUp size={16} className="stroke-amber-400" />,
@@ -80,7 +80,7 @@ export const StatusNode = memo(
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
-            <IconSelector
+            <IconSelector<StatusNodeState>
               selectedIcon={state}
               onSelectChange={handleIconChange}
               availableIcons={statusNodeIconMap}
