@@ -1,6 +1,7 @@
 import {
   Background,
   Controls,
+  ControlButton,
   MiniMap,
   Panel,
   ReactFlow,
@@ -17,7 +18,8 @@ import {
   type OnNodeDrag,
   type OnNodesChange,
 } from '@xyflow/react';
-import { useCallback, useState, type ChangeEventHandler } from 'react';
+import { SunMoon } from "lucide-react";
+import { useCallback, useState } from 'react';
 
 import '@xyflow/react/dist/style.css';
 
@@ -33,7 +35,6 @@ const fitViewOptions: FitViewOptions = {
 };
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
-  animated: true,
 };
 
 const onNodeDrag: OnNodeDrag = (_, node) => {
@@ -41,7 +42,16 @@ const onNodeDrag: OnNodeDrag = (_, node) => {
 };
 
 export default function App() {
-  const [colorMode, setColorMode] = useState<ColorMode>('system');
+  const [colorMode, setColorMode] = useState<ColorMode>(() => {
+    if (typeof window !== 'undefined') { // Check if window is defined (for SSR safety)
+      const storedTheme = localStorage.getItem('app-theme') as ColorMode | undefined;
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorMode;
+      // If no theme is stored, use the system theme
+      return storedTheme ?? systemTheme;
+    }
+
+    return 'light'; // Default for SSR or if window is not available
+  });
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
@@ -58,9 +68,11 @@ export default function App() {
     [setEdges],
   );
 
-  const onColorModeChange: ChangeEventHandler<HTMLSelectElement> = (evt) => {
-    setColorMode(evt.target.value as ColorMode);
-  };
+  const toggleColorMode = () => {
+    const newTheme = colorMode === 'light' ? 'dark' : 'light';
+    localStorage.setItem('app-theme', newTheme)
+    setColorMode(newTheme);
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
@@ -78,18 +90,11 @@ export default function App() {
       >
         <MiniMap />
         <Background />
-        <Controls />
-        <Panel position="top-right">
-          <select
-            className="xy-theme__select"
-            onChange={onColorModeChange}
-            data-testid="colormode-select"
-          >
-            <option value="dark">dark</option>
-            <option value="light">light</option>
-            <option value="system">system</option>
-          </select>
-        </Panel>
+        <Controls>
+          <ControlButton onClick={toggleColorMode}>
+            <SunMoon />
+          </ControlButton>
+        </Controls>
       </ReactFlow>
     </div>
   );
