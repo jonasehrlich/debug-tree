@@ -17,12 +17,12 @@ import {
   type OnNodeDrag,
   type OnNodesChange,
 } from '@xyflow/react';
-import { SunMoon } from "lucide-react";
-import { useCallback, useState } from 'react';
+import { SunMoon, Map } from "lucide-react";
+import { useCallback, useEffect, useState } from 'react';
 import ActionNode from "./components/header-node";
+import { Toaster } from './components/ui/sonner';
 
 import '@xyflow/react/dist/style.css';
-import { Toaster } from './components/ui/sonner';
 
 const nodeTypes = {
   actionNode: ActionNode,
@@ -48,18 +48,6 @@ const onNodeDrag: OnNodeDrag = (_, node) => {
 };
 
 export default function App() {
-  const [colorMode, setColorMode] = useState<ColorMode>(() => {
-    if (typeof window !== 'undefined') { // Check if window is defined (for SSR safety)
-      // Check the local storage for a theme
-      const storedTheme = localStorage.getItem('app-theme') as ColorMode | undefined;
-      // Get the theme that matches the system theme
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorMode;
-      // If no theme is stored, use the system theme
-      return storedTheme ?? systemTheme;
-    }
-
-    return 'light'; // Default for SSR or if window is not available
-  });
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
@@ -76,10 +64,36 @@ export default function App() {
     [setEdges],
   );
 
+  const [colorMode, setColorMode] = useState<ColorMode>(() => {
+    if (typeof window !== 'undefined') { // Check if window is defined (for SSR safety)
+      // Check the local storage for a theme
+      const storedTheme = localStorage.getItem('app-theme') as ColorMode | undefined;
+      // Get the theme that matches the system theme
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorMode;
+      // If no theme is stored, use the system theme
+      return storedTheme ?? systemTheme;
+    }
+
+    return 'light'; // Default for SSR or if window is not available
+  });
+  useEffect(() => {
+    localStorage.setItem('app-theme', colorMode);
+  }, [colorMode])
+
   const toggleColorMode = () => {
     const newTheme = colorMode === 'light' ? 'dark' : 'light';
-    localStorage.setItem('app-theme', newTheme)
     setColorMode(newTheme);
+  }
+
+  const [isMiniMapVisible, setIsMiniMapVisible] = useState<boolean>(() => {
+    return localStorage.getItem('app-minimap-visible') === 'false' ? false : true;
+  })
+  useEffect(() => {
+    localStorage.setItem('app-minimap-visible', String(isMiniMapVisible));
+  }, [isMiniMapVisible]);
+
+  const toggleMiniMap = () => {
+    setIsMiniMapVisible(!isMiniMapVisible);
   }
 
   return (
@@ -97,11 +111,16 @@ export default function App() {
         fitViewOptions={fitViewOptions}
         defaultEdgeOptions={defaultEdgeOptions}
       >
-        <MiniMap />
+        {isMiniMapVisible && (
+          <MiniMap position="top-right" />
+        )}
         <Background />
         <Controls>
           <ControlButton onClick={toggleColorMode}>
             <SunMoon />
+          </ControlButton>
+          <ControlButton onClick={toggleMiniMap}>
+            <Map />
           </ControlButton>
         </Controls>
       </ReactFlow>
