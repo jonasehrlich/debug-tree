@@ -18,18 +18,19 @@ import {
 } from '@xyflow/react';
 import { Sun, Moon, Map } from "lucide-react";
 import { useCallback, useEffect, useState } from 'react';
-import { ActionNode } from "./components/nodes";
+import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from './components/ui/sonner';
 
 import '@xyflow/react/dist/style.css';
 
 const nodeTypes = {
   actionNode: ActionNode,
+  statusNode: StatusNode,
 };
 
 const initialNodes: Node[] = [
-  { id: '1', type: "actionNode", data: { title: 'Node 1' }, position: { x: 5, y: 5 } },
-  { id: '2', type: "actionNode", data: { title: 'Node 2' }, position: { x: 5, y: 100 } },
+  { id: '1', type: "actionNode", data: { title: 'Node 1', state: "not started" }, position: { x: 5, y: 5 } },
+  { id: '2', type: "statusNode", data: { title: 'Node 2', state: "unknown", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " }, position: { x: 250, y: 5 } },
   { id: '3', data: { label: 'Node 2' }, position: { x: 10, y: 200 } },
 ];
 
