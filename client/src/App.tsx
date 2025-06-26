@@ -7,8 +7,7 @@ import {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
-  type ColorMode,
-  type DefaultEdgeOptions,
+  type ColorModeClass,
   type Edge,
   type FitViewOptions,
   type Node,
@@ -17,7 +16,7 @@ import {
   type OnNodeDrag,
   type OnNodesChange,
 } from '@xyflow/react';
-import { SunMoon, Map } from "lucide-react";
+import { Sun, Moon, Map } from "lucide-react";
 import { useCallback, useEffect, useState } from 'react';
 import { ActionNode } from "./components/nodes";
 import { Toaster } from './components/ui/sonner';
@@ -40,8 +39,6 @@ const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
 
-const defaultEdgeOptions: DefaultEdgeOptions = {
-};
 
 const onNodeDrag: OnNodeDrag = (_, node) => {
   console.log('drag event', node.data);
@@ -64,12 +61,12 @@ export default function App() {
     [setEdges],
   );
 
-  const [colorMode, setColorMode] = useState<ColorMode>(() => {
+  const [colorMode, setColorMode] = useState<ColorModeClass>(() => {
     if (typeof window !== 'undefined') { // Check if window is defined (for SSR safety)
       // Check the local storage for a theme
-      const storedTheme = localStorage.getItem('app-theme') as ColorMode | undefined;
+      const storedTheme = localStorage.getItem('app-theme') as ColorModeClass | undefined;
       // Get the theme that matches the system theme
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorMode;
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorModeClass;
       // If no theme is stored, use the system theme
       return storedTheme ?? systemTheme;
     }
@@ -109,7 +106,6 @@ export default function App() {
         colorMode={colorMode}
         fitView
         fitViewOptions={fitViewOptions}
-        defaultEdgeOptions={defaultEdgeOptions}
       >
         {isMiniMapVisible && (
           <MiniMap position="top-right" />
@@ -117,7 +113,9 @@ export default function App() {
         <Background />
         <Controls>
           <ControlButton onClick={toggleColorMode}>
-            <SunMoon />
+            {colorMode === "dark" ? (
+              <Sun />
+            ) : (<Moon />)}
           </ControlButton>
           <ControlButton onClick={toggleMiniMap}>
             <Map />
