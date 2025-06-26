@@ -14,3 +14,10 @@ repos:
       - id: fmt
       - id: cargo-check
       - id: clippy
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: bash -c "cd client && npm run format && git diff --exit-code"
+        language: system
+        types: [javascript, jsx, ts, tsx]
