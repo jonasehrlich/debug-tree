@@ -22,6 +22,7 @@ import { useCallback, useState } from 'react';
 import ActionNode from "./components/header-node";
 
 import '@xyflow/react/dist/style.css';
+import { Toaster } from './components/ui/sonner';
 
 const nodeTypes = {
   actionNode: ActionNode,
@@ -49,7 +50,9 @@ const onNodeDrag: OnNodeDrag = (_, node) => {
 export default function App() {
   const [colorMode, setColorMode] = useState<ColorMode>(() => {
     if (typeof window !== 'undefined') { // Check if window is defined (for SSR safety)
+      // Check the local storage for a theme
       const storedTheme = localStorage.getItem('app-theme') as ColorMode | undefined;
+      // Get the theme that matches the system theme
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' as ColorMode;
       // If no theme is stored, use the system theme
       return storedTheme ?? systemTheme;
@@ -102,6 +105,7 @@ export default function App() {
           </ControlButton>
         </Controls>
       </ReactFlow>
+      <Toaster position="bottom-right" richColors expand={true} theme={colorMode} />
     </div>
   );
 }
