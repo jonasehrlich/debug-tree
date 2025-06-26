@@ -6,6 +6,7 @@ use tree::{TreeType, get_dummy_tree};
 
 mod tree;
 mod utils;
+mod web;
 
 #[derive(thiserror::Error, Debug)]
 enum LoadSaveError {
@@ -85,17 +86,33 @@ struct NewArgs {
     force: bool,
 }
 
+#[derive(Parser)]
+struct ServeArgs {
+    #[clap(flatten)]
+    project: ProjectArgs,
+    /// Host to bind the server to
+    #[arg(long, default_value = "localhost")]
+    host: String,
+    /// Port to bind the server to
+    #[arg(short, long, default_value_t = 8000)]
+    port: u16,
+    /// Port on localhost to proxy all fallback requests to, only available in debug builds
+    #[arg(long, default_value_t = 5173, hide = cfg!(not(debug_assertions)))]
+    frontend_proxy_port: u16,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Create a new project
     New(NewArgs),
-    /// Run the TUI for a project
-    Tui(ProjectArgs),
+    /// Run the server and web-frontend for a project
+    Serve(ServeArgs),
     /// Print the project tree as JSON
     PrintJson(PrintJsonArgs),
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Cli::parse();
     match &args.command {
         Commands::New(args) => {
@@ -137,8 +154,10 @@ fn main() {
                 );
             }
         }
-        Commands::Tui(_args) => {
-            todo!("Implement TUI functionality");
+        Commands::Serve(args) => {
+            web::serve(args.host.as_str(), args.port, args.frontend_proxy_port)
+                .await
+                .unwrap();
         }
     };
 }

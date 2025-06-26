@@ -9,3 +9,16 @@ serde = "1.0"
 serde_json = "1.0"
 thiserror = "2.0.12"
 tree-ds = { version = "0.1", features = ["serde", "auto_id"] }
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.5", features = ["fs", "trace"] }
+mime_guess = "2.0"
+rust-embed = { version = "8.0", features = [
+    "compression",
+    "debug-embed",
+    "include-exclude",
+] }
+log = "0.4.27"
+# Required for debug builds to proxy requests to the frontend dev server,
+# unfortunately Cargo.toml does not allow specifying dependencies for debug builds only
+reqwest = "0.12.20"
