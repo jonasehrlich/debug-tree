@@ -17,6 +17,7 @@ import { type NodeProps, Position } from "@xyflow/react";
 import { ChartLine, Rocket } from "lucide-react";
 import { memo, useState } from "react";
 import { IconSelector, type IconOptions, type IconMap } from "./icon-selector";
+import { GitRevision } from "./git-revision";
 
 import { CircleCheck, CircleQuestionMark, Ban, TrendingUp } from "lucide-react";
 
@@ -53,12 +54,7 @@ const statusNodeIconOptions: IconOptions<StatusNodeState> = [
 
 // Map status note states to icons
 const statusNodeIconMap: IconMap<StatusNodeState> = {
-  unknown: (
-    <CircleQuestionMark
-      size={16}
-      className="stroke-gray-400"
-    />
-  ),
+  unknown: <CircleQuestionMark size={16} className="stroke-gray-400" />,
   progress: <TrendingUp size={16} className="stroke-amber-400" />,
   fail: <Ban size={16} className="stroke-red-500" />,
   success: <CircleCheck size={16} className="stroke-green-500" />,
@@ -69,7 +65,7 @@ export const StatusNode = memo(
     const [state, setState] = useState<StatusNodeState>(data.state);
     const handleIconChange = (newIconKey: StatusNodeState) => {
       setState(newIconKey);
-      // Call the parent callback or set the node status using the API
+      // TODO: Call the parent callback or set the node status using the API
     };
 
     return (
@@ -87,12 +83,17 @@ export const StatusNode = memo(
               iconChoices={statusNodeIconOptions}
               ariaLabel="Select node state"
             />
+            <NodeHeaderEditAction />
             <NodeHeaderDeleteAction />
           </NodeHeaderActions>
         </NodeHeader>
         <BaseHandle id="target-1" type="target" position={Position.Left} />
         {data.description && <div className="mt-2">{data.description}</div>}
-
+        {data.git && (
+          <NodeHeader className="-mx-3 -mb-2 mt-2 border-t">
+            <GitRevision revision={data.git.rev} />
+          </NodeHeader>
+        )}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
       </BaseNode>
     );

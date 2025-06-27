@@ -43,10 +43,18 @@ const initialNodes: Node[] = [
       state: "unknown",
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla ",
+      git: {
+        rev: "123asd",
+      },
     },
     position: { x: 250, y: 5 },
   },
-  { id: "3", data: { label: "Node 2" }, position: { x: 10, y: 200 } },
+  {
+    id: "3",
+    type: "statusNode",
+    data: { title: "Foo Bar", state: "unknown", description: "rockin'" },
+    position: { x: 10, y: 200 },
+  },
 ];
 
 const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
