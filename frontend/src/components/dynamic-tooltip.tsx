@@ -13,17 +13,17 @@ import {
  * @property {() => Promise<boolean>} onClickAction - A function that is called when the trigger is clicked.
  * It should perform an action (e.g., copy to clipboard)
  * and return a Promise that resolves to `true` for success or `false` for failure.
- * @property {string} [defaultHoverContent='Copy'] - The text to display when the tooltip is hovered normally.
- * @property {string} [successContent='Success!'] - The text to display after a successful click action.
- * @property {string} [failedContent='Failed to copy!'] - The text to display after a failed click action.
- * @property {number} [successDisplayDurationMs=1000] - Total duration the "Success!" message is shown.
- * @property {number} [successTextResetPointMs=700] - Point in time (ms) at which "Success!" changes back to default text.
- * @property {number} [failDisplayDurationMs=2000] - Total duration the "Failed to copy!" message is shown.
+ * @property {string} - The text to display when the tooltip is hovered normally.
+ * @property {string} [successContent='Success'] - The text to display after a successful click action.
+ * @property {string} [failedContent='Fail'] - The text to display after a failed click action.
+ * @property {number} [successDisplayDurationMs=1000] - Total duration the success message is shown.
+ * @property {number} [successTextResetPointMs=700] - Point in time (ms) at which success changes back to default text.
+ * @property {number} [failDisplayDurationMs=2000] - Total duration the fail message is shown.
  */
 interface DynamicTooltipProps {
   children: React.ReactNode;
   onClickAction: () => Promise<boolean>; // Returns true for success, false for failure
-  defaultHoverContent?: string;
+  defaultHoverContent: string;
   successContent?: string;
   failedContent?: string;
   successDisplayDurationMs?: number;
@@ -37,11 +37,11 @@ interface DynamicTooltipProps {
 export const DynamicTooltip: React.FC<DynamicTooltipProps> = ({
   children,
   onClickAction,
-  defaultHoverContent = "Copy",
+  defaultHoverContent,
   successContent = "Success",
   failedContent = "Fail",
   successDisplayDurationMs = 1000,
-  successTextResetPointMs = 1010,
+  successTextResetPointMs = 1050,
   failDisplayDurationMs = 2000,
 }) => {
   // Updated type for tooltipDisplayStatus to use 'success'
@@ -72,21 +72,21 @@ export const DynamicTooltip: React.FC<DynamicTooltipProps> = ({
       setIsTooltipControlledOpen(true);
 
       try {
-        const success = await onClickAction(); // Execute the parent's action
+        // Execute the parent's action
+        const success = await onClickAction();
 
         if (success) {
-          setTooltipDisplayStatus("success"); // Changed to 'success'
+          setTooltipDisplayStatus("success");
 
           // Stage 1: Change text back after `successTextResetPointMs`
           textResetTimeoutRef.current = setTimeout(() => {
             setTooltipDisplayStatus("resetting");
-          }, successTextResetPointMs); // Changed prop name
-
+          }, successTextResetPointMs);
           // Stage 2: Hide the tooltip completely after `successDisplayDurationMs`
           hideTimeoutRef.current = setTimeout(() => {
             setIsTooltipControlledOpen(false);
             setTooltipDisplayStatus("hover");
-          }, successDisplayDurationMs); // Changed prop name
+          }, successDisplayDurationMs);
         } else {
           setTooltipDisplayStatus("failed");
 
@@ -160,7 +160,7 @@ export const DynamicTooltip: React.FC<DynamicTooltipProps> = ({
         <TooltipTrigger asChild onClick={handleTriggerClick}>
           {children}
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent side="bottom">
           <p>{getTooltipContent()}</p>
         </TooltipContent>
       </Tooltip>
