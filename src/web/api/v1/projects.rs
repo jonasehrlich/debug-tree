@@ -22,6 +22,11 @@ pub fn router() -> routing::Router<web::AppState> {
         )
 }
 
+/// API documentation for the projects endpoints.
+#[derive(utoipa::OpenApi)]
+#[openapi(paths(list_projects, create_project, get_project, delete_project,), tags((name = "Project Management", description="Project related endpoints")) )]
+pub(super) struct ApiDoc;
+
 #[derive(Serialize, ToSchema)]
 struct ListProjectsResponse {
     projects: Vec<project::Metadata>,
@@ -49,7 +54,7 @@ where
 
 #[utoipa::path(
     get,
-    path = "/projects",
+    path = "",
     description = "List the available projects",
     responses(
         (status = http::StatusCode::OK, description = "List projects", body = ListProjectsResponse),
@@ -90,7 +95,7 @@ impl From<project::Project> for CreateProjectResponse {
 
 #[utoipa::path(
     post,
-    path = "/projects",
+    path = "",
     description = "Create a project",
     responses(
         (status = http::StatusCode::OK, description = "Project created", body = CreateProjectResponse),
@@ -127,8 +132,8 @@ impl From<project::Project> for GetProjectResponse {
 
 #[utoipa::path(
     get,
-    path = "/projects/{id}",
-    description = "Get the full state of a project",
+    path = "/{id}",
+    description = "Get a project",
     responses(
         (status = http::StatusCode::OK, description = "Project is available", body = GetProjectResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -159,7 +164,7 @@ async fn get_project(
 
 #[utoipa::path(
     delete,
-    path = "/projects/{id}",
+    path = "/{id}",
     description = "Delete a project",
     responses(
         (status = http::StatusCode::OK, description = "Project is deleted", body = api::ApiStatusResponse),

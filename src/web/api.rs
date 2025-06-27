@@ -105,9 +105,13 @@ pub(super) fn router() -> routing::Router<web::AppState> {
 #[openapi(
         nest(
             (path = "/v1", api = v1::ApiDoc)
+        ),
+        info(
+            description = "API for the debug-tree project",
+            license (name= "MIT", url = "https://mit-license.org/")
         )
     )]
-pub struct ApiDoc;
+pub(super) struct ApiDoc;
 
 pub mod v1 {
     use axum::routing;
@@ -118,11 +122,8 @@ pub mod v1 {
 
     /// API documentation for the v1 endpoints.
     #[derive(utoipa::OpenApi)]
-    #[openapi(paths(
-        projects::list_projects,
-        projects::create_project,
-        projects::get_project,
-        projects::delete_project,
+    #[openapi(nest(
+        (path = "/projects", api = projects::ApiDoc)
     ))]
     pub(super) struct ApiDoc;
 
