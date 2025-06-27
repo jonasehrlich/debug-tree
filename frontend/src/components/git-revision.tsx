@@ -12,11 +12,10 @@ interface GitRevisionProps {
 }
 
 export const GitRevision = ({ revision }: GitRevisionProps) => {
-  const textColorClass = "text-gray-800 dark:text-gray-300";
   return (
-    <div className={cn("flex flex-1 items-center", textColorClass)}>
+    <div className={cn("flex flex-1 items-center text-muted-foreground")}>
       <GitBranch size={20}  />
-      <span className="flex-1 text-gray-800 dark:text-gray-300 font-mono px-3 py-1 truncate align-middle">
+      <span className="flex-1 font-mono px-3 py-1 truncate align-middle">
         {revision}
       </span>
       <CopyButton text={revision} contentName="revision"/>

@@ -16,6 +16,7 @@ import { Toaster } from "./components/ui/sonner";
 import useStore from "./store";
 import "@xyflow/react/dist/style.css";
 import type { AppState } from "./types/state";
+import { AppControlPanel } from "./components/app-control-panel";
 
 const nodeTypes = {
   actionNode: ActionNode,
@@ -97,6 +98,7 @@ export default function App() {
         fitView
         fitViewOptions={fitViewOptions}
       >
+        <AppControlPanel position="top-left"/>
         {isMiniMapVisible && <MiniMap position="top-right" />}
         <Background />
         <Controls>
@@ -111,7 +113,6 @@ export default function App() {
       <Toaster
         position="bottom-right"
         richColors
-        expand={true}
         theme={colorMode}
       />
     </div>
