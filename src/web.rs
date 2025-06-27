@@ -1,3 +1,4 @@
+use crate::project;
 use axum::routing;
 #[cfg(not(debug_assertions))]
 use axum::{http, response::IntoResponse};
@@ -5,6 +6,7 @@ use axum::{http, response::IntoResponse};
 use axum_reverse_proxy::ReverseProxy;
 #[cfg(not(debug_assertions))]
 use mime_guess::from_path;
+use utoipa::OpenApi;
 
 #[cfg(not(debug_assertions))]
 #[derive(rust_embed::RustEmbed)]
@@ -12,18 +14,50 @@ use mime_guess::from_path;
 #[exclude = ".gitkeep"]
 pub struct Asset;
 
+mod api;
+
+#[derive(utoipa::OpenApi)]
+#[openapi(
+        nest(
+            (path = "/api", api = api::ApiDoc)
+        )
+    )]
+struct ApiDoc;
+
+/// Application state available in all request handlers
+#[derive(Clone)]
+struct AppState {
+    project_dir: project::ProjectDir,
+}
+
+impl AppState {
+    pub fn new(project_dir: project::ProjectDir) -> Self {
+        AppState { project_dir }
+    }
+
+    pub fn project_dir(&self) -> &project::ProjectDir {
+        &self.project_dir
+    }
+}
+
 pub async fn serve(
     host: &str,
     port: u16,
     frontend_proxy_port: u16,
+    project_dir: crate::project::ProjectDir,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let api_router = axum::Router::new().route(
-        "/api/hello",
-        routing::get(|| async { "Hello from Rust API (dev)!" }),
-    );
+    let app_state = AppState::new(project_dir);
 
-    let frontend_router = frontend_router(frontend_proxy_port);
-    let app = axum::Router::new().merge(frontend_router).merge(api_router);
+    let app = routing::Router::new()
+        .nest("/api", api::router())
+        .with_state(app_state)
+        .merge(
+            utoipa_rapidoc::RapiDoc::with_openapi("/api-docs/openapi.json", ApiDoc::openapi())
+                .path("/rapidoc")
+                .path("/api-docs"),
+        )
+        .merge(frontend_router(frontend_proxy_port));
+
     let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
         .await
         .unwrap();

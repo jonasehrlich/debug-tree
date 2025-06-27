@@ -10,11 +10,16 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
+
 #[derive(Parser, Debug)]
-struct ProjectArgs {
+struct ProjectDirArgs {
     /// Projects directory
     #[arg(long, default_value = "./.debug-tree")]
     dir: PathBuf,
+}
+
+#[derive(Parser, Debug)]
+struct ProjectArgs {
     /// Project name
     #[arg(name = "project", value_name = "PROJECT")]
     name: String,
@@ -23,6 +28,8 @@ struct ProjectArgs {
 #[derive(Parser)]
 #[command(group(clap::ArgGroup::new("formatting").args(&["indent", "min"]).multiple(false)))]
 struct PrintJsonArgs {
+    #[clap(flatten)]
+    project_dir: ProjectDirArgs,
     #[clap(flatten)]
     project: ProjectArgs,
     /// Number of spaces to indent the JSON output
@@ -36,6 +43,8 @@ struct PrintJsonArgs {
 #[derive(Parser)]
 struct NewArgs {
     #[clap(flatten)]
+    project_dir: ProjectDirArgs,
+    #[clap(flatten)]
     project: ProjectArgs,
     /// Overwrite an existing project
     #[arg(long)]
@@ -45,7 +54,7 @@ struct NewArgs {
 #[derive(Parser)]
 struct ServeArgs {
     #[clap(flatten)]
-    project: ProjectArgs,
+    project_dir: ProjectDirArgs,
     /// Host to bind the server to
     #[arg(long, default_value = "localhost")]
     host: String,
@@ -76,7 +85,7 @@ async fn main() {
     let args = Cli::parse();
     match &args.command {
         Commands::New(args) => {
-            let project_dir = debug_tree::project::ProjectDir::new(args.project.dir.clone())
+            let project_dir = debug_tree::project::ProjectDir::new(args.project_dir.dir.clone())
                 .expect("Error creating project directory");
             let project = project_dir
                 .create_project(&args.project.name, args.force)
@@ -88,11 +97,11 @@ async fn main() {
             );
         }
         Commands::PrintJson(args) => {
-            let project_dir = debug_tree::project::ProjectDir::new(args.project.dir.clone())
+            let project_dir = debug_tree::project::ProjectDir::new(args.project_dir.dir.clone())
                 .expect("Error creating project directory");
 
             let project = project_dir
-                .get_project(&args.project.name)
+                .get_project_by_name(&args.project.name)
                 .expect("Error getting project");
 
             if args.min {
@@ -112,9 +121,16 @@ async fn main() {
             }
         }
         Commands::Serve(args) => {
-            debug_tree::web::serve(args.host.as_str(), args.port, args.frontend_proxy_port)
-                .await
-                .unwrap();
+            let project_dir = debug_tree::project::ProjectDir::new(args.project_dir.dir.clone())
+                .expect("Error creating project directory");
+            debug_tree::web::serve(
+                args.host.as_str(),
+                args.port,
+                args.frontend_proxy_port,
+                project_dir,
+            )
+            .await
+            .unwrap();
         }
     };
 }

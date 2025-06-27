@@ -1,6 +1,7 @@
 use crate::utils;
 use serde::{Deserialize, Serialize};
 use std::{fmt, fs, io, path};
+use utoipa::ToSchema;
 
 #[derive(thiserror::Error)]
 pub enum Error {
@@ -23,6 +24,7 @@ impl fmt::Debug for Error {
     }
 }
 /// Abstraction for a directory containing debug-tree projects
+#[derive(Clone)]
 pub struct ProjectDir {
     /// Path of the project directory
     path: path::PathBuf,
@@ -92,12 +94,28 @@ impl ProjectDir {
     }
 
     /// Load a project from the project directory
-    pub fn get_project(&self, name: &str) -> Result<Project, Error> {
-        Project::from_file(&Project::file_name_from_project_name(name))
+    pub fn get_project_by_name(&self, name: &str) -> Result<Project, Error> {
+        let mut p = self.path.clone();
+        p.push(Project::file_name_from_project_name(name));
+        Project::from_file(&p)
+    }
+
+    /// Load a project from the project directory
+    pub fn get_project_by_id(&self, id: &str) -> Result<Project, Error> {
+        let mut p = self.path.clone();
+        p.push(Project::file_name_from_id(id));
+        Project::from_file(&p)
+    }
+
+    pub fn delete_project_by_id(&self, id: &str) -> Result<(), Error> {
+        let mut p = self.path.clone();
+        p.push(Project::file_name_from_id(id));
+        fs::remove_file(p)?;
+        Ok(())
     }
 
     /// Get an iterator over all projects in the project directory
-    pub fn get_projects_iter(&self) -> Result<impl Iterator<Item = Project> + '_, Error> {
+    pub fn projects_iter(&self) -> Result<impl Iterator<Item = Project> + '_, Error> {
         let files_iter = fs::read_dir(self.path.clone())
             .map_err(|e| Error::Io(self.path.clone(), e))? // Handle error during initial read_dir
             .filter_map(|entry_result| {
@@ -131,7 +149,7 @@ impl ProjectDir {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct Project {
     /// Name of the project
     name: String,
@@ -147,14 +165,24 @@ impl Project {
         }
     }
 
+    /// Get the ID of the project
+    pub fn id(&self) -> String {
+        utils::to_kebab_case(self.name.as_str())
+    }
+
     /// Get the name of the project
-    pub fn name(&self) -> &str {
-        self.name.as_str()
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     /// Get the file name from the project name
     pub fn file_name_from_project_name(name: &str) -> path::PathBuf {
-        let mut p = path::PathBuf::from(utils::to_kebab_case(name));
+        Project::file_name_from_id(utils::to_kebab_case(name).as_str())
+    }
+
+    /// Get the file name from the project ID
+    pub fn file_name_from_id(id: &str) -> path::PathBuf {
+        let mut p = path::PathBuf::from(id);
         p.set_extension("json");
         p
     }
@@ -170,6 +198,21 @@ impl Project {
     pub fn from_file(path: &path::PathBuf) -> Result<Project, Error> {
         let file_content = std::fs::read_to_string(path)?;
         serde_json::from_str(&file_content).map_err(Error::Json)
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct Metadata {
+    id: String,
+    name: String,
+}
+
+impl From<Project> for Metadata {
+    fn from(project: Project) -> Self {
+        Metadata {
+            id: project.id(),
+            name: project.name(),
+        }
     }
 }
 
