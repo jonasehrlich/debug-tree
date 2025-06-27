@@ -158,6 +158,7 @@ impl ProjectDir {
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 pub struct Project {
     /// Name of the project
     name: String,

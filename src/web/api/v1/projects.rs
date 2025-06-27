@@ -74,11 +74,13 @@ async fn list_projects(
 }
 
 #[derive(Deserialize, ToSchema)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 struct CreateProjectRequest {
     name: String,
 }
 
 #[derive(Serialize, ToSchema)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 struct CreateProjectResponse {
     project: project::Metadata,
 }
@@ -116,17 +118,18 @@ async fn create_project(
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
-struct GetProjectResponse {
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+struct FullProjectRequestResponse {
     project: project::Project,
 }
 
-impl GetProjectResponse {
+impl FullProjectRequestResponse {
     pub fn new(project: project::Project) -> Self {
         Self { project }
     }
 }
 
-impl From<project::Project> for GetProjectResponse {
+impl From<project::Project> for FullProjectRequestResponse {
     fn from(value: project::Project) -> Self {
         Self::new(value)
     }
@@ -137,7 +140,7 @@ impl From<project::Project> for GetProjectResponse {
     path = "/{id}",
     description = "Get a project",
     responses(
-        (status = http::StatusCode::OK, description = "Project is available", body = GetProjectResponse),
+        (status = http::StatusCode::OK, description = "Project is available", body = FullProjectRequestResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "File not found", body = api::ApiStatusDetailResponse),
     )
@@ -145,7 +148,7 @@ impl From<project::Project> for GetProjectResponse {
 async fn get_project(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
-) -> api::Result<GetProjectResponse> {
+) -> api::Result<FullProjectRequestResponse> {
     let project = match app_state.project_dir().get_project_by_id(&id) {
         Ok(p) => p,
         Err(project::Error::Io(_, io_err)) => match io_err.kind() {
@@ -202,7 +205,7 @@ async fn delete_project(
 async fn store_project(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
-    Json(new_project): Json<GetProjectResponse>,
+    Json(new_project): Json<FullProjectRequestResponse>,
 ) -> api::Result<api::ApiStatusResponse> {
     match app_state.project_dir().save_project(&new_project.project) {
         Ok(_) => Ok(Json(http::StatusCode::OK.into())),
