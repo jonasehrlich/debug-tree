@@ -8,18 +8,24 @@ import {
   NodeHeaderIcon,
   NodeHeaderTitle,
 } from "@/components/node-header";
+import useStore from "@/store";
 import {
   type ActionNode as ActionNodeType,
   type StatusNodeState,
   type StatusNode as StatusNodeType,
 } from "@/types/nodes";
-import { type NodeProps, Position } from "@xyflow/react";
-import { ChartLine, Rocket } from "lucide-react";
-import { memo, useState } from "react";
-import { IconSelector, type IconOptions, type IconMap } from "./icon-selector";
+import { Position, type NodeProps } from "@xyflow/react";
+import {
+  Ban,
+  ChartLine,
+  CircleCheck,
+  CircleQuestionMark,
+  Rocket,
+  TrendingUp,
+} from "lucide-react";
+import { memo } from "react";
 import { GitRevision } from "./git-revision";
-
-import { CircleCheck, CircleQuestionMark, Ban, TrendingUp } from "lucide-react";
+import { IconSelector, type IconMap, type IconOptions } from "./icon-selector";
 
 export const ActionNode = memo(
   ({ data, selected }: NodeProps<ActionNodeType>) => {
@@ -61,12 +67,8 @@ const statusNodeIconMap: IconMap<StatusNodeState> = {
 };
 
 export const StatusNode = memo(
-  ({ data, selected }: NodeProps<StatusNodeType>) => {
-    const [state, setState] = useState<StatusNodeState>(data.state);
-    const handleIconChange = (newIconKey: StatusNodeState) => {
-      setState(newIconKey);
-      // TODO: Call the parent callback or set the node status using the API
-    };
+  ({ id, data, selected }: NodeProps<StatusNodeType>) => {
+    const updateNodeState = useStore((state) => state.updateStatusNodeState);
 
     return (
       <BaseNode selected={selected} className="px-3 py-2 max-w-md">
@@ -77,8 +79,10 @@ export const StatusNode = memo(
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
             <IconSelector<StatusNodeState>
-              selectedIcon={state}
-              onSelectChange={handleIconChange}
+              selectedIcon={data.state}
+              onSelectChange={(newState) => {
+                updateNodeState(id, newState);
+              }}
               availableIcons={statusNodeIconMap}
               iconChoices={statusNodeIconOptions}
               ariaLabel="Select node state"

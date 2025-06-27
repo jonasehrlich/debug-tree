@@ -4,60 +4,31 @@ import {
   ControlButton,
   MiniMap,
   ReactFlow,
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
   type ColorModeClass,
-  type Edge,
   type FitViewOptions,
-  type Node,
-  type OnConnect,
-  type OnEdgesChange,
   type OnNodeDrag,
-  type OnNodesChange,
 } from "@xyflow/react";
 import { Sun, Moon, Map } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
-
+import useStore from "./store";
 import "@xyflow/react/dist/style.css";
+import type { AppState } from "./types/state";
 
 const nodeTypes = {
   actionNode: ActionNode,
   statusNode: StatusNode,
 };
 
-const initialNodes: Node[] = [
-  {
-    id: "1",
-    type: "actionNode",
-    data: { title: "Node 1", state: "not started" },
-    position: { x: 5, y: 5 },
-  },
-  {
-    id: "2",
-    type: "statusNode",
-    data: {
-      title: "Node 2",
-      state: "unknown",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla ",
-      git: {
-        rev: "123asd",
-      },
-    },
-    position: { x: 250, y: 5 },
-  },
-  {
-    id: "3",
-    type: "statusNode",
-    data: { title: "Foo Bar", state: "unknown", description: "rockin'" },
-    position: { x: 10, y: 200 },
-  },
-];
-
-const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
+const selector = (state: AppState) => ({
+  nodes: state.nodes,
+  edges: state.edges,
+  onNodesChange: state.onNodesChange,
+  onEdgesChange: state.onEdgesChange,
+  onConnect: state.onConnect,
+});
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -68,26 +39,8 @@ const onNodeDrag: OnNodeDrag = (_, node) => {
 };
 
 export default function App() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
-
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => {
-      setNodes((nds) => applyNodeChanges(changes, nds));
-    },
-    [setNodes],
-  );
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => {
-      setEdges((eds) => applyEdgeChanges(changes, eds));
-    },
-    [setEdges],
-  );
-  const onConnect: OnConnect = useCallback(
-    (connection) => {
-      setEdges((eds) => addEdge(connection, eds));
-    },
-    [setEdges],
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore(
+    useShallow(selector),
   );
 
   const [colorMode, setColorMode] = useState<ColorModeClass>(() => {

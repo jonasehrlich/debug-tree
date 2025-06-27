@@ -23,3 +23,5 @@ export type StatusNode = Node<
   },
   "statusNode"
 >;
+
+export type AppNode = StatusNode | ActionNode;
