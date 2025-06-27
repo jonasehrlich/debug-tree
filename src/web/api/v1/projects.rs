@@ -18,13 +18,15 @@ pub fn router() -> routing::Router<web::AppState> {
         )
         .route(
             "/projects/{id}",
-            routing::get(get_project).delete(delete_project),
+            routing::get(get_project)
+                .delete(delete_project)
+                .post(store_project),
         )
 }
 
 /// API documentation for the projects endpoints.
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(list_projects, create_project, get_project, delete_project,), tags((name = "Project Management", description="Project related endpoints")) )]
+#[openapi(paths(list_projects, create_project, get_project, delete_project, store_project), tags((name = "Project Management", description="Project related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[derive(Serialize, ToSchema)]
@@ -55,7 +57,7 @@ where
 #[utoipa::path(
     get,
     path = "",
-    description = "List the available projects",
+    description = "List all projects",
     responses(
         (status = http::StatusCode::OK, description = "List projects", body = ListProjectsResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -113,7 +115,7 @@ async fn create_project(
     Ok(Json(project.into()))
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, Deserialize, ToSchema)]
 struct GetProjectResponse {
     project: project::Project,
 }
@@ -177,6 +179,32 @@ async fn delete_project(
     Path(id): Path<String>,
 ) -> api::Result<api::ApiStatusResponse> {
     match app_state.project_dir().delete_project_by_id(&id) {
+        Ok(_) => Ok(Json(http::StatusCode::OK.into())),
+        Err(project::Error::Io(_, io_err)) => match io_err.kind() {
+            io::ErrorKind::NotFound => Err(api::AppError::NotFound(id)),
+            _ => Err(api::AppError::InternalServerError(
+                io_err.kind().to_string(),
+            )),
+        },
+        Err(e) => Err(api::AppError::InternalServerError(e.to_string())),
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/{id}",
+    description = "Store a project",
+    responses(
+        (status = http::StatusCode::OK, description = "Project is stored", body = api::ApiStatusResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn store_project(
+    State(app_state): State<web::AppState>,
+    Path(id): Path<String>,
+    Json(new_project): Json<GetProjectResponse>,
+) -> api::Result<api::ApiStatusResponse> {
+    match app_state.project_dir().save_project(&new_project.project) {
         Ok(_) => Ok(Json(http::StatusCode::OK.into())),
         Err(project::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => Err(api::AppError::NotFound(id)),

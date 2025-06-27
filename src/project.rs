@@ -147,6 +147,14 @@ impl ProjectDir {
 
         Ok(files_iter)
     }
+
+    /// Save a project to the project directory
+    pub fn save_project(&self, project: &Project) -> Result<(), Error> {
+        let mut p = self.path.clone();
+        p.push(Project::file_name_from_project_name(&project.name));
+        project.to_file(&p)?;
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
