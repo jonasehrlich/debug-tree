@@ -1,3 +1,4 @@
+import { type VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 
 export const buttonVariants = cva(
@@ -30,3 +31,9 @@ export const buttonVariants = cva(
     },
   },
 );
+
+// This seems to be used to be part of @/components/ui/button, but let's define it here
+export type ButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+  };

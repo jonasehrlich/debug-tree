@@ -7,7 +7,6 @@ import {
 import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import { useNodeId, useReactFlow } from "@xyflow/react";
-import { type VariantProps } from "class-variance-authority";
 import { EllipsisVertical, Pencil, Trash } from "lucide-react";
 import {
   forwardRef,
@@ -16,8 +15,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { buttonVariants } from "./ui/button-variants";
-
+import { type ButtonProps } from "./ui/button-props";
 /* NODE HEADER -------------------------------------------------------------- */
 
 export type NodeHeaderProps = HTMLAttributes<HTMLElement>;
@@ -112,12 +110,6 @@ export const NodeHeaderActions = forwardRef<
 NodeHeaderActions.displayName = "NodeHeaderActions";
 
 /* NODE HEADER ACTION ------------------------------------------------------- */
-
-// This seems to be used to be part of @/components/ui/button, but let's define it here
-type ButtonProps = React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  };
 
 export type NodeHeaderActionProps = ButtonProps & {
   label: string;
