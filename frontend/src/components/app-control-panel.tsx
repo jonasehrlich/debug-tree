@@ -5,11 +5,12 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { Panel, type PanelProps } from "@xyflow/react";
-import { FolderOpen, Redo2, Save, Undo2 } from "lucide-react";
+import { FilePlus2, FolderOpen, Redo2, Save, Undo2 } from "lucide-react";
 import { forwardRef } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import type { ButtonProps } from "./ui/button-props";
+import { CreateProjectDialog } from "./create-project-dialog";
 
 type ButtonShape = "round" | "default";
 
@@ -72,7 +73,6 @@ const AppControlPanelButton = forwardRef<
   },
 );
 
-
 interface AppControlPanelSpecificProps {
   buttonShape?: ButtonShape;
 }
@@ -88,9 +88,16 @@ export const AppControlPanel: React.FC<AppControlPanelProps> = ({
   };
 
   return (
-    <Panel
-      {...props}
-    >
+    <Panel {...props}>
+      <CreateProjectDialog
+        children={
+          <AppControlPanelButton
+            tooltipContent="Create New Project"
+            icon={<FilePlus2 />}
+            shape={buttonShape}
+          />
+        }
+      />
       <AppControlPanelButton
         tooltipContent="Open Project"
         icon={<FolderOpen />}

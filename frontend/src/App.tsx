@@ -98,7 +98,7 @@ export default function App() {
         fitView
         fitViewOptions={fitViewOptions}
       >
-        <AppControlPanel position="top-left"/>
+        <AppControlPanel position="top-left" />
         {isMiniMapVisible && <MiniMap position="top-right" />}
         <Background />
         <Controls>
@@ -110,11 +110,7 @@ export default function App() {
           </ControlButton>
         </Controls>
       </ReactFlow>
-      <Toaster
-        position="bottom-right"
-        richColors
-        theme={colorMode}
-      />
+      <Toaster position="bottom-right" richColors theme={colorMode} />
     </div>
   );
 }
