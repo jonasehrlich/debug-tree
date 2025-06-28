@@ -14,7 +14,7 @@ use utoipa::OpenApi;
 #[exclude = ".gitkeep"]
 pub struct Asset;
 
-mod api;
+pub mod api;
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
@@ -22,7 +22,7 @@ mod api;
             (path = "/api", api = api::ApiDoc)
         )
     )]
-struct ApiDoc;
+pub struct ApiDoc;
 
 /// Application state available in all request handlers
 #[derive(Clone)]
