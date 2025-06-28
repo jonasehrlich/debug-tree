@@ -6,7 +6,16 @@ import {
 import { cn } from "@/lib/utils";
 import useStore from "@/store";
 import { Panel, type PanelProps } from "@xyflow/react";
-import { FilePlus2, FolderOpen, Redo2, Save, Undo2 } from "lucide-react";
+import {
+  FilePlus2,
+  FolderOpen,
+  LineChart,
+  Plus,
+  Redo2,
+  Rocket,
+  Save,
+  Undo2,
+} from "lucide-react";
 import { forwardRef } from "react";
 import { toast } from "sonner";
 import { CreateProjectDialog } from "./create-project-dialog";
@@ -16,7 +25,9 @@ import type { ButtonProps } from "./ui/button-props";
 type ButtonShape = "round" | "default";
 
 interface AppControlPanelButtonSpecificProps {
-  icon: React.ReactElement;
+  leftIcon?: React.ReactElement;
+  rightIcon?: React.ReactElement;
+  text?: string;
   /** Whether the notification badge should be visible. */
   hasNotification?: boolean;
   tooltipContent: string;
@@ -33,7 +44,9 @@ const AppControlPanelButton = forwardRef<
   (
     {
       className,
-      icon,
+      leftIcon,
+      text = "",
+      rightIcon,
       tooltipContent,
       hasNotification,
       shape = "default",
@@ -48,12 +61,14 @@ const AppControlPanelButton = forwardRef<
             ref={ref}
             className={cn(
               className,
-              "cursor-pointer w-12 h-12 p-0 relative shadow-lg mx-2",
+              "cursor-pointer h-12 min-w-12 p-0 relative shadow-lg mx-2",
               shape == "round" ? "rounded-full" : "",
             )}
             {...props}
           >
-            {icon}
+            {leftIcon}
+            {text}
+            {rightIcon}
             {hasNotification && (
               <span
                 className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4
@@ -97,20 +112,20 @@ export const AppControlPanel: React.FC<AppControlPanelProps> = ({
         children={
           <AppControlPanelButton
             tooltipContent="Create New Project"
-            icon={<FilePlus2 />}
+            leftIcon={<FilePlus2 />}
             shape={buttonShape}
           />
         }
       />
       <AppControlPanelButton
         tooltipContent="Open Project"
-        icon={<FolderOpen />}
+        leftIcon={<FolderOpen />}
         onClick={onUnsupportedFeatClick}
         shape={buttonShape}
       />
       <AppControlPanelButton
         tooltipContent="Save Project"
-        icon={<Save />}
+        leftIcon={<Save />}
         hasNotification={hasUnsavedChanges}
         onClick={onUnsupportedFeatClick}
         shape={buttonShape}
@@ -118,13 +133,31 @@ export const AppControlPanel: React.FC<AppControlPanelProps> = ({
       />
       <AppControlPanelButton
         tooltipContent="Undo"
-        icon={<Undo2 />}
+        leftIcon={<Undo2 />}
         onClick={onUnsupportedFeatClick}
         shape={buttonShape}
       />
       <AppControlPanelButton
         tooltipContent="Redo"
-        icon={<Redo2 />}
+        leftIcon={<Redo2 />}
+        onClick={onUnsupportedFeatClick}
+        shape={buttonShape}
+      />
+
+      <AppControlPanelButton
+        tooltipContent="Create Action Node"
+        leftIcon={<Plus strokeWidth="3" />}
+        text="Create Action Node"
+        rightIcon={<Rocket />}
+        onClick={onUnsupportedFeatClick}
+        shape={buttonShape}
+      />
+
+      <AppControlPanelButton
+        tooltipContent="Create Status Node"
+        leftIcon={<Plus strokeWidth="3" />}
+        text="Create Status Node"
+        rightIcon={<LineChart />}
         onClick={onUnsupportedFeatClick}
         shape={buttonShape}
       />
