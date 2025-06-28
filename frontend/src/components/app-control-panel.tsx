@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import type { ButtonProps } from "./ui/button-props";
 import { CreateProjectDialog } from "./create-project-dialog";
+import useStore from "@/store";
 
 type ButtonShape = "round" | "default";
 
@@ -87,6 +88,9 @@ export const AppControlPanel: React.FC<AppControlPanelProps> = ({
     toast.error("This feature is not supported yet");
   };
 
+  const hasUnsavedChanges = useStore((state) => state.hasUnsavedChanges);
+  const saveOngoing = useStore((state) => state.saveOngoing);
+
   return (
     <Panel {...props}>
       <CreateProjectDialog
@@ -107,9 +111,10 @@ export const AppControlPanel: React.FC<AppControlPanelProps> = ({
       <AppControlPanelButton
         tooltipContent="Save Project"
         icon={<Save />}
-        hasNotification={true}
+        hasNotification={hasUnsavedChanges}
         onClick={onUnsupportedFeatClick}
         shape={buttonShape}
+        disabled={saveOngoing}
       />
       <AppControlPanelButton
         tooltipContent="Undo"

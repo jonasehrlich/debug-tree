@@ -7,6 +7,7 @@ import {
 import { create } from "zustand";
 import type { AppNode, StatusNode } from "./types/nodes";
 import { type AppState } from "./types/state";
+import { client } from "./client";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";
@@ -43,22 +44,113 @@ const initialNodes: AppNode[] = [
 
 const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
 
+export interface ReactflowZustand {
+  nodes: AppNode[];
+  edges: Edge[];
+}
+
 const useStore = create<AppState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
+  currentProject: undefined,
+  projects: [],
+  error: undefined,
+  hasUnsavedChanges: false,
+  saveOngoing: false,
+  loadProjectsMetadata: async () => {
+    const { data, error } = await client.GET("/api/v1/projects");
+    if (error) {
+      set({
+        error: { message: "Loading projects failed", response: error },
+      });
+    }
+    if (data) {
+      set({
+        projects: data.projects,
+      });
+    }
+  },
+  loadProject: async (id: string) => {
+    const { data, error } = await client.GET("/api/v1/projects/{id}", {
+      params: { path: { id: id } },
+    });
+    if (error) {
+      set({
+        error: { message: "Loading project {id} failed", response: error },
+      });
+    }
+    if (data) {
+      // The project has been loaded successfully, first set the metadata of the project that is currently loaded
+      set({
+        currentProject: { id: id, name: data.project.name },
+      });
+
+      // Get the nodes and edges from
+      let nodes: AppNode[] = [];
+      let edges: Edge[] = [];
+      if (data.project.zustand) {
+        const s = data.project.zustand as ReactflowZustand;
+        nodes = s.nodes;
+        edges = s.edges;
+      }
+      const store = get();
+      store.setNodes(nodes);
+      store.setEdges(edges);
+    }
+  },
+  saveProject: async (id: string) => {
+    set({ saveOngoing: true });
+    const store = get();
+
+    // if (!store.hasUnsavedChanges) {
+    //   return;
+    // }
+
+    if (store.currentProject == undefined) {
+      set({
+        error: {
+          message: "Cannot save a project if no current project is selected",
+        },
+      });
+      return;
+    }
+
+    const { error } = await client.POST("/api/v1/projects/{id}", {
+      params: {
+        path: { id: id },
+      },
+      body: {
+        project: {
+          name: store.currentProject.name,
+          zustand: { nodes: store.nodes, edges: store.edges },
+        },
+      },
+    });
+    if (error) {
+      set({
+        error: { message: "Saving project {id} failed", response: error },
+      });
+    } else {
+      set({ hasUnsavedChanges: false });
+    }
+    set({ saveOngoing: true });
+  },
   onNodesChange: (changes) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
+      hasUnsavedChanges: true,
     });
   },
   onEdgesChange: (changes) => {
     set({
       edges: applyEdgeChanges(changes, get().edges),
+      hasUnsavedChanges: true,
     });
   },
   onConnect: (connection) => {
     set({
       edges: addEdge(connection, get().edges),
+      hasUnsavedChanges: true,
     });
   },
   setNodes: (nodes) => {
