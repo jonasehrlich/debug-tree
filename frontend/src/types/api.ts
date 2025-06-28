@@ -87,8 +87,14 @@ export interface components {
         Project: {
             /** @description Name of the project */
             name: string;
-            /** @description Some form of JSON to represent the state of the debug tree, this is managed by the frontend application */
-            zustand?: unknown;
+            /** @description Representation of the reactflow state */
+            reactflow: components["schemas"]["ReactFlowState"];
+        };
+        ReactFlowState: {
+            /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
+            edges: unknown[];
+            /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
+            nodes: unknown[];
         };
     };
     responses: never;

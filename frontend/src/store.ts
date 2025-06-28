@@ -44,11 +44,6 @@ const initialNodes: AppNode[] = [
 
 const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
 
-export interface ReactflowZustand {
-  nodes: AppNode[];
-  edges: Edge[];
-}
-
 const useStore = create<AppState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
@@ -85,17 +80,9 @@ const useStore = create<AppState>((set, get) => ({
         currentProject: { id: id, name: data.project.name },
       });
 
-      // Get the nodes and edges from
-      let nodes: AppNode[] = [];
-      let edges: Edge[] = [];
-      if (data.project.zustand) {
-        const s = data.project.zustand as ReactflowZustand;
-        nodes = s.nodes;
-        edges = s.edges;
-      }
       const store = get();
-      store.setNodes(nodes);
-      store.setEdges(edges);
+      store.setNodes(data.project.reactflow.nodes as AppNode[]);
+      store.setEdges(data.project.reactflow.edges as Edge[]);
     }
   },
   saveProject: async (id: string) => {
@@ -122,7 +109,7 @@ const useStore = create<AppState>((set, get) => ({
       body: {
         project: {
           name: store.currentProject.name,
-          zustand: { nodes: store.nodes, edges: store.edges },
+          reactflow: { nodes: store.nodes, edges: store.edges },
         },
       },
     });

@@ -67,7 +67,7 @@ impl ProjectDir {
         if project_path.exists() {
             Project::from_file(&project_path)
         } else {
-            let p = Project::new(name, None);
+            let p = Project::new(name);
             match p.to_file(&project_path) {
                 Ok(()) => Ok(p),
                 Err(e) => Err(e),
@@ -82,7 +82,7 @@ impl ProjectDir {
 
         match !project_path.is_file() || force {
             true => {
-                let p = Project::new(name, None);
+                let p = Project::new(name);
                 p.to_file(&project_path)?;
                 Ok(p)
             }
@@ -157,20 +157,38 @@ impl ProjectDir {
     }
 }
 
+#[derive(Serialize, Deserialize, ToSchema, Default)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+pub struct ReactFlowState {
+    /// Nodes of the reactflow state, the types of the nodes are managed on the frontend
+    nodes: Vec<serde_json::Value>,
+    /// Edges of the reactflow state, the types of the nodes are managed on the frontend
+    edges: Vec<serde_json::Value>,
+}
+
+impl ReactFlowState {
+    pub fn new() -> Self {
+        ReactFlowState {
+            nodes: Vec::new(),
+            edges: Vec::new(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, ToSchema)]
 #[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
 pub struct Project {
     /// Name of the project
     name: String,
-    /// Some form of JSON to represent the state of the debug tree, this is managed by the frontend application
-    zustand: Option<serde_json::Value>,
+    /// Representation of the reactflow state
+    reactflow: ReactFlowState,
 }
 
 impl Project {
-    pub fn new(name: &str, zustand: Option<serde_json::Value>) -> Self {
+    pub fn new(name: &str) -> Self {
         Project {
             name: name.to_string(),
-            zustand,
+            reactflow: ReactFlowState::new(),
         }
     }
 
