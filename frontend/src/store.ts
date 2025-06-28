@@ -5,9 +5,9 @@ import {
   type Edge,
 } from "@xyflow/react";
 import { create } from "zustand";
+import { client } from "./client";
 import type { AppNode, StatusNode } from "./types/nodes";
 import { type AppState } from "./types/state";
-import { client } from "./client";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";

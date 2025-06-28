@@ -1,14 +1,14 @@
-import { type AppNode, type StatusNodeState } from "./nodes";
 import {
   type Edge,
-  type OnNodesChange,
-  type OnEdgesChange,
   type OnConnect,
+  type OnEdgesChange,
+  type OnNodesChange,
 } from "@xyflow/react";
 import {
   type ApiStatusDetailResponse,
   type ProjectMetadata,
 } from "./api-types";
+import { type AppNode, type StatusNodeState } from "./nodes";
 
 export interface Error {
   message: string;

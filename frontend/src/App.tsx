@@ -1,22 +1,22 @@
 import {
   Background,
-  Controls,
   ControlButton,
+  Controls,
   MiniMap,
   ReactFlow,
   type ColorModeClass,
   type FitViewOptions,
   type OnNodeDrag,
 } from "@xyflow/react";
-import { Sun, Moon, Map } from "lucide-react";
+import "@xyflow/react/dist/style.css";
+import { Map, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { AppControlPanel } from "./components/app-control-panel";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
 import useStore from "./store";
-import "@xyflow/react/dist/style.css";
 import type { AppState } from "./types/state";
-import { AppControlPanel } from "./components/app-control-panel";
 
 const nodeTypes = {
   actionNode: ActionNode,

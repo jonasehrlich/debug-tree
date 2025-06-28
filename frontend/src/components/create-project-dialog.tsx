@@ -1,18 +1,18 @@
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "./ui/button";
-import { toast } from "sonner";
 import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "./ui/button";
 
 interface CreateProjectDialogProps {
   // The element that triggers the dialog (e.g., a button).

@@ -13,7 +13,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-        "module": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "Bundler",
     "noUncheckedIndexedAccess": true
   }

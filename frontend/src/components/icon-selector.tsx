@@ -5,8 +5,8 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@radix-ui/react-select";
-import { Button } from "./ui/button";
 import React from "react";
+import { Button } from "./ui/button";
 
 // A generic string key maps to a ReactNode (JSX.Element), these are the icons shown for the individual elements
 export type IconMap<T extends string = string> = Record<T, React.ReactNode>;

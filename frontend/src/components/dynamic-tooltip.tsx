@@ -1,10 +1,10 @@
-import React, { useState, useRef, useCallback } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"; // Adjust path if needed
+import React, { useCallback, useRef, useState } from "react";
 
 /**
  * @interface DynamicTooltipProps
