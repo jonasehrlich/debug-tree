@@ -2,6 +2,7 @@
 name = "debug-tree"
 version = "0.1.0"
 edition = "2024"
+default-run = "debug-tree"
 
 [dependencies]
 clap = { version = "^4.5.40", features = ["derive"] }
