@@ -31,4 +31,12 @@ export default tseslint.config([
       globals: globals.browser,
     },
   },
+  {
+    // *** OVERRIDE FOR src/types/api.ts ***
+    files: ["src/types/api.ts"],
+    rules: {
+      // Disable 'consistent-indexed-object-style' specifically for this file
+      "@typescript-eslint/consistent-indexed-object-style": "off",
+    },
+  },
 ]);

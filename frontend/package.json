@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write .",
+    "create-api": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o src/types/api.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
@@ -40,6 +41,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.2.0",
+    "openapi-typescript": "^7.8.0",
     "prettier": "^3.6.1",
     "tw-animate-css": "^1.3.4",
     "typescript": "~5.8.3",
