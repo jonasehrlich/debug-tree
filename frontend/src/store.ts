@@ -119,10 +119,17 @@ const useStore = create<AppState>()(
             description: error.message,
           });
         } else {
-          toast.success("Saved");
+          toast.success("Saved", { duration: 800 });
           set({ hasUnsavedChanges: false });
         }
         set({ saveOngoing: false });
+      },
+      closeCurrentProject: async () => {
+        const store = get();
+        await store.saveCurrentProject();
+        set({ currentProject: null });
+        store.setNodes([]);
+        store.setEdges([]);
       },
       onNodesChange: (changes) => {
         set({

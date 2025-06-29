@@ -15,6 +15,7 @@ import {
   Save,
   Undo2,
   Workflow,
+  X,
 } from "lucide-react";
 import { forwardRef, useCallback } from "react";
 import { toast } from "sonner";
@@ -148,12 +149,9 @@ export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
 
     const hasUnsavedChanges = useStore((state) => state.hasUnsavedChanges);
     const saveOngoing = useStore((state) => state.saveOngoing);
-    const saveCurrentProject = useStore((state) => state.saveCurrentProject);
-
     const currentProject = useStore((state) => state.currentProject);
-    const onSaveProject = async () => {
-      await saveCurrentProject();
-    };
+    const saveCurrentProject = useStore((state) => state.saveCurrentProject);
+    const closeCurrentProject = useStore((state) => state.closeCurrentProject);
 
     return (
       <Panel {...props}>
@@ -162,7 +160,7 @@ export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
             <AppControlPanelButton
               tooltipContent="Manage Project"
               text={currentProject ? currentProject.name : "Project"}
-              leftIcon={<Workflow />}
+              leftIcon={<Workflow strokeWidth="3" />}
               // onClick={onUnsupportedFeatClick}
               shape={buttonShape}
             />
@@ -170,23 +168,34 @@ export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
         />
         <AppControlPanelButton
           tooltipContent="Save"
-          leftIcon={<Save />}
+          leftIcon={<Save strokeWidth="3" />}
           hasNotification={hasUnsavedChanges}
-          onClick={onSaveProject}
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          onClick={saveCurrentProject}
           shape={buttonShape}
           disabled={saveOngoing || !currentProject}
         />
         <AppControlPanelButton
           tooltipContent="Undo"
-          leftIcon={<Undo2 />}
+          leftIcon={<Undo2 strokeWidth="3" />}
           onClick={onUnsupportedFeatClick}
           shape={buttonShape}
+          disabled={saveOngoing || !currentProject}
         />
         <AppControlPanelButton
           tooltipContent="Redo"
-          leftIcon={<Redo2 />}
+          leftIcon={<Redo2 strokeWidth="3" />}
           onClick={onUnsupportedFeatClick}
           shape={buttonShape}
+          disabled={saveOngoing || !currentProject}
+        />
+        <AppControlPanelButton
+          tooltipContent="Close Project"
+          leftIcon={<X strokeWidth="3" />}
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          onClick={closeCurrentProject}
+          shape={buttonShape}
+          disabled={saveOngoing}
         />
 
         <AppControlPanelButton
@@ -198,17 +207,19 @@ export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
             createNode("actionNode");
           }}
           shape={buttonShape}
+          disabled={saveOngoing || !currentProject}
         />
 
         <AppControlPanelButton
           tooltipContent="Create Status Node"
           leftIcon={<Plus strokeWidth="3" />}
           text="Create Status Node"
-          rightIcon={<LineChart />}
+          rightIcon={<LineChart strokeWidth="3" />}
           onClick={() => {
             createNode("statusNode");
           }}
           shape={buttonShape}
+          disabled={saveOngoing || !currentProject}
         />
       </Panel>
     );
