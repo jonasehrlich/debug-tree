@@ -9,9 +9,9 @@ type Result<T> = std::result::Result<axum::Json<T>, AppError>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Not Found: {0}")]
+    #[error("{0}")]
     NotFound(String),
-    #[error("Internal Server Error: {0}")]
+    #[error("{0}")]
     InternalServerError(String),
     #[error("JSON Deserialization Error")]
     JsonExtractionError(#[from] axum::extract::rejection::JsonRejection), // Handle Axum's JSON parsing errors
