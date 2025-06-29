@@ -62,28 +62,24 @@ impl ProjectDir {
     /// Load of create a project in the project directory
     pub fn load_or_create_project(&self, name: &str) -> Result<Project, Error> {
         let mut project_path = self.path.clone();
-        project_path.push(Project::file_name_from_project_name(name));
+        project_path.push(ProjectData::file_name_from_project_name(name));
 
         if project_path.exists() {
             Project::from_file(&project_path)
         } else {
-            let p = Project::new(name);
-            match p.to_file(&project_path) {
-                Ok(()) => Ok(p),
-                Err(e) => Err(e),
-            }
+            Project::from_project_dir_and_name(&self.path, name)
         }
     }
 
     /// Create a project with a name and store it in the project directory
     pub fn create_project(&self, name: &str, force: bool) -> Result<Project, Error> {
         let mut project_path = self.path.clone();
-        project_path.push(Project::file_name_from_project_name(name));
+        project_path.push(ProjectData::file_name_from_project_name(name));
 
         match !project_path.is_file() || force {
             true => {
-                let p = Project::new(name);
-                p.to_file(&project_path)?;
+                let p = Project::new(&self.path, name);
+                p.to_file()?;
                 Ok(p)
             }
             false => Err(Error::ProjectExistsAlready(
@@ -95,36 +91,37 @@ impl ProjectDir {
 
     /// Load a project from the project directory
     pub fn get_project_by_name(&self, name: &str) -> Result<Project, Error> {
-        let mut p = self.path.clone();
-        p.push(Project::file_name_from_project_name(name));
-        Project::from_file(&p)
+        Project::from_project_dir_and_name(&self.path, name)
     }
 
     /// Load a project from the project directory
     pub fn get_project_by_id(&self, id: &str) -> Result<Project, Error> {
-        let mut p = self.path.clone();
-        p.push(Project::file_name_from_id(id));
-        Project::from_file(&p)
+        Project::from_project_dir_and_id(&self.path, id)
     }
 
     pub fn delete_project_by_id(&self, id: &str) -> Result<(), Error> {
         let mut p = self.path.clone();
-        p.push(Project::file_name_from_id(id));
+        p.push(ProjectData::file_name_from_id(id));
         fs::remove_file(p)?;
         Ok(())
     }
 
+    /// Get the metadata objects for all projects in the project directory
+    pub fn metadatas(&self) -> Result<impl Iterator<Item = ProjectMetadata> + '_, Error> {
+        Ok(self
+            .projects()?
+            .filter_map(|project| project.try_into().ok()))
+    }
+
     /// Get an iterator over all projects in the project directory
-    pub fn projects_iter(&self) -> Result<impl Iterator<Item = Project> + '_, Error> {
-        let files_iter = fs::read_dir(self.path.clone())
+    pub fn projects(&self) -> Result<impl Iterator<Item = Project> + '_, Error> {
+        Ok(fs::read_dir(self.path.clone())
             .map_err(|e| Error::Io(self.path.clone(), e))? // Handle error during initial read_dir
             .filter_map(|entry_result| {
                 // Filter out non-files
                 match entry_result {
                     Ok(entry) => {
                         let path = entry.path();
-                        // Only consider files that might be JSON projects
-                        // You might want to refine this to check for a .json extension
                         if path.is_file() {
                             match Project::from_file(&path) {
                                 Ok(project) => Some(project),
@@ -143,22 +140,20 @@ impl ProjectDir {
                         None
                     }
                 }
-            });
-
-        Ok(files_iter)
+            }))
     }
 
     /// Save a project to the project directory
-    pub fn save_project(&self, project: &Project) -> Result<(), Error> {
+    pub fn save_project(&self, project: &ProjectData) -> Result<(), Error> {
         let mut p = self.path.clone();
-        p.push(Project::file_name_from_project_name(&project.name));
+        p.push(ProjectData::file_name_from_project_name(&project.name));
         project.to_file(&p)?;
         Ok(())
     }
 }
 
-#[derive(Serialize, Deserialize, ToSchema, Default)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+#[derive(Serialize, Deserialize, ToSchema, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ReactFlowState {
     /// Nodes of the reactflow state, the types of the nodes are managed on the frontend
     nodes: Vec<serde_json::Value>,
@@ -175,18 +170,18 @@ impl ReactFlowState {
     }
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
-pub struct Project {
+#[derive(Serialize, Deserialize, ToSchema, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectData {
     /// Name of the project
     name: String,
     /// Representation of the reactflow state
     reactflow: ReactFlowState,
 }
 
-impl Project {
+impl ProjectData {
     pub fn new(name: &str) -> Self {
-        Project {
+        ProjectData {
             name: name.to_string(),
             reactflow: ReactFlowState::new(),
         }
@@ -202,9 +197,16 @@ impl Project {
         self.name.clone()
     }
 
+    /// Store the project data to a file
+    pub fn to_file(&self, path: &path::PathBuf) -> std::result::Result<(), Error> {
+        let json_content = serde_json::to_string(self)?;
+        std::fs::write(path, json_content)?;
+        Ok(())
+    }
+
     /// Get the file name from the project name
     pub fn file_name_from_project_name(name: &str) -> path::PathBuf {
-        Project::file_name_from_id(utils::to_kebab_case(name).as_str())
+        ProjectData::file_name_from_id(utils::to_kebab_case(name).as_str())
     }
 
     /// Get the file name from the project ID
@@ -214,32 +216,124 @@ impl Project {
         p
     }
 
-    /// Store the project to a file
-    pub fn to_file(&self, path: &path::PathBuf) -> std::result::Result<(), Error> {
-        let json_content = serde_json::to_string(self)?;
-        std::fs::write(path, json_content)?;
-        Ok(())
-    }
-
-    /// Create a project from a file
-    pub fn from_file(path: &path::PathBuf) -> Result<Project, Error> {
+    /// Create project data from a file
+    pub fn from_file(path: &path::PathBuf) -> Result<ProjectData, Error> {
         let file_content = std::fs::read_to_string(path)?;
         serde_json::from_str(&file_content).map_err(Error::Json)
+    }
+
+    /// Get the number of nodes in the diagram
+    pub fn num_nodes(&self) -> usize {
+        self.reactflow.nodes.len()
+    }
+
+    /// Get the number of edges in the diagram
+    pub fn num_edges(&self) -> usize {
+        self.reactflow.edges.len()
+    }
+}
+
+pub struct Project {
+    /// Path of the project
+    path: path::PathBuf,
+    /// Project data
+    data: ProjectData,
+}
+
+impl Project {
+    pub fn new(project_dir: &path::Path, name: &str) -> Self {
+        let mut path = project_dir.to_path_buf();
+        path.push(ProjectData::file_name_from_project_name(name));
+        Project {
+            path,
+            data: ProjectData::new(name),
+        }
+    }
+
+    /// Create a new object from a project directory and project name
+    /// NOTE:
+    pub fn from_project_dir_and_name(project_dir: &path::Path, name: &str) -> Result<Self, Error> {
+        let mut path = project_dir.to_path_buf();
+        path.push(ProjectData::file_name_from_project_name(name));
+
+        Ok(Project {
+            path: path.clone(),
+            data: ProjectData::from_file(&path)?,
+        })
+    }
+
+    pub fn from_project_dir_and_id(project_dir: &path::Path, id: &str) -> Result<Self, Error> {
+        let mut path = project_dir.to_path_buf();
+        path.push(ProjectData::file_name_from_id(id));
+
+        Ok(Project {
+            path: path.clone(),
+            data: ProjectData::from_file(&path)?,
+        })
+    }
+
+    pub fn from_file(path: &path::PathBuf) -> Result<Project, Error> {
+        Ok(Project {
+            path: path.clone(),
+            data: ProjectData::from_file(path)?,
+        })
+    }
+
+    pub fn id(&self) -> String {
+        self.data.id()
+    }
+
+    pub fn name(&self) -> String {
+        self.data.name()
+    }
+    pub fn to_file(&self) -> Result<(), Error> {
+        self.data.to_file(&self.path)
+    }
+
+    pub fn data(&self) -> &ProjectData {
+        &self.data
+    }
+
+    pub fn num_nodes(&self) -> usize {
+        self.data.num_nodes()
+    }
+
+    pub fn num_edges(&self) -> usize {
+        self.data.num_edges()
+    }
+
+    pub fn file_metadata(&self) -> Result<fs::Metadata, Error> {
+        Ok(fs::metadata(&self.path)?)
     }
 }
 
 #[derive(Serialize, ToSchema)]
-pub struct Metadata {
+#[serde(rename_all = "camelCase")]
+pub struct ProjectMetadata {
+    /// ID of the project
     id: String,
+    /// Name of the project
     name: String,
+    /// Last modified date
+    last_modified_date: chrono::DateTime<chrono::Utc>,
+    /// Number of nodes in the project
+    num_nodes: usize,
+    /// Number of edges in the project
+    num_edges: usize,
 }
 
-impl From<Project> for Metadata {
-    fn from(project: Project) -> Self {
-        Metadata {
-            id: project.id(),
-            name: project.name(),
-        }
+impl TryFrom<Project> for ProjectMetadata {
+    type Error = Error;
+
+    fn try_from(p: Project) -> Result<Self, Error> {
+        let accessed = p.file_metadata()?.accessed()?;
+        Ok(ProjectMetadata {
+            id: p.id(),
+            name: p.name(),
+            last_modified_date: accessed.into(),
+            num_nodes: p.num_nodes(),
+            num_edges: p.num_edges(),
+        })
     }
 }
 
@@ -250,7 +344,7 @@ mod tests {
     #[test]
     fn test_file_name() {
         assert_eq!(
-            Project::file_name_from_project_name("HELLO WORLD"),
+            ProjectData::file_name_from_project_name("HELLO WORLD"),
             path::Path::new("hello-world.json")
         );
     }

@@ -31,7 +31,7 @@ pub(super) struct ApiDoc;
 
 #[derive(Serialize, ToSchema)]
 struct ListProjectsResponse {
-    projects: Vec<project::Metadata>,
+    projects: Vec<project::ProjectMetadata>,
 }
 impl ListProjectsResponse {
     pub fn new() -> Self {
@@ -43,7 +43,7 @@ impl ListProjectsResponse {
 
 impl<T> FromIterator<T> for ListProjectsResponse
 where
-    project::Metadata: From<T>,
+    project::ProjectMetadata: From<T>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut resp = ListProjectsResponse::new();
@@ -68,32 +68,33 @@ async fn list_projects(
 ) -> api::Result<ListProjectsResponse> {
     let projects = app_state
         .project_dir()
-        .projects_iter()
+        .metadatas()
         .map_err(|e| api::AppError::InternalServerError(e.to_string()))?;
     Ok(Json(projects.collect::<ListProjectsResponse>()))
 }
 
 #[derive(Deserialize, ToSchema)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+#[serde(rename_all = "camelCase")]
 struct CreateProjectRequest {
     name: String,
 }
 
 #[derive(Serialize, ToSchema)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+#[serde(rename_all = "camelCase")]
 struct CreateProjectResponse {
-    project: project::Metadata,
+    project: project::ProjectMetadata,
 }
 
 impl CreateProjectResponse {
-    pub fn new(project: project::Metadata) -> Self {
+    pub fn new(project: project::ProjectMetadata) -> Self {
         Self { project }
     }
 }
 
-impl From<project::Project> for CreateProjectResponse {
-    fn from(project: project::Project) -> Self {
-        Self::new(project.into())
+impl TryFrom<project::Project> for CreateProjectResponse {
+    type Error = project::Error;
+    fn try_from(project: project::Project) -> Result<Self, project::Error> {
+        Ok(Self::new(project.try_into()?))
     }
 }
 
@@ -110,31 +111,39 @@ async fn create_project(
     State(app_state): State<web::AppState>,
     Json(new_project): Json<CreateProjectRequest>,
 ) -> api::Result<CreateProjectResponse> {
-    let project = app_state
+    let resp: CreateProjectResponse = app_state
         .project_dir()
         .create_project(&new_project.name, false)
-        .map_err(|e| api::AppError::InternalServerError(e.to_string()))?;
-    Ok(Json(project.into()))
+        .map_err(|e| api::AppError::InternalServerError(e.to_string()))?
+        .try_into()
+        .map_err(|e: project::Error| api::AppError::InternalServerError(e.to_string()))?;
+
+    Ok(Json(resp))
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+#[serde(rename_all = "camelCase")]
 struct FullProjectRequestResponse {
-    project: project::Project,
+    project: project::ProjectData,
 }
 
 impl FullProjectRequestResponse {
-    pub fn new(project: project::Project) -> Self {
+    pub fn new(project: project::ProjectData) -> Self {
         Self { project }
     }
 }
 
-impl From<project::Project> for FullProjectRequestResponse {
-    fn from(value: project::Project) -> Self {
+impl From<project::ProjectData> for FullProjectRequestResponse {
+    fn from(value: project::ProjectData) -> Self {
         Self::new(value)
     }
 }
 
+impl From<&project::ProjectData> for FullProjectRequestResponse {
+    fn from(value: &project::ProjectData) -> Self {
+        Self::new(value.clone())
+    }
+}
 #[utoipa::path(
     get,
     path = "/{id}",
@@ -164,7 +173,7 @@ async fn get_project(
         Err(e) => return Err(api::AppError::InternalServerError(e.to_string())),
     };
 
-    Ok(Json(project.into()))
+    Ok(Json(project.data().into()))
 }
 
 #[utoipa::path(

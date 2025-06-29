@@ -105,13 +105,14 @@ async fn main() {
                 .expect("Error getting project");
 
             if args.min {
-                println!("{}", serde_json::to_string(&project).unwrap());
+                println!("{}", serde_json::to_string(&project.data()).unwrap());
             } else {
                 let indent_vec = " ".repeat(args.indent).into_bytes();
                 let formatter = serde_json::ser::PrettyFormatter::with_indent(&indent_vec);
                 let mut buf = Vec::new();
                 let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
                 project
+                    .data()
                     .serialize(&mut ser)
                     .expect("Error: Failed to serialize project");
                 println!(

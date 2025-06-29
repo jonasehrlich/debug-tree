@@ -53,7 +53,7 @@ impl IntoResponse for AppError {
 }
 
 #[derive(Serialize, Debug, ToSchema)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+#[serde(rename_all = "camelCase")]
 /// Basic serializable API status response
 pub struct ApiStatusResponse {
     /// HTTP status code
@@ -72,7 +72,7 @@ impl From<http::StatusCode> for ApiStatusResponse {
 }
 
 #[derive(Serialize, Debug, ToSchema)]
-#[serde(rename_all(serialize = "camelCase", deserialize = "snake_case"))]
+#[serde(rename_all = "camelCase")]
 pub struct ApiStatusDetailResponse {
     /// HTTP status code
     pub status: u16,

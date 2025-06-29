@@ -21,6 +21,7 @@ rust-embed = { version = "^8.7", features = [
 log = "^0.4.27"
 axum-reverse-proxy = "^1.0.2"
 env_logger = "^0.11.8"
-utoipa = { version = "^5.3.1", features = ["axum_extras"] }
+utoipa = { version = "^5.3.1", features = ["axum_extras", "chrono"] }
 utoipa-axum = { version = "^0.2.0" }
 utoipa-rapidoc = { version = "^6.0.0", features = ["axum"] }
+chrono = { version = "^0.4.41", features = ["serde"] }
