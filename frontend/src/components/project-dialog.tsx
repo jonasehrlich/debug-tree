@@ -132,6 +132,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
       setSelectedProject(null);
     }
   };
+
   const filteredProjects = projects.filter((project) =>
     project.name.toLowerCase().includes(filterTerm.toLowerCase()),
   );
@@ -175,7 +176,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                         className={cn(
                           "p-2 px-4 border-b cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
                           {
-                            "bg-blue-100 border-blue-500":
+                            "bg-secondary":
                               selectedProject === project.id,
                           },
                         )}

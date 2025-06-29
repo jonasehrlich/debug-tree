@@ -15,10 +15,15 @@ export interface Error {
   response?: ApiStatusDetailResponse;
 }
 
+export interface ProjectIdAndName {
+  id: string;
+  name: string;
+}
+
 export interface AppState {
   nodes: AppNode[];
   edges: Edge[];
-  currentProject: ProjectMetadata | null;
+  currentProject: ProjectIdAndName | null;
   projects: ProjectMetadata[];
   // Whether there is an error to display in the UI
   error: Error | null;
