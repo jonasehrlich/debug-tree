@@ -35,8 +35,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { FilterableScrollArea } from "./filterable-scroll-area";
 import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
 import { Skeleton } from "./ui/skeleton";
 
 interface SelectProjectDialogProps {
@@ -85,6 +85,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
   }, [setIsOpen, currentProject]);
 
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [filterTerm, setFilterTerm] = useState<string>("");
 
   const loadProject = useStore((state) => state.loadProject);
   const onLoadProjectClick = () => {
@@ -131,11 +132,13 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
       setSelectedProject(null);
     }
   };
+  const filteredProjects = projects.filter((project) =>
+    project.name.toLowerCase().includes(filterTerm.toLowerCase()),
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-
       <DialogContent
         className="sm:max-w-[500px] p-0 overflow-hidden"
         showCloseButton={currentProject !== null}
@@ -153,20 +156,25 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
               <h4 className="mb-4 text-sm leading-none font-medium">
                 Projects
               </h4>
-              <ScrollArea className="h-72 w-48 rounded-md border">
-                <div className="p-4">
+              <FilterableScrollArea
+                className="h-72 rounded-md border"
+                filterTerm={filterTerm}
+                setFilterTerm={setFilterTerm}
+                placeholder="Filter"
+              >
+                <div className="px-4">
                   {isProjectsLoading ? (
                     <>
                       <Skeleton />
                       <Skeleton />
                       <Skeleton />
                     </>
-                  ) : (
-                    projects.map((project) => (
+                  ) : filteredProjects.length > 0 ? (
+                    filteredProjects.map((project) => (
                       <div
                         key={project.id}
                         className={cn(
-                          "p-2 border cursor-pointer hover:bg-blue-50 flex items-center justify-between text-sm select-none",
+                          "p-2 border-b cursor-pointer hover:bg-blue-50 flex items-center justify-between text-sm select-none",
                           {
                             "bg-blue-100 border-blue-500":
                               selectedProject === project.id,
@@ -216,9 +224,13 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                         </AlertDialog>
                       </div>
                     ))
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      No projects found.
+                    </div>
                   )}
                 </div>
-              </ScrollArea>{" "}
+              </FilterableScrollArea>{" "}
             </div>
             {/* --- SECTION ONE FOOTER --- */}
             <div className="pt-4 mt-4 flex justify-end gap-2">
