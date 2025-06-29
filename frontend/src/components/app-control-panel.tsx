@@ -5,7 +5,8 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import useStore from "@/store";
-import { Panel, type PanelProps } from "@xyflow/react";
+import type { ActionNode, AppNode, StatusNode } from "@/types/nodes";
+import { Panel, useReactFlow, type PanelProps } from "@xyflow/react";
 import {
   LineChart,
   Plus,
@@ -15,7 +16,7 @@ import {
   Undo2,
   Workflow,
 } from "lucide-react";
-import { forwardRef } from "react";
+import { forwardRef, useCallback } from "react";
 import { toast } from "sonner";
 import { ProjectDialog } from "./project-dialog";
 import { Button } from "./ui/button";
@@ -94,70 +95,122 @@ interface AppControlPanelSpecificProps {
 
 type AppControlPanelProps = PanelProps & AppControlPanelSpecificProps;
 
-export const AppControlPanel: React.FC<AppControlPanelProps> = ({
-  buttonShape = "default",
-  ...props
-}) => {
-  const onUnsupportedFeatClick = () => {
-    toast.error("This feature is not supported yet");
-  };
+export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
+  ({ buttonShape = "default", ...props }, ref) => {
+    const onUnsupportedFeatClick = () => {
+      toast.error("This feature is not supported yet");
+    };
+    const { addNodes, screenToFlowPosition } = useReactFlow<AppNode>();
 
-  const hasUnsavedChanges = useStore((state) => state.hasUnsavedChanges);
-  const saveOngoing = useStore((state) => state.saveOngoing);
+    const createNode = useCallback(
+      (type: "actionNode" | "statusNode") => {
+        if (
+          !ref ||
+          typeof ref !== "object" ||
+          !("current" in ref) ||
+          !ref.current
+        )
+          return;
 
-  const currentProject = useStore((state) => state.currentProject);
+        const bounds = ref.current.getBoundingClientRect();
+        const position = screenToFlowPosition({
+          x: bounds.x + bounds.width / 2,
+          y: bounds.y + bounds.height / 2,
+        });
 
-  return (
-    <Panel {...props}>
-      <ProjectDialog
-        children={
-          <AppControlPanelButton
-            tooltipContent="Manage Project"
-            text={currentProject ? currentProject.name : "Project"}
-            leftIcon={<Workflow />}
-            // onClick={onUnsupportedFeatClick}
-            shape={buttonShape}
-          />
+        if (type === "actionNode") {
+          const newNode: ActionNode = {
+            id: `action-node-${crypto.randomUUID()}`,
+            type: "actionNode",
+            position,
+            data: {
+              title: "Action Node",
+              description: "A new action node",
+            },
+          };
+          addNodes(newNode);
+        } else {
+          const newNode: StatusNode = {
+            id: `status-node-${crypto.randomUUID()}`,
+            type: "statusNode",
+            position,
+            data: {
+              title: "Status Node",
+              description: "A new status node",
+              state: "unknown",
+            },
+          };
+          addNodes(newNode);
         }
-      />
-      <AppControlPanelButton
-        tooltipContent="Save"
-        leftIcon={<Save />}
-        hasNotification={hasUnsavedChanges}
-        onClick={onUnsupportedFeatClick}
-        shape={buttonShape}
-        disabled={saveOngoing}
-      />
-      <AppControlPanelButton
-        tooltipContent="Undo"
-        leftIcon={<Undo2 />}
-        onClick={onUnsupportedFeatClick}
-        shape={buttonShape}
-      />
-      <AppControlPanelButton
-        tooltipContent="Redo"
-        leftIcon={<Redo2 />}
-        onClick={onUnsupportedFeatClick}
-        shape={buttonShape}
-      />
+      },
+      [addNodes, ref, screenToFlowPosition],
+    );
 
-      <AppControlPanelButton
-        tooltipContent="Create Action Node"
-        leftIcon={<Plus strokeWidth="3" />}
-        text="Create Action Node"
-        rightIcon={<Rocket />}
-        onClick={onUnsupportedFeatClick}
-        shape={buttonShape}
-      />
+    const hasUnsavedChanges = useStore((state) => state.hasUnsavedChanges);
+    const saveOngoing = useStore((state) => state.saveOngoing);
+    const saveCurrentProject = useStore((state) => state.saveCurrentProject);
 
-      <AppControlPanelButton
-        tooltipContent="Create Status Node"
-        leftIcon={<Plus strokeWidth="3" />}
-        text="Create Status Node"
-        rightIcon={<LineChart />}
-        onClick={onUnsupportedFeatClick}
-        shape={buttonShape}
-      />
-    </Panel>
-  );
-};
+    const currentProject = useStore((state) => state.currentProject);
+    const onSaveProject = async () => {
+      await saveCurrentProject();
+    };
+
+    return (
+      <Panel {...props}>
+        <ProjectDialog
+          children={
+            <AppControlPanelButton
+              tooltipContent="Manage Project"
+              text={currentProject ? currentProject.name : "Project"}
+              leftIcon={<Workflow />}
+              // onClick={onUnsupportedFeatClick}
+              shape={buttonShape}
+            />
+          }
+        />
+        <AppControlPanelButton
+          tooltipContent="Save"
+          leftIcon={<Save />}
+          hasNotification={hasUnsavedChanges}
+          onClick={onSaveProject}
+          shape={buttonShape}
+          disabled={saveOngoing || !currentProject}
+        />
+        <AppControlPanelButton
+          tooltipContent="Undo"
+          leftIcon={<Undo2 />}
+          onClick={onUnsupportedFeatClick}
+          shape={buttonShape}
+        />
+        <AppControlPanelButton
+          tooltipContent="Redo"
+          leftIcon={<Redo2 />}
+          onClick={onUnsupportedFeatClick}
+          shape={buttonShape}
+        />
+
+        <AppControlPanelButton
+          tooltipContent="Create Action Node"
+          leftIcon={<Plus strokeWidth="3" />}
+          text="Create Action Node"
+          rightIcon={<Rocket />}
+          onClick={() => {
+            createNode("actionNode");
+          }}
+          shape={buttonShape}
+        />
+
+        <AppControlPanelButton
+          tooltipContent="Create Status Node"
+          leftIcon={<Plus strokeWidth="3" />}
+          text="Create Status Node"
+          rightIcon={<LineChart />}
+          onClick={() => {
+            createNode("statusNode");
+          }}
+          shape={buttonShape}
+        />
+      </Panel>
+    );
+  },
+);

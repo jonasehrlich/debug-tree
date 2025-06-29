@@ -32,7 +32,7 @@ export interface AppState {
   // Load a project
   loadProject: (id: string) => Promise<void>;
   // Save a project
-  saveProject: (id: string) => Promise<void>;
+  saveCurrentProject: () => Promise<void>;
   onNodesChange: OnNodesChange<AppNode>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;

@@ -10,7 +10,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Map, Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { AppControlPanel } from "./components/app-control-panel";
 import { ActionNode, StatusNode } from "./components/nodes";
@@ -43,6 +43,8 @@ export default function App() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore(
     useShallow(selector),
   );
+
+  const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
 
   const [colorMode, setColorMode] = useState<ColorModeClass>(() => {
     if (typeof window !== "undefined") {
@@ -87,6 +89,7 @@ export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       <ReactFlow
+        ref={reactFlowRef}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -98,7 +101,7 @@ export default function App() {
         fitView
         fitViewOptions={fitViewOptions}
       >
-        <AppControlPanel position="top-left" />
+        <AppControlPanel position="top-left" ref={reactFlowRef} />
         {isMiniMapVisible && <MiniMap position="top-right" />}
         <Background />
         <Controls>

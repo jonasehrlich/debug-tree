@@ -4,50 +4,19 @@ import {
   applyNodeChanges,
   type Edge,
 } from "@xyflow/react";
+import { toast } from "sonner";
 import { create } from "zustand";
 import { client } from "./client";
 import type { AppNode, StatusNode } from "./types/nodes";
 import { type AppState } from "./types/state";
-import { toast } from "sonner";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";
 }
 
-const initialNodes: AppNode[] = [
-  {
-    id: "1",
-    type: "actionNode",
-    data: { title: "Node 1" },
-    position: { x: 5, y: 5 },
-  },
-  {
-    id: "2",
-    type: "statusNode",
-    data: {
-      title: "Node 2",
-      state: "unknown",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla ",
-      git: {
-        rev: "123asd",
-      },
-    },
-    position: { x: 250, y: 5 },
-  },
-  {
-    id: "3",
-    type: "statusNode",
-    data: { title: "Foo Bar", state: "unknown", description: "rockin'" },
-    position: { x: 10, y: 200 },
-  },
-];
-
-const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
-
 const useStore = create<AppState>((set, get) => ({
-  nodes: initialNodes,
-  edges: initialEdges,
+  nodes: [],
+  edges: [],
   currentProject: null,
   projects: [],
   error: null,
@@ -107,26 +76,19 @@ const useStore = create<AppState>((set, get) => ({
       store.setEdges(data.project.reactflow.edges as Edge[]);
     }
   },
-  saveProject: async (id: string) => {
-    set({ saveOngoing: true });
+  saveCurrentProject: async () => {
     const store = get();
-
-    // if (!store.hasUnsavedChanges) {
-    //   return;
-    // }
-
-    if (store.currentProject == undefined) {
-      set({
-        error: {
-          message: "Cannot save a project if no current project is selected",
-        },
-      });
+    if (!store.currentProject) {
       return;
     }
+    if (!store.hasUnsavedChanges) {
+      return;
+    }
+    set({ saveOngoing: true });
 
     const { error } = await client.POST("/api/v1/projects/{id}", {
       params: {
-        path: { id: id },
+        path: { id: store.currentProject.id },
       },
       body: {
         project: {
@@ -136,13 +98,14 @@ const useStore = create<AppState>((set, get) => ({
       },
     });
     if (error) {
-      set({
-        error: { message: "Saving project {id} failed", response: error },
+      toast.error(`Saving project ${store.currentProject.name} failed`, {
+        description: error.message,
       });
     } else {
+      toast.success("Saved");
       set({ hasUnsavedChanges: false });
     }
-    set({ saveOngoing: true });
+    set({ saveOngoing: false });
   },
   onNodesChange: (changes) => {
     set({
