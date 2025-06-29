@@ -162,7 +162,6 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                 setFilterTerm={setFilterTerm}
                 placeholder="Filter"
               >
-                <div className="px-4">
                   {isProjectsLoading ? (
                     <>
                       <Skeleton />
@@ -174,7 +173,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                       <div
                         key={project.id}
                         className={cn(
-                          "p-2 border-b cursor-pointer hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
+                          "p-2 px-4 border-b cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
                           {
                             "bg-blue-100 border-blue-500":
                               selectedProject === project.id,
@@ -196,7 +195,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="cursor-pointer shadow-sm"
+                              className="cursor-pointer"
                             >
                               <Trash className="text-red-500" />
                             </Button>
@@ -225,11 +224,10 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-muted-foreground">
+                    <div className="text-center p-2 text-muted-foreground">
                       No projects found.
                     </div>
                   )}
-                </div>
               </FilterableScrollArea>{" "}
             </div>
             {/* --- SECTION ONE FOOTER --- */}
