@@ -18,14 +18,15 @@ export interface Error {
 export interface AppState {
   nodes: AppNode[];
   edges: Edge[];
-  currentProject?: ProjectMetadata;
+  currentProject: ProjectMetadata | null;
   projects: ProjectMetadata[];
   // Whether there is an error to display in the UI
-  error?: Error;
+  error: Error | null;
   // Whether there are unsaved modifications
   hasUnsavedChanges: boolean;
   // Whether saving to the API is currently ongoing
   saveOngoing: boolean;
+  setCurrentProject: (project: ProjectMetadata) => void;
   // Load projects metadata and store them
   loadProjectsMetadata: () => Promise<void>;
   // Load a project

@@ -6,6 +6,7 @@ import {
 } from "@xyflow/react";
 import { create } from "zustand";
 import { client } from "./client";
+import type { ProjectMetadata } from "./types/api-types";
 import type { AppNode, StatusNode } from "./types/nodes";
 import { type AppState } from "./types/state";
 
@@ -47,11 +48,14 @@ const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
 const useStore = create<AppState>((set, get) => ({
   nodes: initialNodes,
   edges: initialEdges,
-  currentProject: undefined,
+  currentProject: null,
   projects: [],
-  error: undefined,
+  error: null,
   hasUnsavedChanges: false,
   saveOngoing: false,
+  setCurrentProject: (project: ProjectMetadata) => {
+    set({ currentProject: project });
+  },
   loadProjectsMetadata: async () => {
     const { data, error } = await client.GET("/api/v1/projects");
     if (error) {
