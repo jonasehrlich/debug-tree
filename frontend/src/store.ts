@@ -43,6 +43,20 @@ const useStore = create<AppState>((set, get) => ({
       });
     }
   },
+  deleteProject: async (id: string) => {
+    const { data, error } = await client.DELETE("/api/v1/projects/{id}", {
+      params: { path: { id } },
+    });
+
+    if (data) {
+      await get().loadProjectsMetadata();
+    }
+    if (error) {
+      toast.error(`Error deleting project ${id}`, {
+        description: error.message,
+      });
+    }
+  },
   loadProjectsMetadata: async () => {
     const { data, error } = await client.GET("/api/v1/projects");
     if (error) {

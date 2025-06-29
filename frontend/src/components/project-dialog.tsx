@@ -1,4 +1,15 @@
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -91,6 +102,11 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
     form.reset();
   };
 
+  const deleteProject = useStore((state) => state.deleteProject);
+  const onDeleteProjectConfirm = async (id: string) => {
+    await deleteProject(id);
+  };
+
   return (
     <Dialog
       open={isOpen}
@@ -153,9 +169,37 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                         }}
                       >
                         {project.name}{" "}
-                        <Button variant="destructive" size="sm">
-                          <Trash />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="cursor-pointer shadow-sm"
+                            >
+                              <Trash className="text-red-500" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Delete Project
+                              </AlertDialogTitle>
+                            </AlertDialogHeader>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this project?
+                            </AlertDialogDescription>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  onDeleteProjectConfirm(project.id);
+                                }}
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     ))
                   )}

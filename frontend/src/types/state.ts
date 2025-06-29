@@ -27,6 +27,8 @@ export interface AppState {
   // Whether saving to the API is currently ongoing
   saveOngoing: boolean;
   createProject: (name: string) => Promise<void>;
+  // Delete a project
+  deleteProject: (id: string) => Promise<void>;
   // Load projects metadata and store them
   loadProjectsMetadata: () => Promise<void>;
   // Load a project
