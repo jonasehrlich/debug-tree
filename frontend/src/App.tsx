@@ -4,12 +4,13 @@ import {
   Controls,
   MiniMap,
   ReactFlow,
-  type ColorModeClass,
+  type ColorMode,
   type FitViewOptions,
   type OnNodeDrag,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Map, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { AppControlPanel } from "./components/app-control-panel";
@@ -45,32 +46,11 @@ export default function App() {
   );
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
+  const { theme, setTheme } = useTheme();
 
-  const [colorMode, setColorMode] = useState<ColorModeClass>(() => {
-    if (typeof window !== "undefined") {
-      // Check if window is defined (for SSR safety)
-      // Check the local storage for a theme
-      const storedTheme = localStorage.getItem("app-theme") as
-        | ColorModeClass
-        | undefined;
-      // Get the theme that matches the system theme
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : ("light" as ColorModeClass);
-      // If no theme is stored, use the system theme
-      return storedTheme ?? systemTheme;
-    }
-
-    return "light"; // Default for SSR or if window is not available
-  });
-  useEffect(() => {
-    localStorage.setItem("app-theme", colorMode);
-  }, [colorMode]);
-
-  const toggleColorMode = () => {
-    const newTheme = colorMode === "light" ? "dark" : "light";
-    setColorMode(newTheme);
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
   };
 
   const [isMiniMapVisible, setIsMiniMapVisible] = useState<boolean>(() => {
@@ -97,7 +77,7 @@ export default function App() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeDrag={onNodeDrag}
-        colorMode={colorMode}
+        colorMode={theme ? (theme as ColorMode) : "system"}
         fitView
         fitViewOptions={fitViewOptions}
       >
@@ -105,15 +85,16 @@ export default function App() {
         {isMiniMapVisible && <MiniMap position="top-right" />}
         <Background />
         <Controls>
-          <ControlButton onClick={toggleColorMode}>
-            {colorMode === "dark" ? <Sun /> : <Moon />}
+          <ControlButton onClick={toggleTheme}>
+            <Sun className="hidden dark:block" />
+            <Moon className="block dark:hidden" />
           </ControlButton>
           <ControlButton onClick={toggleMiniMap}>
             <Map />
           </ControlButton>
         </Controls>
       </ReactFlow>
-      <Toaster position="bottom-right" richColors theme={colorMode} />
+      <Toaster position="bottom-right" richColors />
     </div>
   );
 }

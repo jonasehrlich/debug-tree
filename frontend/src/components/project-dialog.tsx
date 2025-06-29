@@ -157,7 +157,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                 Projects
               </h4>
               <FilterableScrollArea
-                className="h-72 rounded-md border"
+                className="h-72 rounded-md border dark:bg-input/30 "
                 filterTerm={filterTerm}
                 setFilterTerm={setFilterTerm}
                 placeholder="Filter"
@@ -174,7 +174,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                       <div
                         key={project.id}
                         className={cn(
-                          "p-2 border-b cursor-pointer hover:bg-blue-50 flex items-center justify-between text-sm select-none",
+                          "p-2 border-b cursor-pointer hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
                           {
                             "bg-blue-100 border-blue-500":
                               selectedProject === project.id,
