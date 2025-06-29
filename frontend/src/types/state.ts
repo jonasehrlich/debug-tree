@@ -26,7 +26,7 @@ export interface AppState {
   hasUnsavedChanges: boolean;
   // Whether saving to the API is currently ongoing
   saveOngoing: boolean;
-  setCurrentProject: (project: ProjectMetadata) => void;
+  createProject: (name: string) => Promise<void>;
   // Load projects metadata and store them
   loadProjectsMetadata: () => Promise<void>;
   // Load a project

@@ -7,18 +7,17 @@ import { cn } from "@/lib/utils";
 import useStore from "@/store";
 import { Panel, type PanelProps } from "@xyflow/react";
 import {
-  FilePlus2,
-  FolderOpen,
   LineChart,
   Plus,
   Redo2,
   Rocket,
   Save,
   Undo2,
+  Workflow,
 } from "lucide-react";
 import { forwardRef } from "react";
 import { toast } from "sonner";
-import { CreateProjectDialog } from "./create-project-dialog";
+import { ProjectDialog } from "./project-dialog";
 import { Button } from "./ui/button";
 import type { ButtonProps } from "./ui/button-props";
 
@@ -106,25 +105,23 @@ export const AppControlPanel: React.FC<AppControlPanelProps> = ({
   const hasUnsavedChanges = useStore((state) => state.hasUnsavedChanges);
   const saveOngoing = useStore((state) => state.saveOngoing);
 
+  const currentProject = useStore((state) => state.currentProject);
+
   return (
     <Panel {...props}>
-      <CreateProjectDialog
+      <ProjectDialog
         children={
           <AppControlPanelButton
-            tooltipContent="Create New Project"
-            leftIcon={<FilePlus2 />}
+            tooltipContent="Manage Project"
+            text={currentProject ? currentProject.name : "Project"}
+            leftIcon={<Workflow />}
+            // onClick={onUnsupportedFeatClick}
             shape={buttonShape}
           />
         }
       />
       <AppControlPanelButton
-        tooltipContent="Open Project"
-        leftIcon={<FolderOpen />}
-        onClick={onUnsupportedFeatClick}
-        shape={buttonShape}
-      />
-      <AppControlPanelButton
-        tooltipContent="Save Project"
+        tooltipContent="Save"
         leftIcon={<Save />}
         hasNotification={hasUnsavedChanges}
         onClick={onUnsupportedFeatClick}

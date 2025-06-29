@@ -6,9 +6,9 @@ import {
 } from "@xyflow/react";
 import { create } from "zustand";
 import { client } from "./client";
-import type { ProjectMetadata } from "./types/api-types";
 import type { AppNode, StatusNode } from "./types/nodes";
 import { type AppState } from "./types/state";
+import { toast } from "sonner";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";
@@ -53,8 +53,26 @@ const useStore = create<AppState>((set, get) => ({
   error: null,
   hasUnsavedChanges: false,
   saveOngoing: false,
-  setCurrentProject: (project: ProjectMetadata) => {
-    set({ currentProject: project });
+  createProject: async (name: string) => {
+    console.log(`Creating project ${name}`);
+    const { data, error } = await client.POST("/api/v1/projects", {
+      body: { name: name },
+    });
+    if (data) {
+      // TODO: If current project is set, save it first. Or maybe save every time this dialog is opened
+      set({ currentProject: data.project });
+      const store = get();
+
+      store.setNodes([]);
+      store.setEdges([]);
+      toast.success(`Created Project ${data.project.name}`);
+      // setOpen(false);
+    } else {
+      // TODO: set the error instead
+      toast.error(`Error creating project ${name}`, {
+        description: error.message,
+      });
+    }
   },
   loadProjectsMetadata: async () => {
     const { data, error } = await client.GET("/api/v1/projects");
