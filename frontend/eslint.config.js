@@ -39,4 +39,15 @@ export default tseslint.config([
       "@typescript-eslint/consistent-indexed-object-style": "off",
     },
   },
+  {
+    // *** OVERRIDE FOR src/components/ui, all components in there are imported through shadcn/ui ***
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      // Disable 'consistent-indexed-object-style' specifically for this file
+      "@typescript-eslint/consistent-type-definitions": "off",
+      "@typescript-eslint/no-unnecessary-condition": "off",
+      "react-refresh/only-export-components": "off",
+      "@typescript-eslint/no-unnecessary-template-expression": "off",
+    },
+  },
 ]);
