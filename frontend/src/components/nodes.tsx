@@ -37,8 +37,8 @@ export const ActionNode = memo(
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
-            <NodeHeaderDeleteAction />
             <NodeHeaderEditAction />
+            <NodeHeaderDeleteAction />
           </NodeHeaderActions>
         </NodeHeader>
         <BaseHandle id="target-1" type="target" position={Position.Left} />

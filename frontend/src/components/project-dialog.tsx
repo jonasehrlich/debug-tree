@@ -29,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import useStore from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Separator } from "@radix-ui/react-separator";
 import { Trash } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -55,28 +54,35 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
   children,
 }) => {
   const currentProject = useStore((state) => state.currentProject);
-  const [isOpen, setOpen] = useState(!currentProject);
+  const [isOpen, setIsOpen] = useState(currentProject === null);
+
   // If a currentProject is set, close the dialog
   useEffect(() => {
     if (currentProject) {
-      setOpen(false);
+      setIsOpen(false);
     }
   }, [currentProject]);
 
   const projects = useStore((state) => state.projects);
-  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(false);
   const loadProjects = useStore((state) => state.loadProjectsMetadata);
-  // When opening the dialog, load the projects
+  // Load projects on mount
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
     try {
       void loadProjects();
     } finally {
       setIsProjectsLoading(false);
     }
-  }, [loadProjects, isOpen]);
+  }, [loadProjects]);
+
+  // When current project is set to null, open the dialog and close it automatically if a current project is set
+  useEffect(() => {
+    if (currentProject === null) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  }, [setIsOpen, currentProject]);
 
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
@@ -107,19 +113,27 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
     await deleteProject(id);
   };
 
+  const onOpenChange = (open: boolean) => {
+    if (!open && currentProject === null) {
+      // Don't allow closing the dialog if there is no currentProject
+      return;
+    }
+    setIsOpen(open);
+    if (open) {
+      // Load projects on open
+      try {
+        void loadProjects();
+      } finally {
+        setIsProjectsLoading(false);
+      }
+    } else {
+      form.reset();
+      setSelectedProject(null);
+    }
+  };
+
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(newOpenState) => {
-        if (newOpenState || currentProject) {
-          setOpen(newOpenState);
-          if (!newOpenState) {
-            form.reset();
-            setSelectedProject(null);
-          }
-        }
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent
@@ -139,7 +153,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
               <h4 className="mb-4 text-sm leading-none font-medium">
                 Projects
               </h4>
-              <ScrollArea>
+              <ScrollArea className="h-72 w-48 rounded-md border">
                 <div className="p-4">
                   {isProjectsLoading ? (
                     <>
@@ -152,7 +166,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                       <div
                         key={project.id}
                         className={cn(
-                          "p-2 mb-2 border rounded-md cursor-pointer hover:bg-blue-50 flex items-center justify-between text-sm px-4 select-none",
+                          "p-2 border cursor-pointer hover:bg-blue-50 flex items-center justify-between text-sm select-none",
                           {
                             "bg-blue-100 border-blue-500":
                               selectedProject === project.id,
@@ -218,7 +232,6 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
               </Button>
             </div>
           </div>
-          <Separator className="my-4" />
           {/* Bottom Section  */}
           <div className="p-6">
             <DialogHeader className="mb-4">

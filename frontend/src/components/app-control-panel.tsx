@@ -161,7 +161,6 @@ export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
               tooltipContent="Manage Project"
               text={currentProject ? currentProject.name : "Project"}
               leftIcon={<Workflow strokeWidth="3" />}
-              // onClick={onUnsupportedFeatClick}
               shape={buttonShape}
             />
           }
