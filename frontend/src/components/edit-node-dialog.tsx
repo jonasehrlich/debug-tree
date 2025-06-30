@@ -199,7 +199,11 @@ export const EditNodeDialog = () => {
                     <FormItem className="flex gap-5">
                       <FormLabel>Git Revision</FormLabel>
                       <FormControl>
-                        <Input {...field} autoComplete="off" className="font-mono w-[180px]"/>
+                        <Input
+                          {...field}
+                          autoComplete="off"
+                          className="font-mono w-[180px]"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

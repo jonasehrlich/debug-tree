@@ -188,7 +188,12 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes]);
 
   return (
-    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Delete node" className="cursor-pointer">
+    <NodeHeaderAction
+      onClick={handleClick}
+      variant="ghost"
+      label="Delete node"
+      className="cursor-pointer"
+    >
       <Trash />
     </NodeHeaderAction>
   );

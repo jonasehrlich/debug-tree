@@ -15,15 +15,11 @@ import {
   type StatusNode as StatusNodeType,
 } from "@/types/nodes";
 import { Position, type NodeProps } from "@xyflow/react";
-import {
-  ChartLine,
-  Pencil,
-  Rocket,
-} from "lucide-react";
+import { ChartLine, Pencil, Rocket } from "lucide-react";
 import { memo } from "react";
 import { GitRevision } from "./git-revision";
-import { IconSelector,  } from "./icon-selector";
-import { statusNodeIconOptions, statusNodeIconMap } from "./status-icons";
+import { IconSelector } from "./icon-selector";
+import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
 
 interface NodeHeaderEditActionProps {
   onClick: () => void;
@@ -74,8 +70,6 @@ export const ActionNode = memo(
     );
   },
 );
-
-
 
 export const StatusNode = memo(
   ({ id, data, type, selected }: NodeProps<StatusNodeType>) => {

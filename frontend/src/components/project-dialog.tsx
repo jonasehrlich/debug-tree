@@ -163,72 +163,69 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                 setFilterTerm={setFilterTerm}
                 placeholder="Filter"
               >
-                  {isProjectsLoading ? (
-                    <>
-                      <Skeleton />
-                      <Skeleton />
-                      <Skeleton />
-                    </>
-                  ) : filteredProjects.length > 0 ? (
-                    filteredProjects.map((project) => (
-                      <div
-                        key={project.id}
-                        className={cn(
-                          "p-2 px-4 border-b cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
-                          {
-                            "bg-secondary":
-                              selectedProject === project.id,
-                          },
-                        )}
-                        onClick={() => {
-                          setSelectedProject(
-                            selectedProject == project.id ? null : project.id,
-                          );
-                        }}
-                        onDoubleClick={() => {
-                          // Double click on the project, load it directly
-                          void loadProject(project.id);
-                        }}
-                      >
-                        {project.name}{" "}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="cursor-pointer"
+                {isProjectsLoading ? (
+                  <>
+                    <Skeleton />
+                    <Skeleton />
+                    <Skeleton />
+                  </>
+                ) : filteredProjects.length > 0 ? (
+                  filteredProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className={cn(
+                        "p-2 px-4 border-b cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
+                        {
+                          "bg-secondary": selectedProject === project.id,
+                        },
+                      )}
+                      onClick={() => {
+                        setSelectedProject(
+                          selectedProject == project.id ? null : project.id,
+                        );
+                      }}
+                      onDoubleClick={() => {
+                        // Double click on the project, load it directly
+                        void loadProject(project.id);
+                      }}
+                    >
+                      {project.name}{" "}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="cursor-pointer"
+                          >
+                            <Trash className="text-red-500" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                          </AlertDialogHeader>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this project?
+                          </AlertDialogDescription>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                onDeleteProjectConfirm(project.id);
+                              }}
                             >
-                              <Trash className="text-red-500" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Project
-                              </AlertDialogTitle>
-                            </AlertDialogHeader>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this project?
-                            </AlertDialogDescription>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => {
-                                  onDeleteProjectConfirm(project.id);
-                                }}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center p-2 text-muted-foreground">
-                      No projects found.
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
-                  )}
+                  ))
+                ) : (
+                  <div className="text-center p-2 text-muted-foreground">
+                    No projects found.
+                  </div>
+                )}
               </FilterableScrollArea>{" "}
             </div>
             {/* --- SECTION ONE FOOTER --- */}

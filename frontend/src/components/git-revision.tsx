@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { GitBranch } from "lucide-react";
-import { CopyButton } from "./copy-button";
 import { useRef } from "react";
+import { CopyButton } from "./copy-button";
 
 /**
  * @interface GitRevisionProps
