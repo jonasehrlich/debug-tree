@@ -12,7 +12,7 @@ import { type ButtonProps } from "./ui/button-props";
  * @property {string} whatToCopy - What the text is to be copied, the tooltip will then show "Copy "+whatToCopy
  */
 type CopyButtonProps = ButtonProps & {
-  ref: Ref<HTMLButtonElement>;
+  ref: Ref<HTMLButtonElement | null>;
   text: string;
   contentName?: string;
 };
