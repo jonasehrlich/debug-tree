@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { GitBranch } from "lucide-react";
-import { useRef } from "react";
+import { useRef, type RefObject } from "react";
 import { CopyButton } from "./copy-button";
 
 /**
@@ -13,7 +13,7 @@ interface GitRevisionProps {
 }
 
 export const GitRevision = ({ revision }: GitRevisionProps) => {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLButtonElement>(null);
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>
@@ -21,7 +21,11 @@ export const GitRevision = ({ revision }: GitRevisionProps) => {
       <span className="flex-1 font-mono px-3 py-1 truncate align-middle">
         {revision}
       </span>
-      <CopyButton text={revision} contentName="revision" ref={ref} />
+      <CopyButton
+        text={revision}
+        contentName="revision"
+        ref={ref as RefObject<HTMLButtonElement>}
+      />
     </div>
   );
 };

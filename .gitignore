@@ -24,6 +24,7 @@ dist/
 dist-ssr/
 *.local
 
+frontend/.vite/
 ## Cargo build output
 /target
 
