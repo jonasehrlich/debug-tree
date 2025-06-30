@@ -186,7 +186,8 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                       }}
                       onDoubleClick={() => {
                         // Double click on the project, load it directly
-                        void loadProject(project.id);
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        loadProject(project.id);
                       }}
                     >
                       {project.name}{" "}
@@ -211,6 +212,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => {
+                                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                 onDeleteProjectConfirm(project.id);
                               }}
                             >
@@ -250,7 +252,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
             </DialogHeader>
             <Form {...form}>
               <form
-                // ignoring this promise does not work as the
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 onSubmit={form.handleSubmit(onCreateProject)}
                 className="space-y-8"
               >
