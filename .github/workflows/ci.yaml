@@ -7,29 +7,29 @@ on:
     branches: [main]
 
 jobs:
-  format-backend:
+  check-format-backend:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: rustfmt
         run: cargo fmt -- --check
 
-  format-frontend:
+  check-format-frontend:
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: cd frontend
-      - run: npm install
+      - name: Install frontend dependencies
+        run: npm install
       - name: prettier
-        run: cd frontend && npm run fmt --check .
+        run: npm run fmt:check
 
   lint-backend:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
@@ -40,17 +40,32 @@ jobs:
     runs-on: ubuntu-latest
     # Still some lint errors in frontend code
     continue-on-error: true
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: cd frontend
-      - run: npm install
+      - name: Install frontend dependencies
+        run: npm install
       - name: lint
-        run: cd frontend && npm run lint
+        run: npm run lint
+
+  typecheck-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - name: Install frontend dependencies
+        run: npm install
+      - name: typecheck
+        run: npm run typecheck
 
   test-backend:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
@@ -67,6 +82,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
       - uses: Swatinem/rust-cache@v2
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
 
       - name: build-debug
         run: cargo build
