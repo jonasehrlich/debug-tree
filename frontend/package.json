@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "fmt": "prettier --write",
+    "lint:fix": "eslint . --fix",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
     "create-api": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o src/types/api.ts"
   },
   "dependencies": {
