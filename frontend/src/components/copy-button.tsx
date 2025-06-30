@@ -1,7 +1,7 @@
 import { DynamicTooltip } from "@/components/dynamic-tooltip";
 import { cn } from "@/lib/utils";
 import { Copy } from "lucide-react";
-import { forwardRef, useCallback } from "react";
+import { useCallback, type Ref } from "react";
 import { Button } from "./ui/button";
 import { type ButtonProps } from "./ui/button-props";
 
@@ -12,39 +12,44 @@ import { type ButtonProps } from "./ui/button-props";
  * @property {string} whatToCopy - What the text is to be copied, the tooltip will then show "Copy "+whatToCopy
  */
 type CopyButtonProps = ButtonProps & {
+  ref: Ref<HTMLButtonElement>;
   text: string;
   contentName?: string;
 };
 
-export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
-  ({ className, text, contentName, ...props }, ref) => {
-    const handleCopyAction = useCallback(async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch {
-        return false;
-      }
-    }, [text]);
+export const CopyButton = ({
+  className,
+  text,
+  contentName,
+  ref,
+  ...props
+}: CopyButtonProps) => {
+  const handleCopyAction = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [text]);
 
-    const paddedContentName = contentName ? " " + contentName : "";
+  const paddedContentName = contentName ? " " + contentName : "";
 
-    return (
-      <DynamicTooltip
-        onClickAction={handleCopyAction}
-        defaultHoverContent={"Copy" + paddedContentName}
-        successContent={"Copied" + paddedContentName}
-        failedContent={"Failed to copy" + paddedContentName}
+  return (
+    <DynamicTooltip
+      onClickAction={handleCopyAction}
+      defaultHoverContent={"Copy" + paddedContentName}
+      successContent={"Copied" + paddedContentName}
+      failedContent={"Failed to copy" + paddedContentName}
+    >
+      <Button
+        ref={ref}
+        variant="ghost"
+        className={cn(className, "nodrag size-6 p-1 cursor-pointer")}
+        {...props}
       >
-        <Button
-          ref={ref}
-          variant="ghost"
-          className={cn(className, "nodrag size-6 p-1 cursor-pointer")}
-          {...props}
-        >
-          <Copy />
-        </Button>
-      </DynamicTooltip>
-    );
-  },
-);
+        <Copy />
+      </Button>
+    </DynamicTooltip>
+  );
+};
