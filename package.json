@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "fmt": "prettier --write .",
+    "fmt:files": "prettier --write",
     "fmt:check": "prettier --check .",
     "create-api": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o frontend/src/types/api.ts"
   },

@@ -18,7 +18,10 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry: bash -c "cd frontend && npm run fmt"
+        entry: npm run fmt:files
         language: system
-        types: [javascript, jsx, ts, tsx]
+        # The types field should work but somehow doesn't,
+        # so we have to fall back to regex
+        # types: [javascript, jsx, ts, tsx]
+        files: \.(js|ts|jsx|tsx)$
         pass_filenames: true
