@@ -20,7 +20,7 @@ npm run dev
 In the development build of the backend application, the requests for the frontend are proxied to the development
 server. To run the backend, run
 
-``` sh
+```sh
 cargo run -- serve
 ```
 
@@ -30,7 +30,7 @@ This will serve the application on port 8000. See `cargo run -- serve --help` fo
 
 To dump the OpenAPI schema run
 
-``` sh
+```sh
 cargo run --bin dump-openapi-schema
 ```
 
