@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --fix",
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
-    "create-api": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o src/types/api.ts"
+    "create-api": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o frontend/src/types/api.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

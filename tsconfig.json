@@ -9,9 +9,9 @@
     }
   ],
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./frontend/src",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["*"]
     },
     "module": "ESNext",
     "moduleResolution": "Bundler",

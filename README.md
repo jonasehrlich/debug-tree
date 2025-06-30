@@ -17,8 +17,6 @@ features such as hot module reloading. Run the development server by executing
 npm run dev
 ```
 
-in the *frontend* directory.
-
 In the development build of the backend application, the requests for the frontend are proxied to the development
 server. To run the backend, run
 
@@ -46,5 +44,3 @@ To re-generate the API types run
 ```sh
 npm run create-api
 ```
-
-in the *frontend* directory.

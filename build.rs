@@ -1,5 +1,4 @@
 use std::env;
-use std::path::Path;
 use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -11,23 +10,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if profile == "release" {
         println!("Building frontend for release...");
-        let frontend_dir = Path::new("frontend");
 
         // Ensure npm dependencies are installed
-        let npm_install_output = Command::new("npm")
-            .arg("install")
-            .current_dir(frontend_dir)
-            .output()?;
+        let npm_install_output = Command::new("npm").arg("install").output()?;
         if !npm_install_output.status.success() {
             return Err(format!("npm install failed: {:?}", npm_install_output).into());
         }
 
         // Build the frontend
-        let npm_build_output = Command::new("npm")
-            .arg("run")
-            .arg("build")
-            .current_dir(frontend_dir)
-            .output()?;
+        let npm_build_output = Command::new("npm").arg("run").arg("build").output()?;
 
         if npm_build_output.status.success() {
             println!("cargo:info=Frontend built successfully.");

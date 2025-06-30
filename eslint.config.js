@@ -33,7 +33,7 @@ export default tseslint.config([
   },
   {
     // *** OVERRIDE FOR src/types/api.ts ***
-    files: ["src/types/api.ts"],
+    files: ["frontend/src/types/api.ts"],
     rules: {
       // Disable 'consistent-indexed-object-style' specifically for this file
       "@typescript-eslint/consistent-indexed-object-style": "off",
@@ -41,7 +41,7 @@ export default tseslint.config([
   },
   {
     // *** OVERRIDE FOR src/components/ui, all components in there are imported through shadcn/ui ***
-    files: ["src/components/ui/**/*.{ts,tsx}"],
+    files: ["frontend/src/components/ui/**/*.{ts,tsx}"],
     rules: {
       // Disable 'consistent-indexed-object-style' specifically for this file
       "@typescript-eslint/consistent-type-definitions": "off",
