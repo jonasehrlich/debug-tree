@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
       - name: prettier
         run: npm run fmt:check
 
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
       - name: lint
         run: npm run lint
 
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
       - name: typecheck
         run: npm run typecheck
 
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/setup-node@v4
       - uses: Swatinem/rust-cache@v2
       - name: Install frontend dependencies
-        run: npm install
+        run: npm ci
       - name: build-debug
         run: cargo build
       - name: build-release

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "typecheck": "tsc -b",
+    "build": "tsc --build && vite build",
+    "typecheck": "tsc --build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "fmt": "prettier --write .",
