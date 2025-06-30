@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  format-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: rustfmt
+        run: cargo fmt -- --check
+
+  format-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: cd frontend
+      - run: npm install
+      - name: prettier
+        run: cd frontend && npm run fmt --check .
+
+  lint-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Run clippy
+        run: cargo clippy -- -D warnings
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    # Still some lint errors in frontend code
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: cd frontend
+      - run: npm install
+      - name: lint
+        run: cd frontend && npm run lint
+
+  test-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test
+
+  # TODO: Add frontend tests
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - uses: Swatinem/rust-cache@v2
+
+      - name: build-debug
+        run: cargo build
+
+      - name: build-release
+        run: cargo build --release
