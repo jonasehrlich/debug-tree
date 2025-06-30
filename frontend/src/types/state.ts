@@ -8,7 +8,12 @@ import {
   type ApiStatusDetailResponse,
   type ProjectMetadata,
 } from "./api-types";
-import { type AppNode, type StatusNodeState } from "./nodes";
+import type {
+  ActionNodeData,
+  AppNode,
+  StatusNodeData,
+  StatusNodeState,
+} from "./nodes";
 
 export interface Error {
   message: string;
@@ -18,6 +23,15 @@ export interface Error {
 export interface ProjectIdAndName {
   id: string;
   name: string;
+}
+
+export interface EditNodeData<
+  NodeType extends string,
+  NodeDataType extends Record<string, unknown>,
+> {
+  id: string;
+  type: NodeType;
+  data: NodeDataType;
 }
 
 export interface AppState {
@@ -31,6 +45,12 @@ export interface AppState {
   hasUnsavedChanges: boolean;
   // Whether saving to the API is currently ongoing
   saveOngoing: boolean;
+  // A node that's currently being edited, set it through
+  editNodeData:
+    | EditNodeData<"actionNode", ActionNodeData>
+    | EditNodeData<"statusNode", StatusNodeData>
+    | null;
+  // Create a project
   createProject: (name: string) => Promise<void>;
   // Delete a project
   deleteProject: (id: string) => Promise<void>;
@@ -42,10 +62,23 @@ export interface AppState {
   saveCurrentProject: () => Promise<void>;
   // Save and close the current project
   closeCurrentProject: () => Promise<void>;
+  getNodeById: (nodeId: string) => AppNode | null;
   onNodesChange: OnNodesChange<AppNode>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   setNodes: (nodes: AppNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   updateStatusNodeState: (nodeId: string, state: StatusNodeState) => void;
+  editNode: (
+    data:
+      | EditNodeData<"actionNode", ActionNodeData>
+      | EditNodeData<"statusNode", StatusNodeData>,
+  ) => void;
+  // Set the node data to be edited
+  setEditNodeData: (
+    data:
+      | EditNodeData<"actionNode", ActionNodeData>
+      | EditNodeData<"statusNode", StatusNodeData>
+      | null,
+  ) => void;
 }

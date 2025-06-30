@@ -139,6 +139,9 @@ export const AppControlPanel = forwardRef<HTMLDivElement, AppControlPanelProps>(
               title: "Status Node",
               description: "A new status node",
               state: "unknown",
+              git: {
+                rev: "",
+              },
             },
           };
           addNodes(newNode);

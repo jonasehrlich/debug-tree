@@ -7,14 +7,13 @@ import {
 import { cn } from "@/lib/utils";
 import { Slot } from "@radix-ui/react-slot";
 import { useNodeId, useReactFlow } from "@xyflow/react";
-import { EllipsisVertical, Pencil, Trash } from "lucide-react";
+import { EllipsisVertical, Trash } from "lucide-react";
 import {
   forwardRef,
   useCallback,
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { toast } from "sonner";
 import { type ButtonProps } from "./ui/button-props";
 /* NODE HEADER -------------------------------------------------------------- */
 
@@ -189,24 +188,10 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes]);
 
   return (
-    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Delete node">
+    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Delete node" className="cursor-pointer">
       <Trash />
     </NodeHeaderAction>
   );
 };
 
 NodeHeaderDeleteAction.displayName = "NodeHeaderDeleteAction";
-
-export const NodeHeaderEditAction = () => {
-  const handleClick = () => {
-    toast.warning("Node editing is not implemented yet");
-  };
-
-  return (
-    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Edit node">
-      <Pencil />
-    </NodeHeaderAction>
-  );
-};
-
-NodeHeaderEditAction.displayName = "NodeHeaderEditAction";

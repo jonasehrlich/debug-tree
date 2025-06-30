@@ -8,8 +8,13 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { client } from "./client";
-import type { AppNode, StatusNode } from "./types/nodes";
-import { type AppState } from "./types/state";
+import type {
+  ActionNodeData,
+  AppNode,
+  StatusNode,
+  StatusNodeData,
+} from "./types/nodes";
+import type { AppState, EditNodeData } from "./types/state";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";
@@ -25,6 +30,7 @@ const useStore = create<AppState>()(
       error: null,
       hasUnsavedChanges: false,
       saveOngoing: false,
+      editNodeData: null,
       createProject: async (name: string) => {
         console.log(`Creating project ${name}`);
         const { data, error } = await client.POST("/api/v1/projects", {
@@ -166,6 +172,42 @@ const useStore = create<AppState>()(
             return node;
           }),
         });
+      },
+      getNodeById: (nodeId) => {
+        get().nodes.map((node) => {
+          if (node.id === nodeId) {
+            return node;
+          }
+        });
+        return null;
+      },
+      editNode: (
+        data:
+          | EditNodeData<"actionNode", ActionNodeData>
+          | EditNodeData<"statusNode", StatusNodeData>,
+      ) => {
+        set({
+          nodes: get().nodes.map((node) => {
+            if (node.id === data.id) {
+              // typescript is stupid
+              if (node.type === "statusNode" && data.type === "statusNode") {
+                // it's important to create a new object here, to inform React Flow about the changes
+                return { ...node, data: data.data };
+              } else if (
+                node.type === "actionNode" &&
+                data.type === "actionNode"
+              ) {
+                return { ...node, data: data.data };
+              }
+            }
+
+            return node;
+          }),
+        });
+        set({ editNodeData: null });
+      },
+      setEditNodeData: (data) => {
+        set({ editNodeData: data });
       },
     }),
     {

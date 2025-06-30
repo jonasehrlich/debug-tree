@@ -14,6 +14,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { AppControlPanel } from "./components/app-control-panel";
+import { EditNodeDialog } from "./components/edit-node-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
 import useStore from "./store";
@@ -93,6 +94,7 @@ export default function App() {
             <Map />
           </ControlButton>
         </Controls>
+        <EditNodeDialog />
       </ReactFlow>
       <Toaster position="bottom-right" richColors />
     </div>

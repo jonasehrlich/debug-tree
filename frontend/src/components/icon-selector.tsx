@@ -5,19 +5,7 @@ import {
   SelectTriggerIcon,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import React from "react";
-
-// A generic string key maps to a ReactNode (JSX.Element), these are the icons shown for the individual elements
-export type IconMap<T extends string = string> = Record<T, React.ReactNode>;
-
-// Define the type for a single icon option
-export interface IconOption<T extends string = string> {
-  value: T;
-  label: string;
-}
-
-// Define the type for the iconOptions array
-export type IconOptions<T extends string = string> = IconOption<T>[];
+import type { IconMap, IconOptions } from "./status-icons";
 
 // Define the props interface for IconSelector
 interface IconSelectorProps<T extends string = string> {

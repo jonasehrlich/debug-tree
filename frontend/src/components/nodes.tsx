@@ -2,9 +2,9 @@ import { BaseHandle } from "@/components/base-handle";
 import { BaseNode } from "@/components/base-node";
 import {
   NodeHeader,
+  NodeHeaderAction,
   NodeHeaderActions,
   NodeHeaderDeleteAction,
-  NodeHeaderEditAction,
   NodeHeaderIcon,
   NodeHeaderTitle,
 } from "@/components/node-header";
@@ -16,19 +16,39 @@ import {
 } from "@/types/nodes";
 import { Position, type NodeProps } from "@xyflow/react";
 import {
-  Ban,
   ChartLine,
-  CircleCheck,
-  CircleQuestionMark,
+  Pencil,
   Rocket,
-  TrendingUp,
 } from "lucide-react";
 import { memo } from "react";
 import { GitRevision } from "./git-revision";
-import { IconSelector, type IconMap, type IconOptions } from "./icon-selector";
+import { IconSelector,  } from "./icon-selector";
+import { statusNodeIconOptions, statusNodeIconMap } from "./status-icons";
+
+interface NodeHeaderEditActionProps {
+  onClick: () => void;
+}
+
+export const NodeHeaderEditAction = ({
+  onClick,
+}: NodeHeaderEditActionProps) => {
+  return (
+    <NodeHeaderAction
+      onClick={onClick}
+      variant="ghost"
+      label="Edit node"
+      className="cursor-pointer"
+    >
+      <Pencil />
+    </NodeHeaderAction>
+  );
+};
+
+NodeHeaderEditAction.displayName = "NodeHeaderEditAction";
 
 export const ActionNode = memo(
-  ({ data, selected }: NodeProps<ActionNodeType>) => {
+  ({ id, type, data, selected }: NodeProps<ActionNodeType>) => {
+    const setEditNodeData = useStore((state) => state.setEditNodeData);
     return (
       <BaseNode selected={selected} className="px-3 py-2 max-w-md">
         <NodeHeader className="-mx-3 -mt-2 border-b">
@@ -37,7 +57,12 @@ export const ActionNode = memo(
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
-            <NodeHeaderEditAction />
+            <NodeHeaderEditAction
+              onClick={() => {
+                setEditNodeData({ id: id, type: type, data: data });
+              }}
+            />
+
             <NodeHeaderDeleteAction />
           </NodeHeaderActions>
         </NodeHeader>
@@ -50,25 +75,12 @@ export const ActionNode = memo(
   },
 );
 
-// Map status note states to labels
-const statusNodeIconOptions: IconOptions<StatusNodeState> = [
-  { value: "unknown", label: "Unknown" },
-  { value: "progress", label: "Progress" },
-  { value: "fail", label: "Fail" },
-  { value: "success", label: "Success" },
-];
 
-// Map status note states to icons
-const statusNodeIconMap: IconMap<StatusNodeState> = {
-  unknown: <CircleQuestionMark size={16} className="stroke-gray-400" />,
-  progress: <TrendingUp size={16} className="stroke-amber-400" />,
-  fail: <Ban size={16} className="stroke-red-500" />,
-  success: <CircleCheck size={16} className="stroke-green-500" />,
-};
 
 export const StatusNode = memo(
-  ({ id, data, selected }: NodeProps<StatusNodeType>) => {
+  ({ id, data, type, selected }: NodeProps<StatusNodeType>) => {
     const updateNodeState = useStore((state) => state.updateStatusNodeState);
+    const setEditNodeData = useStore((state) => state.setEditNodeData);
 
     return (
       <BaseNode selected={selected} className="px-3 py-2 max-w-md">
@@ -87,13 +99,17 @@ export const StatusNode = memo(
               iconChoices={statusNodeIconOptions}
               ariaLabel="Select node state"
             />
-            <NodeHeaderEditAction />
+            <NodeHeaderEditAction
+              onClick={() => {
+                setEditNodeData({ id: id, type: type, data: data });
+              }}
+            />
             <NodeHeaderDeleteAction />
           </NodeHeaderActions>
         </NodeHeader>
         <BaseHandle id="target-1" type="target" position={Position.Left} />
         {data.description && <div className="mt-2">{data.description}</div>}
-        {data.git && (
+        {data.git.rev !== "" && (
           <NodeHeader className="-mx-3 -mb-2 mt-2 border-t">
             <GitRevision revision={data.git.rev} />
           </NodeHeader>
