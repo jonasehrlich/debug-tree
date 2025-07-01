@@ -3,7 +3,7 @@ use std::process::Command;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rerun-if-changed=frontend/src");
-    println!("cargo:rerun-if-changed=frontend/package.json");
+    println!("cargo:rerun-if-changed=package.json");
     println!("cargo:rerun-if-changed=frontend/public");
 
     let profile = env::var("PROFILE").unwrap(); // "debug" or "release"
