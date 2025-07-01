@@ -1,1 +1,8 @@
-.gitignore
+.vscode/
+.github/
+# Generated OpenAPI schema
+openapi-schema.json
+# Local debug-tree runs
+.debug-tree/
+# Generated TypeScript types for the API
+frontend/src/types/api.ts

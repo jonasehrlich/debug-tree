@@ -4,293 +4,293 @@
  */
 
 export interface paths {
-  "/api/v1/projects": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List all projects */
+        get: operations["list_projects"];
+        put?: never;
+        /** @description Create a project */
+        post: operations["create_project"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** @description List all projects */
-    get: operations["list_projects"];
-    put?: never;
-    /** @description Create a project */
-    post: operations["create_project"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/projects/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/projects/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a project */
+        get: operations["get_project"];
+        put?: never;
+        /** @description Store a project */
+        post: operations["store_project"];
+        /** @description Delete a project */
+        delete: operations["delete_project"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** @description Get a project */
-    get: operations["get_project"];
-    put?: never;
-    /** @description Store a project */
-    post: operations["store_project"];
-    /** @description Delete a project */
-    delete: operations["delete_project"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    ApiStatusDetailResponse: {
-      /** @description More details */
-      details?: string[] | null;
-      /** @description Error message */
-      message: string;
-      /** @description Canonical reason for the error */
-      reason: string;
-      /**
-       * Format: int32
-       * @description HTTP status code
-       */
-      status: number;
+    schemas: {
+        ApiStatusDetailResponse: {
+            /** @description More details */
+            details?: string[] | null;
+            /** @description Error message */
+            message: string;
+            /** @description Canonical reason for the error */
+            reason: string;
+            /**
+             * Format: int32
+             * @description HTTP status code
+             */
+            status: number;
+        };
+        /** @description Basic serializable API status response */
+        ApiStatusResponse: {
+            /** @description Canonical reason for the error */
+            reason: string;
+            /**
+             * Format: int32
+             * @description HTTP status code
+             */
+            status: number;
+        };
+        CreateProjectRequest: {
+            name: string;
+        };
+        CreateProjectResponse: {
+            project: components["schemas"]["ProjectMetadata"];
+        };
+        FullProjectRequestResponse: {
+            project: components["schemas"]["ProjectData"];
+        };
+        ListProjectsResponse: {
+            projects: components["schemas"]["ProjectMetadata"][];
+        };
+        ProjectData: {
+            /** @description Name of the project */
+            name: string;
+            /** @description Representation of the reactflow state */
+            reactflow: components["schemas"]["ReactFlowState"];
+        };
+        ProjectMetadata: {
+            /** @description ID of the project */
+            id: string;
+            /**
+             * Format: date-time
+             * @description Last modified date
+             */
+            lastModifiedDate: string;
+            /** @description Name of the project */
+            name: string;
+            /** @description Number of edges in the project */
+            numEdges: number;
+            /** @description Number of nodes in the project */
+            numNodes: number;
+        };
+        ReactFlowState: {
+            /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
+            edges: unknown[];
+            /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
+            nodes: unknown[];
+        };
     };
-    /** @description Basic serializable API status response */
-    ApiStatusResponse: {
-      /** @description Canonical reason for the error */
-      reason: string;
-      /**
-       * Format: int32
-       * @description HTTP status code
-       */
-      status: number;
-    };
-    CreateProjectRequest: {
-      name: string;
-    };
-    CreateProjectResponse: {
-      project: components["schemas"]["ProjectMetadata"];
-    };
-    FullProjectRequestResponse: {
-      project: components["schemas"]["ProjectData"];
-    };
-    ListProjectsResponse: {
-      projects: components["schemas"]["ProjectMetadata"][];
-    };
-    ProjectData: {
-      /** @description Name of the project */
-      name: string;
-      /** @description Representation of the reactflow state */
-      reactflow: components["schemas"]["ReactFlowState"];
-    };
-    ProjectMetadata: {
-      /** @description ID of the project */
-      id: string;
-      /**
-       * Format: date-time
-       * @description Last modified date
-       */
-      lastModifiedDate: string;
-      /** @description Name of the project */
-      name: string;
-      /** @description Number of edges in the project */
-      numEdges: number;
-      /** @description Number of nodes in the project */
-      numNodes: number;
-    };
-    ReactFlowState: {
-      /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
-      edges: unknown[];
-      /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
-      nodes: unknown[];
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  list_projects: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    list_projects: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List projects */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListProjectsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description List projects */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    create_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["ListProjectsResponse"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProjectRequest"];
+            };
         };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Project created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateProjectResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
     };
-  };
-  create_project: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    get_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Project is available */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FullProjectRequestResponse"];
+                };
+            };
+            /** @description File not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateProjectRequest"];
-      };
+    store_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FullProjectRequestResponse"];
+            };
+        };
+        responses: {
+            /** @description Project is stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Project created */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    delete_project: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["CreateProjectResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Project is deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusResponse"];
+                };
+            };
+            /** @description File not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
         };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
     };
-  };
-  get_project: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Project is available */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["FullProjectRequestResponse"];
-        };
-      };
-      /** @description File not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
-    };
-  };
-  store_project: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["FullProjectRequestResponse"];
-      };
-    };
-    responses: {
-      /** @description Project is stored */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusResponse"];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
-    };
-  };
-  delete_project: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Project is deleted */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusResponse"];
-        };
-      };
-      /** @description File not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ApiStatusDetailResponse"];
-        };
-      };
-    };
-  };
 }

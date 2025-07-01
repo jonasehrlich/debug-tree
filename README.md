@@ -42,5 +42,5 @@ The API is defined in the backend application and documented through [`utoipa`](
 To re-generate the API types run
 
 ```sh
-npm run create-api
+npm run api:create
 ```

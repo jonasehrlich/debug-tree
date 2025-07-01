@@ -12,7 +12,8 @@
     "fmt": "prettier --write .",
     "fmt:files": "prettier --write",
     "fmt:check": "prettier --check .",
-    "create-api": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o frontend/src/types/api.ts"
+    "api:create": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o frontend/src/types/api.ts",
+    "api:check": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json --check -o frontend/src/types/api.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
