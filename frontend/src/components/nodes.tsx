@@ -45,19 +45,23 @@ NodeHeaderEditAction.displayName = "NodeHeaderEditAction";
 export const ActionNode = memo(
   ({ id, type, data, selected }: NodeProps<ActionNodeType>) => {
     const setEditNodeData = useStore((state) => state.setEditNodeData);
+
+    const setThisNodeAsEditNodeData = () => {
+      setEditNodeData({ id: id, type: type, data: data });
+    };
     return (
-      <BaseNode selected={selected} className="px-3 py-2 max-w-md">
+      <BaseNode
+        selected={selected}
+        onDoubleClick={setThisNodeAsEditNodeData}
+        className="px-3 py-2 max-w-md"
+      >
         <NodeHeader className="-mx-3 -mt-2 border-b">
           <NodeHeaderIcon>
             <Rocket />
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
-            <NodeHeaderEditAction
-              onClick={() => {
-                setEditNodeData({ id: id, type: type, data: data });
-              }}
-            />
+            <NodeHeaderEditAction onClick={setThisNodeAsEditNodeData} />
 
             <NodeHeaderDeleteAction />
           </NodeHeaderActions>
@@ -76,8 +80,15 @@ export const StatusNode = memo(
     const updateNodeState = useStore((state) => state.updateStatusNodeState);
     const setEditNodeData = useStore((state) => state.setEditNodeData);
 
+    const setThisNodeAsEditNodeData = () => {
+      setEditNodeData({ id: id, type: type, data: data });
+    };
     return (
-      <BaseNode selected={selected} className="px-3 py-2 max-w-md">
+      <BaseNode
+        selected={selected}
+        onDoubleClick={setThisNodeAsEditNodeData}
+        className="px-3 py-2 max-w-md"
+      >
         <NodeHeader className="-mx-3 -mt-2 border-b">
           <NodeHeaderIcon>
             <ChartLine />
@@ -93,11 +104,7 @@ export const StatusNode = memo(
               iconChoices={statusNodeIconOptions}
               ariaLabel="Select node state"
             />
-            <NodeHeaderEditAction
-              onClick={() => {
-                setEditNodeData({ id: id, type: type, data: data });
-              }}
-            />
+            <NodeHeaderEditAction onClick={setThisNodeAsEditNodeData} />
             <NodeHeaderDeleteAction />
           </NodeHeaderActions>
         </NodeHeader>
