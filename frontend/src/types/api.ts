@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/api/v1/git/commit/{commit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a commit */
+        get: operations["get_commit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/git/commits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List commits */
+        get: operations["list_commits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects": {
         parameters: {
             query?: never;
@@ -68,6 +102,15 @@ export interface components {
              */
             status: number;
         };
+        Commit: {
+            author: components["schemas"]["Signature"];
+            body: string;
+            commiter: components["schemas"]["Signature"];
+            id: string;
+            summary: string;
+            /** Format: date-time */
+            time: string;
+        };
         CreateProjectRequest: {
             name: string;
         };
@@ -76,6 +119,11 @@ export interface components {
         };
         FullProjectRequestResponse: {
             project: components["schemas"]["ProjectData"];
+        };
+        ListCommitsResponse: {
+            /** @description Array of commits between the base and head commit IDs
+             *     in reverse chronological order. */
+            commits: components["schemas"]["Commit"][];
         };
         ListProjectsResponse: {
             projects: components["schemas"]["ProjectMetadata"][];
@@ -107,6 +155,10 @@ export interface components {
             /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
             nodes: unknown[];
         };
+        Signature: {
+            email: string;
+            name: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -116,6 +168,84 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_commit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The ID of the commit to retrieve
+                 * @example abc123
+                 */
+                commit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commit exists */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commit"];
+                };
+            };
+            /** @description Commit not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    list_commits: {
+        parameters: {
+            query?: {
+                /** @description The base revision of the range */
+                baseRev?: string | null;
+                /** @description The base revision of the range */
+                headRev?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of commits */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListCommitsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
     list_projects: {
         parameters: {
             query?: never;
