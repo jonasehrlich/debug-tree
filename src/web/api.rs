@@ -13,6 +13,8 @@ pub enum AppError {
     NotFound(String),
     #[error("{0}")]
     InternalServerError(String),
+    #[error("{0}")]
+    BadRequest(String),
     #[error("JSON Deserialization Error")]
     JsonExtractionError(#[from] axum::extract::rejection::JsonRejection), // Handle Axum's JSON parsing errors
 }
@@ -23,6 +25,7 @@ impl AppError {
         match self {
             AppError::NotFound(_) => http::StatusCode::NOT_FOUND,
             AppError::InternalServerError(_) => http::StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::BadRequest(_) => http::StatusCode::BAD_REQUEST,
             AppError::JsonExtractionError(rejection) => rejection.status(),
         }
     }
@@ -120,17 +123,21 @@ pub mod v1 {
 
     use crate::web;
 
+    mod git;
     mod projects;
 
     /// API documentation for the v1 endpoints.
     #[derive(utoipa::OpenApi)]
     #[openapi(nest(
-        (path = "/projects", api = projects::ApiDoc)
+        (path = "/projects", api = projects::ApiDoc),
+        (path = "/git", api = git::ApiDoc)
     ))]
     pub(super) struct ApiDoc;
 
     /// Get the router for the v1 API.
     pub(super) fn router() -> routing::Router<web::AppState> {
-        routing::Router::new().merge(projects::router())
+        routing::Router::new()
+            .merge(projects::router())
+            .nest("/git", git::router())
     }
 }

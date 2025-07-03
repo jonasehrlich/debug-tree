@@ -6,6 +6,8 @@ use axum::{http, response::IntoResponse};
 use axum_reverse_proxy::ReverseProxy;
 #[cfg(not(debug_assertions))]
 use mime_guess::from_path;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use utoipa::OpenApi;
 
 #[cfg(not(debug_assertions))]
@@ -28,15 +30,40 @@ pub struct ApiDoc;
 #[derive(Clone)]
 struct AppState {
     project_dir: project::ProjectDir,
+    repo: Arc<Mutex<Option<git2::Repository>>>,
 }
 
 impl AppState {
     pub fn new(project_dir: project::ProjectDir) -> Self {
-        AppState { project_dir }
+        let repo = match project_dir.path().parent() {
+            Some(p) => match git2::Repository::open(p) {
+                Ok(repo) => Some(repo),
+                Err(_) => {
+                    log::warn!("Repository not found in '{}'", p.display());
+                    None
+                }
+            },
+            None => {
+                log::warn!(
+                    "Could not get parent director of project dir '{}'",
+                    project_dir.path().display()
+                );
+                None
+            }
+        };
+
+        AppState {
+            project_dir,
+            repo: Arc::new(Mutex::new(repo)),
+        }
     }
 
     pub fn project_dir(&self) -> &project::ProjectDir {
         &self.project_dir
+    }
+
+    pub fn repo(&self) -> &Arc<Mutex<Option<git2::Repository>>> {
+        &self.repo
     }
 }
 
