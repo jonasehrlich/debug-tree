@@ -80,7 +80,6 @@ pub async fn serve(
         .with_state(app_state)
         .merge(
             utoipa_rapidoc::RapiDoc::with_openapi("/api-docs/openapi.json", ApiDoc::openapi())
-                .path("/rapidoc")
                 .path("/api-docs"),
         )
         .merge(frontend_router(frontend_proxy_port));
