@@ -87,7 +87,10 @@ pub async fn serve(
     let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
         .await
         .unwrap();
-    println!("Server running on http://{host}:{port}",);
+    log::info!(
+        "Server running on http://{}",
+        listener.local_addr().unwrap()
+    );
     axum::serve(listener, app)
         // .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
         .await?;
