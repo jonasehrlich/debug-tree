@@ -23,5 +23,5 @@ repos:
         # The types field should work but somehow doesn't,
         # so we have to fall back to regex
         # types: [javascript, jsx, ts, tsx]
-        files: \.(js|ts|jsx|tsx)$
+        files: \.(js|ts|jsx|tsx|vue|css|scss|less|md|html|json|yaml|yml)$
         pass_filenames: true
