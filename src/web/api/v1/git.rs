@@ -131,9 +131,9 @@ impl ListCommitsResponse {
 #[derive(Serialize, ToSchema, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct CommitRangeQuery {
-    /// The base revision of the range
+    /// The base revision of the range, if empty, the first commit is used.
     base_rev: Option<String>,
-    /// The base revision of the range
+    /// The head revision of the range, if empty, the current HEAD is used.
     head_rev: Option<String>,
 }
 

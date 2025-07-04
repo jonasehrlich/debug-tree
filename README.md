@@ -26,9 +26,15 @@ cargo run -- serve
 
 This will serve the application on port 8000. See `cargo run -- serve --help` for more command line flags.
 
-## Dump the OpenAPI schema
+## API
 
-To dump the OpenAPI schema run
+### API documentation
+
+The API documentation is served through the same server using [RapiDoc](https://rapidocweb.com/). It can be accessed on the */api-docs* path.
+
+### Dump the OpenAPI schema
+
+To dump the OpenAPI schema to JSON run
 
 ```sh
 cargo run --bin dump-openapi-schema
@@ -36,7 +42,7 @@ cargo run --bin dump-openapi-schema
 
 For more options for dumping the schema, run `cargo run --bin dump-openapi-schema -- --help`.
 
-## Recreate OpenAPI types for Frontend
+### Recreate OpenAPI types for Frontend
 
 The API is defined in the backend application and documented through [`utoipa`](https://docs.rs/utoipa/latest/utoipa/).
 To re-generate the API types run
