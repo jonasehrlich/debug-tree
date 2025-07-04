@@ -215,9 +215,9 @@ export interface operations {
     list_commits: {
         parameters: {
             query?: {
-                /** @description The base revision of the range */
+                /** @description The base revision of the range, if empty, the first commit is used. */
                 baseRev?: string | null;
-                /** @description The base revision of the range */
+                /** @description The head revision of the range, if empty, the current HEAD is used. */
                 headRev?: string | null;
             };
             header?: never;

@@ -12,12 +12,15 @@ repos:
     rev: v1.0
     hooks:
       - id: fmt
+        name: format rust
       - id: cargo-check
+        name: check rust
       - id: clippy
+        name: lint rust
   - repo: local
     hooks:
       - id: prettier
-        name: prettier
+        name: format js
         entry: npm run fmt:files
         language: system
         # The types field should work but somehow doesn't,
@@ -25,3 +28,9 @@ repos:
         # types: [javascript, jsx, ts, tsx]
         files: \.(js|ts|jsx|tsx|vue|css|scss|less|md|html|json|yaml|yml)$
         pass_filenames: true
+      - id: check-frontend-api-types
+        name: check frontend API types
+        entry: npm run api:create
+        language: system
+        files: ^src/web/api/.*\.rs$
+        pass_filenames: false
