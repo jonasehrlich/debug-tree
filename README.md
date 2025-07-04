@@ -30,7 +30,7 @@ This will serve the application on port 8000. See `cargo run -- serve --help` fo
 
 ### API documentation
 
-The API documentation is served through the same server using [RapiDoc](https://rapidocweb.com/). It can be accessed on the */api-docs* path.
+The API documentation is served through the same server using [RapiDoc](https://rapidocweb.com/). It can be accessed on the _/api-docs_ path.
 
 ### Dump the OpenAPI schema
 
