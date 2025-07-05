@@ -27,7 +27,6 @@ const useStore = create<AppState>()(
       edges: [],
       currentProject: null,
       projects: [],
-      error: null,
       hasUnsavedChanges: false,
       saveOngoing: false,
       editNodeData: null,
@@ -69,9 +68,7 @@ const useStore = create<AppState>()(
       loadProjectsMetadata: async () => {
         const { data, error } = await client.GET("/api/v1/projects");
         if (error) {
-          set({
-            error: { message: "Loading projects failed", response: error },
-          });
+          toast.error("Error loading projects", { description: error.message });
         }
         if (data) {
           set({
@@ -84,9 +81,7 @@ const useStore = create<AppState>()(
           params: { path: { id: id } },
         });
         if (error) {
-          set({
-            error: { message: "Loading project {id} failed", response: error },
-          });
+          toast.error("Error loading project", { description: error.message });
         }
         if (data) {
           // The project has been loaded successfully, first set the metadata of the project that is currently loaded

@@ -39,8 +39,6 @@ export interface AppState {
   edges: Edge[];
   currentProject: ProjectIdAndName | null;
   projects: ProjectMetadata[];
-  // Whether there is an error to display in the UI
-  error: Error | null;
   // Whether there are unsaved modifications
   hasUnsavedChanges: boolean;
   // Whether saving to the API is currently ongoing
