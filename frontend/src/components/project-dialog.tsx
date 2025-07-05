@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import useStore from "@/store";
+import { useStore, useUiStore } from "@/store";
+import type { UiState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash } from "lucide-react";
 import * as React from "react";
@@ -35,6 +36,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useShallow } from "zustand/react/shallow";
 import { FilterableScrollArea } from "./filterable-scroll-area";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
@@ -54,14 +56,12 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
   children,
 }) => {
   const currentProject = useStore((state) => state.currentProject);
-  const [isOpen, setIsOpen] = useState(currentProject === null);
-
-  // If a currentProject is set, close the dialog
-  useEffect(() => {
-    if (currentProject) {
-      setIsOpen(false);
-    }
-  }, [currentProject]);
+  const { isOpen, setIsOpen } = useUiStore(
+    useShallow((s: UiState) => ({
+      isOpen: s.isProjectDialogOpen,
+      setIsOpen: s.setIsProjectDialogOpen,
+    })),
+  );
 
   const projects = useStore((state) => state.projects);
   const [isProjectsLoading, setIsProjectsLoading] = useState(false);

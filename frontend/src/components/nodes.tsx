@@ -8,7 +8,7 @@ import {
   NodeHeaderIcon,
   NodeHeaderTitle,
 } from "@/components/node-header";
-import useStore from "@/store";
+import { useStore } from "@/store";
 import {
   type ActionNode as ActionNodeType,
   type StatusNodeState,

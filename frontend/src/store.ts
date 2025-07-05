@@ -14,13 +14,13 @@ import type {
   StatusNode,
   StatusNodeData,
 } from "./types/nodes";
-import type { AppState, EditNodeData } from "./types/state";
+import { type AppState, type EditNodeData, type UiState } from "./types/state";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";
 }
 
-const useStore = create<AppState>()(
+export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       nodes: [],
@@ -211,4 +211,22 @@ const useStore = create<AppState>()(
   ),
 );
 
-export default useStore;
+export const useUiStore = create<UiState>()(
+  persist(
+    // @ts-expect-error: Keep for now, get will be required later
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (set, get) => ({
+      isProjectDialogOpen: false,
+      isMiniMapVisible: true,
+      setIsMiniMapVisible: (isVisible) => {
+        set({ isMiniMapVisible: isVisible });
+      },
+      setIsProjectDialogOpen(isOpen) {
+        set({ isProjectDialogOpen: isOpen });
+      },
+    }),
+    {
+      name: "debug-tree-ui-storage",
+    },
+  ),
+);

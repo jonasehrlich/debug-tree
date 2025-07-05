@@ -80,3 +80,10 @@ export interface AppState {
       | null,
   ) => void;
 }
+
+export interface UiState {
+  isProjectDialogOpen: boolean;
+  isMiniMapVisible: boolean;
+  setIsMiniMapVisible: (isVisible: boolean) => void;
+  setIsProjectDialogOpen: (isOpen: boolean) => void;
+}

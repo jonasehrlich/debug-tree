@@ -1,23 +1,21 @@
 import {
   Background,
-  ControlButton,
-  Controls,
   MiniMap,
+  Panel,
   ReactFlow,
   type ColorMode,
   type FitViewOptions,
   type OnNodeDrag,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Map, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { AppControlPanel } from "./components/app-control-panel";
+import { AppMenubar } from "./components/app-menubar";
 import { EditNodeDialog } from "./components/edit-node-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
-import useStore from "./store";
+import { useStore, useUiStore } from "./store";
 import type { AppState } from "./types/state";
 
 const nodeTypes = {
@@ -34,7 +32,7 @@ const selector = (state: AppState) => ({
 });
 
 const fitViewOptions: FitViewOptions = {
-  padding: 0.2,
+  // padding: 0.2,
 };
 
 const onNodeDrag: OnNodeDrag = (_, node) => {
@@ -47,25 +45,9 @@ export default function App() {
   );
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-  };
-
-  const [isMiniMapVisible, setIsMiniMapVisible] = useState<boolean>(() => {
-    return localStorage.getItem("app-minimap-visible") === "false"
-      ? false
-      : true;
-  });
-  useEffect(() => {
-    localStorage.setItem("app-minimap-visible", String(isMiniMapVisible));
-  }, [isMiniMapVisible]);
-
-  const toggleMiniMap = () => {
-    setIsMiniMapVisible(!isMiniMapVisible);
-  };
+  const isMiniMapVisible = useUiStore((state) => state.isMiniMapVisible);
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
@@ -82,18 +64,12 @@ export default function App() {
         fitView
         fitViewOptions={fitViewOptions}
       >
-        <AppControlPanel position="top-left" ref={reactFlowRef} />
+        <Panel position="top-left" ref={reactFlowRef}>
+          <AppMenubar reactflowRef={reactFlowRef} />
+        </Panel>
+        {/* <AppControlPanel position="top-left" ref={reactFlowRef} /> */}
         {isMiniMapVisible && <MiniMap position="top-right" />}
         <Background />
-        <Controls>
-          <ControlButton onClick={toggleTheme}>
-            <Sun className="hidden dark:block" />
-            <Moon className="block dark:hidden" />
-          </ControlButton>
-          <ControlButton onClick={toggleMiniMap}>
-            <Map />
-          </ControlButton>
-        </Controls>
         <EditNodeDialog />
       </ReactFlow>
       <Toaster position="bottom-right" richColors />

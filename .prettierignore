@@ -6,3 +6,4 @@ openapi-schema.json
 .debug-tree/
 # Generated TypeScript types for the API
 frontend/src/types/api.ts
+frontend/src/components/ui/
