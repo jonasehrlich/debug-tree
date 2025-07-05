@@ -10,13 +10,15 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
 import { useRef } from "react";
+import { HotkeysProvider, useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
 import { EditNodeDialog } from "./components/edit-node-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
+import { keybindings } from "./keybindings";
 import { useStore, useUiStore } from "./store";
-import type { AppState } from "./types/state";
+import type { AppState, UiState } from "./types/state";
 
 const nodeTypes = {
   actionNode: ActionNode,
@@ -29,6 +31,13 @@ const selector = (state: AppState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
+  saveCurrentProject: state.saveCurrentProject,
+});
+
+const uiStoreSelector = (state: UiState) => ({
+  isMiniMapVisible: state.isMiniMapVisible,
+  setIsMiniMapVisible: state.setIsMiniMapVisible,
+  setIsProjectDialogOpen: state.setIsProjectDialogOpen,
 });
 
 const fitViewOptions: FitViewOptions = {
@@ -40,39 +49,71 @@ const onNodeDrag: OnNodeDrag = (_, node) => {
 };
 
 export default function App() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore(
-    useShallow(selector),
-  );
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    saveCurrentProject,
+  } = useStore(useShallow(selector));
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
   const { theme } = useTheme();
 
-  const isMiniMapVisible = useUiStore((state) => state.isMiniMapVisible);
+  const { isMiniMapVisible, setIsProjectDialogOpen } = useUiStore(
+    useShallow(uiStoreSelector),
+  );
+
+  useHotkeys(
+    keybindings.save.keys,
+    (e) => {
+      e.preventDefault();
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      saveCurrentProject();
+    },
+    {
+      description: keybindings.save.description,
+    },
+  );
+
+  useHotkeys(
+    keybindings.open.keys,
+    (e) => {
+      e.preventDefault();
+      setIsProjectDialogOpen(true);
+    },
+    {
+      description: keybindings.open.description,
+    },
+  );
 
   return (
-    <div style={{ width: "100vw", height: "100vh" }}>
-      <ReactFlow
-        ref={reactFlowRef}
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeDrag={onNodeDrag}
-        colorMode={theme ? (theme as ColorMode) : "system"}
-        fitView
-        fitViewOptions={fitViewOptions}
-      >
-        <Panel position="top-left" ref={reactFlowRef}>
-          <AppMenubar reactflowRef={reactFlowRef} />
-        </Panel>
-        {/* <AppControlPanel position="top-left" ref={reactFlowRef} /> */}
-        {isMiniMapVisible && <MiniMap position="top-right" />}
-        <Background />
-        <EditNodeDialog />
-      </ReactFlow>
-      <Toaster position="bottom-right" richColors />
-    </div>
+    <HotkeysProvider>
+      <div style={{ width: "100vw", height: "100vh" }}>
+        <ReactFlow
+          ref={reactFlowRef}
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeDrag={onNodeDrag}
+          colorMode={theme ? (theme as ColorMode) : "system"}
+          fitView
+          fitViewOptions={fitViewOptions}
+        >
+          <Panel position="top-left" ref={reactFlowRef}>
+            <AppMenubar reactflowRef={reactFlowRef} />
+          </Panel>
+          {/* <AppControlPanel position="top-left" ref={reactFlowRef} /> */}
+          {isMiniMapVisible && <MiniMap position="top-right" />}
+          <Background />
+          <EditNodeDialog />
+        </ReactFlow>
+        <Toaster position="bottom-right" richColors />
+      </div>
+    </HotkeysProvider>
   );
 }

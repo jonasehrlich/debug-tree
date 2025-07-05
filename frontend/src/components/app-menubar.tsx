@@ -1,3 +1,4 @@
+import { ProjectDialog } from "@/components/project-dialog";
 import {
   Menubar,
   MenubarCheckboxItem,
@@ -8,6 +9,7 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
+import { keybindings } from "@/keybindings";
 import { useStore, useUiStore } from "@/store";
 import type { ActionNode, AppNode, StatusNode } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
@@ -21,7 +23,6 @@ import { LineChart, Plus, Rocket, Workflow } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ProjectDialog } from "./project-dialog";
 
 interface AppMenubarProps {
   /// Ref to the reactflow component
@@ -165,6 +166,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
             }}
           >
             Open / Create Project
+            <MenubarShortcut>{keybindings.open.repr}</MenubarShortcut>
           </MenubarItem>
           <MenubarItem
             onSelect={() => {
@@ -173,6 +175,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
             }}
           >
             Save
+            <MenubarShortcut>{keybindings.save.repr}</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem
