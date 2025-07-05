@@ -1,6 +1,6 @@
 use crate::utils;
 use serde::{Deserialize, Serialize};
-use std::{fmt, fs, io, path};
+use std::{ffi, fmt, fs, io, path};
 use utoipa::ToSchema;
 
 #[derive(thiserror::Error)]
@@ -122,7 +122,7 @@ impl ProjectDir {
                 match entry_result {
                     Ok(entry) => {
                         let path = entry.path();
-                        if path.is_file() {
+                        if path.is_file() && path.extension() == Some(ffi::OsStr::new("json")) {
                             match Project::from_file(&path) {
                                 Ok(project) => Some(project),
                                 Err(e) => {
