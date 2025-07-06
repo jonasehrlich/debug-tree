@@ -189,20 +189,20 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
       <MenubarMenu>
         <MenubarTrigger>Edit</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem>
+          <MenubarItem disabled>
             Undo <MenubarShortcut>⌘Z</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem disabled>
             Redo <MenubarShortcut>⇧⌘Z</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />
-          <MenubarItem>
+          <MenubarItem disabled>
             Cut <MenubarShortcut>⌘X</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem disabled>
             Copy <MenubarShortcut>⌘C</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem>
+          <MenubarItem disabled>
             Paste <MenubarShortcut>⌘V</MenubarShortcut>
           </MenubarItem>
         </MenubarContent>
