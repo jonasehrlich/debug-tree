@@ -71,11 +71,11 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
     useReactFlow<AppNode>();
 
   const reactflowStore = useReactFlowStoreApi();
-  const onSetIsInteractive = (isInteractive: boolean) => {
+  const onSetIsInteractiveHandler = (isInteractive: boolean) => {
     reactflowStore.setState({
-      nodesDraggable: !isInteractive,
-      nodesConnectable: !isInteractive,
-      elementsSelectable: !isInteractive,
+      nodesDraggable: isInteractive,
+      nodesConnectable: isInteractive,
+      elementsSelectable: isInteractive,
     });
   };
 
@@ -251,7 +251,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           </MenubarItem>
           <MenubarCheckboxItem
             checked={isInteractive}
-            onCheckedChange={onSetIsInteractive}
+            onCheckedChange={onSetIsInteractiveHandler}
           >
             Interactive Mode
           </MenubarCheckboxItem>

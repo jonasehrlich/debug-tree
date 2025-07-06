@@ -5,7 +5,6 @@ import {
   ReactFlow,
   type ColorMode,
   type FitViewOptions,
-  type OnNodeDrag,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
@@ -42,10 +41,6 @@ const uiStoreSelector = (state: UiState) => ({
 
 const fitViewOptions: FitViewOptions = {
   // padding: 0.2,
-};
-
-const onNodeDrag: OnNodeDrag = (_, node) => {
-  console.log("drag event", node.data);
 };
 
 export default function App() {
@@ -99,7 +94,6 @@ export default function App() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onNodeDrag={onNodeDrag}
           colorMode={theme ? (theme as ColorMode) : "system"}
           fitView
           fitViewOptions={fitViewOptions}
