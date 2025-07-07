@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Ensure npm dependencies are installed
         let npm_install_output = Command::new("npm").arg("install").output()?;
         if !npm_install_output.status.success() {
-            return Err(format!("npm install failed: {:?}", npm_install_output).into());
+            return Err(format!("npm install failed: {npm_install_output:?}").into());
         }
 
         // Build the frontend
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if npm_build_output.status.success() {
             println!("cargo:info=Frontend built successfully.");
         } else {
-            return Err(format!("npm run build failed: {:?}", npm_build_output).into());
+            return Err(format!("npm run build failed: {npm_build_output:?}").into());
         }
     } else {
         println!("cargo:info=Skipping frontend build in development mode.");

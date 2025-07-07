@@ -96,14 +96,13 @@ fn get_commit_by_prefix<'repo>(
     repo.find_commit_by_prefix(commit_id)
         .map_err(|e| match e.code() {
             git2::ErrorCode::Invalid => {
-                api::AppError::BadRequest(format!("Invalid base commit ID '{}': {}", commit_id, e))
+                api::AppError::BadRequest(format!("Invalid base commit ID '{commit_id}': {e}"))
             }
             git2::ErrorCode::NotFound => {
-                api::AppError::NotFound(format!("Base commit '{}' not found: {}", commit_id, e))
+                api::AppError::NotFound(format!("Base commit '{commit_id}' not found: {e}"))
             }
             _ => api::AppError::InternalServerError(format!(
-                "Failed to find base commit '{}': {}",
-                commit_id, e
+                "Failed to find base commit '{commit_id}': {e}"
             )),
         })
 }
@@ -145,32 +144,30 @@ impl CommitRangeQuery {
         repo: &'repo git2::Repository,
     ) -> Result<git2::Revwalk<'repo>, api::AppError> {
         let mut revwalk = repo.revwalk().map_err(|e| {
-            api::AppError::InternalServerError(format!("Failed to create revwalk: {}", e))
+            api::AppError::InternalServerError(format!("Failed to create revwalk: {e}"))
         })?;
 
         match &self.head_rev {
             Some(head) => {
-                let oid = get_object_for_reference(repo, head)?.id();
+                let oid = get_object_for_revision(repo, head)?.id();
                 revwalk.push(oid).map_err(|e| {
                     api::AppError::InternalServerError(format!(
-                        "Failed to push head commit '{}': {}",
-                        head, e
+                        "Failed to push head commit '{head}': {e}",
                     ))
                 })?;
             }
             _ => {
                 revwalk.push_head().map_err(|e| {
-                    api::AppError::InternalServerError(format!("Failed to push head commit: {}", e))
+                    api::AppError::InternalServerError(format!("Failed to push head commit: {e}"))
                 })?;
             }
         }
 
         if let Some(base) = &self.base_rev {
-            let oid = get_object_for_reference(repo, base)?.id();
+            let oid = get_object_for_revision(repo, base)?.id();
             revwalk.hide(oid).map_err(|e| {
                 api::AppError::InternalServerError(format!(
-                    "Failed to push base commit '{}': {}",
-                    base, e
+                    "Failed to push base commit '{base}': {e}",
                 ))
             })?;
         }
@@ -179,15 +176,12 @@ impl CommitRangeQuery {
     }
 }
 
-fn get_object_for_reference<'repo>(
+fn get_object_for_revision<'repo>(
     repo: &'repo git2::Repository,
-    reference: &str,
+    rev: &str,
 ) -> Result<git2::Object<'repo>, api::AppError> {
-    repo.revparse_single(reference).map_err(|e| {
-        api::AppError::InternalServerError(format!(
-            "Failed to find reference '{}': {}",
-            reference, e
-        ))
+    repo.revparse_single(rev).map_err(|e| {
+        api::AppError::InternalServerError(format!("Failed to find revision '{rev}': {e}",))
     })
 }
 
@@ -215,13 +209,12 @@ async fn list_commits(
     let commits = revwalk.map(|oid_result| {
         oid_result
             .map_err(|e| {
-                api::AppError::InternalServerError(format!("Error creating commit tree': {}", e))
+                api::AppError::InternalServerError(format!("Error creating commit tree': {e}",))
             })
             .and_then(|oid| {
                 repo.find_commit(oid).map(Commit::from).map_err(|e| {
                     api::AppError::InternalServerError(format!(
-                        "Failed to find commit with ID '{}': {}",
-                        oid, e
+                        "Failed to find commit with ID '{oid}': {e}"
                     ))
                 })
             })

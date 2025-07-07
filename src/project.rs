@@ -126,7 +126,7 @@ impl ProjectDir {
                             match Project::from_file(&path) {
                                 Ok(project) => Some(project),
                                 Err(e) => {
-                                    log::warn!("Error reading project from '{}'", e);
+                                    log::warn!("Error reading project from '{e}'");
                                     None // Propagate error from previous filter_map
                                 }
                             }
@@ -136,7 +136,7 @@ impl ProjectDir {
                     }
                     Err(e) => {
                         // Ignore bad directory entries
-                        log::warn!("Error reading directory entry {}", e);
+                        log::warn!("Error reading directory entry {e}");
                         None
                     }
                 }
