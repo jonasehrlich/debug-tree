@@ -8,11 +8,13 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { HotkeysProvider, useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
 import { EditNodeDialog } from "./components/edit-node-dialog";
+import { GitGraphSlidingPanel } from "./components/git-graph-sliding-panel";
+import { GitRevisionsPanel } from "./components/git-revisions-panel";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
 import { keybindings } from "./keybindings";
@@ -33,6 +35,7 @@ const selector = (state: AppState) => ({
   onConnect: state.onConnect,
   saveCurrentProject: state.saveCurrentProject,
   setEditNodeData: state.setEditNodeData,
+  clearGitRevisions: state.clearGitRevisions,
 });
 
 const uiStoreSelector = (state: UiState) => ({
@@ -54,6 +57,7 @@ export default function App() {
     onConnect,
     saveCurrentProject,
     setEditNodeData,
+    clearGitRevisions,
   } = useStore(useShallow(selector));
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
@@ -85,10 +89,17 @@ export default function App() {
       description: keybindings.open.description,
     },
   );
-
+  const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = useState(false);
   return (
     <HotkeysProvider>
       <div style={{ width: "100vw", height: "100vh" }}>
+        <GitGraphSlidingPanel
+          isOpen={isGitGraphPanelOpen}
+          onClose={() => {
+            clearGitRevisions();
+            setIsGitGraphPanelOpen(false);
+          }}
+        ></GitGraphSlidingPanel>
         <ReactFlow
           ref={reactFlowRef}
           nodes={nodes}
@@ -121,10 +132,12 @@ export default function App() {
           <Panel position="top-left" ref={reactFlowRef}>
             <AppMenubar reactflowRef={reactFlowRef} />
           </Panel>
-          {/* <AppControlPanel position="top-left" ref={reactFlowRef} /> */}
           {isMiniMapVisible && <MiniMap position="top-right" />}
           <Background />
           <EditNodeDialog />
+          <GitRevisionsPanel
+            openGitGraph={() => setIsGitGraphPanelOpen(true)}
+          />
         </ReactFlow>
         <Toaster position="bottom-right" richColors />
       </div>

@@ -48,6 +48,10 @@ export interface AppState {
     | EditNodeData<"actionNode", ActionNodeData>
     | EditNodeData<"statusNode", StatusNodeData>
     | null;
+  // Array of revisions to use for a diff
+  gitRevisions: string[];
+  addGitRevision: (rev: string) => void;
+  clearGitRevisions: () => void;
   // Create a project
   createProject: (name: string) => Promise<void>;
   // Delete a project

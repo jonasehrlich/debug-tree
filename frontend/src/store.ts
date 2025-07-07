@@ -30,6 +30,19 @@ export const useStore = create<AppState>()(
       hasUnsavedChanges: false,
       saveOngoing: false,
       editNodeData: null,
+      gitRevisions: [],
+      addGitRevision(rev) {
+        let revs = get().gitRevisions;
+        if (revs.length == 2) {
+          revs[1] = rev;
+        } else {
+          revs.push(rev);
+        }
+        set({ gitRevisions: revs });
+      },
+      clearGitRevisions() {
+        set({ gitRevisions: [] });
+      },
       createProject: async (name: string) => {
         console.log(`Creating project ${name}`);
         const { data, error } = await client.POST("/api/v1/projects", {

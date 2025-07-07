@@ -80,11 +80,14 @@ export const ActionNode = memo(
 const selector = (s: AppState) => ({
   updateNodeState: s.updateStatusNodeState,
   setEditNodeData: s.setEditNodeData,
+  addGitRevision: s.addGitRevision,
 });
 
 export const StatusNode = memo(
   ({ id, data, type, selected }: NodeProps<StatusNodeType>) => {
-    const { setEditNodeData, updateNodeState } = useStore(useShallow(selector));
+    const { setEditNodeData, updateNodeState, addGitRevision } = useStore(
+      useShallow(selector),
+    );
 
     const setThisNodeAsEditNodeData = () => {
       setEditNodeData({ id: id, type: type, data: data });
@@ -114,7 +117,10 @@ export const StatusNode = memo(
         {data.description && <div className="mt-2">{data.description}</div>}
         {data.git.rev !== "" && (
           <NodeHeader className="-mx-3 -mb-2 mt-2 border-t">
-            <GitRevision revision={data.git.rev} />
+            <GitRevision
+              revision={data.git.rev}
+              onGitIconClick={addGitRevision}
+            />
           </NodeHeader>
         )}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
