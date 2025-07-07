@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { SlidingPanel } from "./sliding-panel";
+import { Skeleton } from "./ui/skeleton";
 
 interface GitGraphSlidingPanelProps {
   isOpen: boolean;
@@ -40,12 +41,20 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
           },
         })
         .then((response) => {
-          setData(response.data?.commits || []);
+          setData(response.data?.commits ?? []);
           setLoading(false);
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
+          let message = "";
+          if (
+            typeof error === "object" &&
+            error !== null &&
+            "message" in error
+          ) {
+            message = String((error as { message?: unknown }).message);
+          }
           toast.error("Error fetching Git Tree data", {
-            description: error.message,
+            description: message,
           });
         });
     }
@@ -59,58 +68,67 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
   return (
     <SlidingPanel title="Git Tree" isOpen={isOpen} onClose={onClose}>
       <div>
-        {data.map((commit, index) => {
-          return (
-            <div key={index} className="border-b font-mono">
-              <button
-                onClick={() => toggle(index)}
-                className={`w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
+        {loading ? (
+          <div className="border-b py-4">
+            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        ) : (
+          data.map((commit, index) => {
+            return (
+              <div key={index} className="border-b font-mono">
+                <button
+                  onClick={() => {
+                    toggle(index);
+                  }}
+                  className={`w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
                 }`}
-              >
-                <div>
-                  <span className="font-bold pr-2">
-                    {commit.id.slice(0, 7)}
-                  </span>
-                  {commit.summary}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {commit.author.name} •{" "}
-                  {formatDistanceToNow(commit.time, { addSuffix: true })}
-                </div>
-              </button>
-              <AnimatePresence initial={false}>
-                {openIndex === index && (
-                  <motion.div
-                    key="content"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.1, ease: "easeInOut" }}
-                    className="overflow-hidden p-4 text-sm text-muted-foreground"
-                  >
-                    {commit.body ?? <p>{commit.body}</p>}
-                    <p>
-                      <strong>Date:</strong>{" "}
-                      {new Date(commit.time).toLocaleString()}
-                    </p>
-                    <p>
-                      <strong>Author:</strong> {commit.author.name}{" "}
-                      {commit.author.email && (
-                        <span> {commit.author.email}</span>
-                      )}
-                    </p>
-                    <p>
-                      <strong>Committer:</strong> {commit.committer.name}{" "}
-                      {commit.author.email && (
-                        <span> {commit.committer.email}</span>
-                      )}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+                >
+                  <div>
+                    <span className="font-bold pr-2">
+                      {commit.id.slice(0, 7)}
+                    </span>
+                    {commit.summary}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {commit.author.name} •{" "}
+                    {formatDistanceToNow(commit.time, { addSuffix: true })}
+                  </div>
+                </button>
+                <AnimatePresence initial={false}>
+                  {openIndex === index && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.1, ease: "easeInOut" }}
+                      className="overflow-hidden p-4 text-sm text-muted-foreground"
+                    >
+                      {commit.body !== "" && <p>{commit.body}</p>}
+                      <p>
+                        <strong>Date:</strong>{" "}
+                        {new Date(commit.time).toLocaleString()}
+                      </p>
+                      <p>
+                        <strong>Author:</strong> {commit.author.name}{" "}
+                        {commit.author.email && (
+                          <span> {commit.author.email}</span>
+                        )}
+                      </p>
+                      <p>
+                        <strong>Committer:</strong> {commit.committer.name}{" "}
+                        {commit.author.email && (
+                          <span> {commit.committer.email}</span>
+                        )}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })
+        )}
       </div>
     </SlidingPanel>
   );

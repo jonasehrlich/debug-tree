@@ -20,17 +20,16 @@ export const GitRevision = ({
 }: GitRevisionProps) => {
   const ref = useRef<HTMLButtonElement>(null);
 
-  const handlePinCommitId = useCallback(async () => {
+  const handlePinCommitId = useCallback(() => {
     if (!onClickPinRevision) {
-      return false;
+      return Promise.resolve(false);
     }
     onClickPinRevision(revision);
-    return true;
+    return Promise.resolve(true);
   }, [revision, onClickPinRevision]);
 
   const contentName = "revision";
-
-  const paddedContentName = contentName ? " " + contentName : "";
+  const paddedContentName = " " + contentName;
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>

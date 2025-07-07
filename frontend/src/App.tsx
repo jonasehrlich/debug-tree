@@ -117,7 +117,7 @@ export default function App() {
                 type: node.type,
                 data: node.data,
               });
-            } else if (node.type === "actionNode") {
+            } else {
               setEditNodeData({
                 id: node.id,
                 type: node.type,
@@ -136,7 +136,9 @@ export default function App() {
           <Background />
           <EditNodeDialog />
           <GitRevisionsPanel
-            openGitGraph={() => setIsGitGraphPanelOpen(true)}
+            openGitGraph={() => {
+              setIsGitGraphPanelOpen(true);
+            }}
           />
         </ReactFlow>
         <Toaster position="bottom-right" richColors />

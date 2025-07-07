@@ -32,7 +32,7 @@ export const useStore = create<AppState>()(
       editNodeData: null,
       gitRevisions: [],
       addGitRevision(rev) {
-        let revs = get().gitRevisions;
+        const revs = get().gitRevisions;
         if (revs.length == 2) {
           revs[1] = rev;
         } else {
