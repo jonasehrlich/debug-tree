@@ -14,9 +14,11 @@ import {
   type StatusNodeState,
   type StatusNode as StatusNodeType,
 } from "@/types/nodes";
+import type { AppState } from "@/types/state";
 import { Position, type NodeProps } from "@xyflow/react";
 import { ChartLine, Pencil, Rocket } from "lucide-react";
 import { memo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { GitRevision } from "./git-revision";
 import { IconSelector } from "./icon-selector";
 import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
@@ -75,20 +77,20 @@ export const ActionNode = memo(
   },
 );
 
+const selector = (s: AppState) => ({
+  updateNodeState: s.updateStatusNodeState,
+  setEditNodeData: s.setEditNodeData,
+});
+
 export const StatusNode = memo(
   ({ id, data, type, selected }: NodeProps<StatusNodeType>) => {
-    const updateNodeState = useStore((state) => state.updateStatusNodeState);
-    const setEditNodeData = useStore((state) => state.setEditNodeData);
+    const { setEditNodeData, updateNodeState } = useStore(useShallow(selector));
 
     const setThisNodeAsEditNodeData = () => {
       setEditNodeData({ id: id, type: type, data: data });
     };
     return (
-      <BaseNode
-        selected={selected}
-        onDoubleClick={setThisNodeAsEditNodeData}
-        className="px-3 py-2 max-w-md"
-      >
+      <BaseNode selected={selected} className="px-3 py-2 max-w-md">
         <NodeHeader className="-mx-3 -mt-2 border-b">
           <NodeHeaderIcon>
             <ChartLine />

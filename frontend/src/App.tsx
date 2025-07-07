@@ -17,6 +17,7 @@ import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
 import { keybindings } from "./keybindings";
 import { useStore, useUiStore } from "./store";
+import type { AppNode } from "./types/nodes";
 import type { AppState, UiState } from "./types/state";
 
 const nodeTypes = {
@@ -31,6 +32,7 @@ const selector = (state: AppState) => ({
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
   saveCurrentProject: state.saveCurrentProject,
+  setEditNodeData: state.setEditNodeData,
 });
 
 const uiStoreSelector = (state: UiState) => ({
@@ -51,6 +53,7 @@ export default function App() {
     onEdgesChange,
     onConnect,
     saveCurrentProject,
+    setEditNodeData,
   } = useStore(useShallow(selector));
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
@@ -94,6 +97,23 @@ export default function App() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeDoubleClick={(_e, node: AppNode) => {
+            // typescript is stupid
+            if (node.type === "statusNode") {
+              // it's important to create a new object here, to inform React Flow about the changes
+              setEditNodeData({
+                id: node.id,
+                type: node.type,
+                data: node.data,
+              });
+            } else if (node.type === "actionNode") {
+              setEditNodeData({
+                id: node.id,
+                type: node.type,
+                data: node.data,
+              });
+            }
+          }}
           colorMode={theme ? (theme as ColorMode) : "system"}
           fitView
           fitViewOptions={fitViewOptions}
