@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { GitBranch } from "lucide-react";
 import { useRef, type RefObject } from "react";
 import { CopyButton } from "./copy-button";
+import { Button } from "./ui/button";
 
 /**
  * @interface GitRevisionProps
@@ -10,14 +11,28 @@ import { CopyButton } from "./copy-button";
  */
 interface GitRevisionProps {
   revision: string;
+  onGitIconClick?: (rev: string) => void;
 }
 
-export const GitRevision = ({ revision }: GitRevisionProps) => {
+export const GitRevision = ({ revision, onGitIconClick }: GitRevisionProps) => {
   const ref = useRef<HTMLButtonElement>(null);
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>
-      <GitBranch size={20} />
+      {onGitIconClick ? (
+        <Button
+          ref={ref}
+          variant="ghost"
+          className={cn("nodrag size-6 p-1 cursor-pointer")}
+          onClick={(_e) => {
+            onGitIconClick(revision);
+          }}
+        >
+          <GitBranch size={20} />
+        </Button>
+      ) : (
+        <GitBranch size={20} />
+      )}
       <span className="flex-1 font-mono px-3 py-1 truncate align-middle">
         {revision}
       </span>
