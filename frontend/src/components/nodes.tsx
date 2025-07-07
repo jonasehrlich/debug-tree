@@ -119,7 +119,7 @@ export const StatusNode = memo(
           <NodeHeader className="-mx-3 -mb-2 mt-2 border-t">
             <GitRevision
               revision={data.git.rev}
-              onGitIconClick={addGitRevision}
+              onClickPinRevision={addGitRevision}
             />
           </NodeHeader>
         )}
