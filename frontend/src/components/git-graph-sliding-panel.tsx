@@ -2,6 +2,8 @@ import { client } from "@/client";
 import { useStore } from "@/store";
 import type { components } from "@/types/api";
 import type { AppState } from "@/types/state";
+import { formatDistanceToNow } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
@@ -48,15 +50,68 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
         });
     }
   }, [isOpen, gitRevisions]);
+
+  const [openIndex, setOpenIndex] = useState<null | number>(null);
+
+  const toggle = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
   return (
     <SlidingPanel title="Git Tree" isOpen={isOpen} onClose={onClose}>
-      {data.map((commit, index) => (
-        <div key={index} className="p-2 border-b font-mono">
-          <span className="font-mono">
-            {commit.id.slice(0, 7)} {commit.summary}
-          </span>
-        </div>
-      ))}
+      <div>
+        {data.map((commit, index) => {
+          return (
+            <div key={index} className="border-b font-mono">
+              <button
+                onClick={() => toggle(index)}
+                className={`w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
+                }`}
+              >
+                <div>
+                  <span className="font-bold pr-2">
+                    {commit.id.slice(0, 7)}
+                  </span>
+                  {commit.summary}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {commit.author.name} •{" "}
+                  {formatDistanceToNow(commit.time, { addSuffix: true })}
+                </div>
+              </button>
+              <AnimatePresence initial={false}>
+                {openIndex === index && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.1, ease: "easeInOut" }}
+                    className="overflow-hidden p-4 text-sm text-muted-foreground"
+                  >
+                    {commit.body ?? <p>{commit.body}</p>}
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(commit.time).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Author:</strong> {commit.author.name}{" "}
+                      {commit.author.email && (
+                        <span> {commit.author.email}</span>
+                      )}
+                    </p>
+                    <p>
+                      <strong>Committer:</strong> {commit.committer.name}{" "}
+                      {commit.author.email && (
+                        <span> {commit.committer.email}</span>
+                      )}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
     </SlidingPanel>
   );
 };
