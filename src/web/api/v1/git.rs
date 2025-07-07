@@ -43,7 +43,7 @@ struct Commit {
     summary: String,
     body: String,
     time: chrono::DateTime<chrono::Utc>,
-    commiter: Signature,
+    committer: Signature,
     author: Signature,
 }
 
@@ -54,7 +54,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
             summary: commit.summary().unwrap_or("").to_string(),
             body: commit.body().unwrap_or("").to_string(),
             time: Git2Time(commit.time()).into(),
-            commiter: commit.committer().into(),
+            committer: commit.committer().into(),
             author: commit.author().into(),
         }
     }

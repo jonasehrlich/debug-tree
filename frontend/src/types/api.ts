@@ -105,7 +105,7 @@ export interface components {
         Commit: {
             author: components["schemas"]["Signature"];
             body: string;
-            commiter: components["schemas"]["Signature"];
+            committer: components["schemas"]["Signature"];
             id: string;
             summary: string;
             /** Format: date-time */
