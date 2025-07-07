@@ -272,7 +272,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
       <MenubarMenu>
         <MenubarTrigger
           onClick={() => {
-            createNode("actionNode");
+            createNode("statusNode");
           }}
           disabled={saveOngoing || !currentProject}
         >
