@@ -163,6 +163,14 @@ export const useStore = create<AppState>()(
           hasUnsavedChanges: true,
         });
       },
+      setEdgeType: (newType) => {
+        set((state) => ({
+          edges: state.edges.map((edge) => ({
+            ...edge,
+            type: newType,
+          })),
+        }));
+      },
       setNodes: (nodes) => {
         set({ nodes });
       },
