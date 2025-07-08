@@ -5,12 +5,18 @@ import {
   MenubarContent,
   MenubarItem,
   MenubarMenu,
+  MenubarRadioGroup,
+  MenubarRadioItem,
   MenubarSeparator,
   MenubarShortcut,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { keybindings } from "@/keybindings";
 import { useStore, useUiStore } from "@/store";
+import { edgeTypes, type EdgeType } from "@/types/edge";
 import type { ActionNode, AppNode, StatusNode } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import {
@@ -41,6 +47,8 @@ const projectSelector = (s: AppState) => ({
   hasUnsavedChanges: s.hasUnsavedChanges,
   closeCurrentProject: s.closeCurrentProject,
   saveCurrentProject: s.saveCurrentProject,
+  currentEdgeType: s.edges[0].type ?? "bezier",
+  setEdgeType: s.setEdgeType,
 });
 
 const uiStoreSelector = (s: UiState) => ({
@@ -56,6 +64,8 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
     hasUnsavedChanges,
     closeCurrentProject,
     saveCurrentProject,
+    currentEdgeType,
+    setEdgeType,
   } = useStore(useShallow(projectSelector));
   const { isMiniMapVisible, setIsMiniMapVisible, setIsProjectDialogOpen } =
     useUiStore(useShallow(uiStoreSelector));
@@ -255,6 +265,23 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           >
             Interactive Mode
           </MenubarCheckboxItem>
+          <MenubarSub>
+            <MenubarSubTrigger inset>Edge Type</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarRadioGroup
+                value={currentEdgeType}
+                onValueChange={(type) => {
+                  setEdgeType(type as EdgeType);
+                }}
+              >
+                {edgeTypes.map((type) => (
+                  <MenubarRadioItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </MenubarRadioItem>
+                ))}
+              </MenubarRadioGroup>
+            </MenubarSubContent>
+          </MenubarSub>
         </MenubarContent>
       </MenubarMenu>
       {/* TODO: Fix behavior of these two buttons, or figure out another UI paradigm*/}

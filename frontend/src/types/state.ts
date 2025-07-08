@@ -8,6 +8,7 @@ import {
   type ApiStatusDetailResponse,
   type ProjectMetadata,
 } from "./api-types";
+import type { EdgeType } from "./edge";
 import type {
   ActionNodeData,
   AppNode,
@@ -68,6 +69,7 @@ export interface AppState {
   onNodesChange: OnNodesChange<AppNode>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  setEdgeType: (newType: EdgeType) => void;
   setNodes: (nodes: AppNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   updateStatusNodeState: (nodeId: string, state: StatusNodeState) => void;
