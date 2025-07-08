@@ -117,6 +117,17 @@ export interface components {
         CreateFlowResponse: {
             flow: components["schemas"]["FlowMetadata"];
         };
+        Diff: {
+            new?: null | components["schemas"]["DiffFile"];
+            old?: null | components["schemas"]["DiffFile"];
+        };
+        DiffFile: {
+            content?: string | null;
+            fileType: components["schemas"]["DiffFileType"];
+            path?: string | null;
+        };
+        /** @enum {string} */
+        DiffFileType: "binary" | "text";
         FlowData: {
             /** @description Name of the debug flow */
             name: string;
@@ -145,6 +156,7 @@ export interface components {
             /** @description Array of commits between the base and head commit IDs
              *     in reverse chronological order. */
             commits: components["schemas"]["Commit"][];
+            diffs: components["schemas"]["Diff"][];
         };
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];

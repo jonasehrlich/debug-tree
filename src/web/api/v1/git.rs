@@ -91,20 +91,92 @@ async fn get_commit(
 
 fn get_commit_by_prefix<'repo>(
     repo: &'repo git2::Repository,
-    commit_id: &str,
+    rev: &str,
 ) -> Result<git2::Commit<'repo>, api::AppError> {
-    repo.find_commit_by_prefix(commit_id)
-        .map_err(|e| match e.code() {
-            git2::ErrorCode::Invalid => {
-                api::AppError::BadRequest(format!("Invalid base commit ID '{commit_id}': {e}"))
+    let oid = get_object_for_revision(repo, rev)?.id();
+    repo.find_commit(oid).map_err(|e| match e.code() {
+        git2::ErrorCode::Invalid => {
+            api::AppError::BadRequest(format!("Invalid base commit ID '{rev}': {e}"))
+        }
+        git2::ErrorCode::NotFound => {
+            api::AppError::NotFound(format!("Base commit '{rev}' not found: {e}"))
+        }
+        _ => api::AppError::InternalServerError(format!("Failed to find base commit '{rev}': {e}")),
+    })
+}
+
+#[derive(Serialize, ToSchema, PartialEq)]
+#[serde(rename_all = "lowercase")]
+enum DiffFileType {
+    Binary,
+    Text,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct DiffFile {
+    path: Option<String>,
+    file_type: DiffFileType,
+    content: Option<String>,
+}
+
+impl DiffFile {
+    pub fn try_from_repo_and_diff_file(
+        repo: &git2::Repository,
+        diff_file: &git2::DiffFile,
+    ) -> Option<DiffFile> {
+        let oid = diff_file.id();
+        if oid.is_zero() {
+            log::warn!(
+                "OID is zero '{:?}'",
+                diff_file
+                    .path()
+                    .map(|p| { p.to_str().unwrap_or("invalid UTF-8 in path") })
+                    .unwrap_or("unknown-path")
+            );
+            return None;
+        }
+
+        let file_type = if diff_file.is_binary() {
+            DiffFileType::Binary
+        } else {
+            DiffFileType::Text
+        };
+
+        let content = match repo.find_blob(oid) {
+            Ok(blob) if file_type == DiffFileType::Text => {
+                Some(String::from_utf8_lossy(blob.content()).into_owned())
             }
-            git2::ErrorCode::NotFound => {
-                api::AppError::NotFound(format!("Base commit '{commit_id}' not found: {e}"))
+            _ => {
+                log::warn!("Did not find blob for {:?}", diff_file.path());
+                None
             }
-            _ => api::AppError::InternalServerError(format!(
-                "Failed to find base commit '{commit_id}': {e}"
-            )),
+        };
+
+        Some(DiffFile {
+            path: diff_file
+                .path()
+                .map(|p| p.to_str().unwrap_or("unknown").to_owned()),
+            file_type,
+            content,
         })
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct Diff {
+    old: Option<DiffFile>,
+    new: Option<DiffFile>,
+}
+
+impl Diff {
+    pub fn from_repo_and_diff_delta(repo: &git2::Repository, delta: &git2::DiffDelta) -> Diff {
+        let old = DiffFile::try_from_repo_and_diff_file(repo, &delta.old_file());
+        let new = DiffFile::try_from_repo_and_diff_file(repo, &delta.new_file());
+
+        Self { old, new }
+    }
 }
 
 #[derive(Serialize, ToSchema)]
@@ -113,17 +185,24 @@ struct ListCommitsResponse {
     /// Array of commits between the base and head commit IDs
     /// in reverse chronological order.
     commits: Vec<Commit>,
+    diffs: Vec<Diff>,
 }
 
 impl ListCommitsResponse {
-    pub fn from_commits<I>(iter: I) -> Result<Self, api::AppError>
+    pub fn from_commits_and_diffs<I, D>(
+        commits_iter: I,
+        diffs_iter: D,
+    ) -> Result<Self, api::AppError>
     where
         I: IntoIterator<Item = Result<Commit, api::AppError>>,
+        D: IntoIterator<Item = Diff>,
     {
-        let commits = iter
+        let commits = commits_iter
             .into_iter()
             .collect::<Result<Vec<_>, api::AppError>>()?;
-        Ok(ListCommitsResponse { commits })
+
+        let diffs = diffs_iter.into_iter().collect();
+        Ok(ListCommitsResponse { commits, diffs })
     }
 }
 
@@ -185,6 +264,18 @@ fn get_object_for_revision<'repo>(
     })
 }
 
+fn get_tree_for_revision<'repo>(
+    repo: &'repo git2::Repository,
+    rev: &str,
+) -> Result<git2::Tree<'repo>, api::AppError> {
+    match get_commit_by_prefix(repo, rev)?.tree() {
+        Ok(t) => Ok(t),
+        Err(_) => Err(api::AppError::InternalServerError(
+            format!("Rev {rev} is not a tree").to_string(),
+        )),
+    }
+}
+
 #[utoipa::path(
     get,
     path = "/commits",
@@ -220,5 +311,26 @@ async fn list_commits(
             })
     });
 
-    Ok(Json(ListCommitsResponse::from_commits(commits)?))
+    let rev = query.head_rev.unwrap_or_else(|| "HEAD".to_string());
+    let tree = get_tree_for_revision(repo, &rev)?;
+
+    let base_tree = match query.base_rev.map(|rev| get_tree_for_revision(repo, &rev)) {
+        Some(Ok(tree)) => Some(tree),
+        Some(Err(e)) => {
+            return Err(e);
+        }
+        None => None,
+    };
+
+    let diff = repo
+        .diff_tree_to_tree(base_tree.as_ref(), Some(&tree), None)
+        .map_err(|e| api::AppError::InternalServerError(format!("Failed to diff tree : {e}")))?;
+
+    let diffs_iter = diff
+        .deltas()
+        .map(|delta| Diff::from_repo_and_diff_delta(repo, &delta));
+
+    Ok(Json(ListCommitsResponse::from_commits_and_diffs(
+        commits, diffs_iter,
+    )?))
 }
