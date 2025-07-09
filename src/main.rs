@@ -27,7 +27,7 @@ struct DebugFlowArgs {
 #[derive(Parser)]
 struct NewArgs {
     #[clap(flatten)]
-    flow_dir: DebugFlowDirArgs,
+    flows_dir: DebugFlowDirArgs,
     #[clap(flatten)]
     flow: DebugFlowArgs,
     /// Overwrite an existing project
@@ -38,7 +38,7 @@ struct NewArgs {
 #[derive(Parser)]
 struct ServeArgs {
     #[clap(flatten)]
-    flow_dir: DebugFlowDirArgs,
+    flows_dir: DebugFlowDirArgs,
     /// Host to bind the server to
     #[arg(long, default_value = "localhost")]
     host: String,
@@ -67,25 +67,25 @@ async fn main() {
     let args = Cli::parse();
     match &args.command {
         Commands::New(args) => {
-            let flow_dir = debug_flow::flow::DebugFlowDir::new(args.flow_dir.dir.clone())
+            let flows_dir = debug_flow::flow::FlowsDir::new(args.flows_dir.dir.clone())
                 .expect("Error creating debug flow directory");
-            let flow = flow_dir
-                .create_debug_flow(&args.flow.name, args.force)
+            let flow = flows_dir
+                .create_flow(&args.flow.name, args.force)
                 .expect("Error creating debug flow");
             println!(
                 "Created debug flow '{}' in '{}'",
                 flow.name(),
-                flow_dir.path().display()
+                flows_dir.path().display()
             );
         }
         Commands::Serve(args) => {
-            let flow_dir = debug_flow::flow::DebugFlowDir::new(args.flow_dir.dir.clone())
+            let flows_dir = debug_flow::flow::FlowsDir::new(args.flows_dir.dir.clone())
                 .expect("Error creating debug flow directory");
             debug_flow::web::serve(
                 args.host.as_str(),
                 args.port,
                 args.frontend_proxy_port,
-                flow_dir,
+                flows_dir,
             )
             .await
             .unwrap();

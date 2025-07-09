@@ -12,43 +12,36 @@ use crate::{
 
 pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
+        .route("/flows", routing::get(list_flows).post(create_flow))
         .route(
-            "/debug_flows",
-            routing::get(list_debug_flows).post(create_debug_flow),
-        )
-        .route(
-            "/debug_flows/{id}",
-            routing::get(get_debug_flow)
-                .delete(delete_debug_flow)
-                .post(store_debug_flow),
+            "/flows/{id}",
+            routing::get(get_flow).delete(delete_flow).post(store_flow),
         )
 }
 
-/// API documentation for the debug_flows endpoints.
+/// API documentation for the flows endpoints.
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(list_debug_flows, create_debug_flow, get_debug_flow, delete_debug_flow, store_debug_flow), tags((name = "DebugFlow Management", description="DebugFlow related endpoints")) )]
+#[openapi(paths(list_flows, create_flow, get_flow, delete_flow, store_flow), tags((name = "Debug Flow Management", description="Debug Flow related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[derive(Serialize, ToSchema)]
-struct ListDebugFlowsResponse {
-    debug_flows: Vec<flow::DebugFlowMetadata>,
+struct ListFlowsResponse {
+    flows: Vec<flow::FlowMetadata>,
 }
-impl ListDebugFlowsResponse {
+impl ListFlowsResponse {
     pub fn new() -> Self {
-        ListDebugFlowsResponse {
-            debug_flows: Vec::new(),
-        }
+        ListFlowsResponse { flows: Vec::new() }
     }
 }
 
-impl<T> FromIterator<T> for ListDebugFlowsResponse
+impl<T> FromIterator<T> for ListFlowsResponse
 where
-    flow::DebugFlowMetadata: From<T>,
+    flow::FlowMetadata: From<T>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        let mut resp = ListDebugFlowsResponse::new();
+        let mut resp = ListFlowsResponse::new();
         for item in iter {
-            resp.debug_flows.push(item.into());
+            resp.flows.push(item.into());
         }
         resp
     }
@@ -57,44 +50,42 @@ where
 #[utoipa::path(
     get,
     path = "",
-    description = "List all debug trees",
+    description = "List all debug flows",
     responses(
-        (status = http::StatusCode::OK, description = "List debug trees", body = ListDebugFlowsResponse),
+        (status = http::StatusCode::OK, description = "List debug flows", body = ListFlowsResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn list_debug_flows(
-    State(app_state): State<web::AppState>,
-) -> api::Result<ListDebugFlowsResponse> {
-    let debug_flows = app_state
-        .debug_flow_dir()
+async fn list_flows(State(app_state): State<web::AppState>) -> api::Result<ListFlowsResponse> {
+    let flows = app_state
+        .flows_dir()
         .metadatas()
         .map_err(|e| api::AppError::InternalServerError(e.to_string()))?;
-    Ok(Json(debug_flows.collect::<ListDebugFlowsResponse>()))
+    Ok(Json(flows.collect::<ListFlowsResponse>()))
 }
 
 #[derive(Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct CreateDebugFlowRequest {
+struct CreateFlowRequest {
     name: String,
 }
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct CreateDebugFlowResponse {
-    debug_flow: flow::DebugFlowMetadata,
+struct CreateFlowResponse {
+    flow: flow::FlowMetadata,
 }
 
-impl CreateDebugFlowResponse {
-    pub fn new(debug_flow: flow::DebugFlowMetadata) -> Self {
-        Self { debug_flow }
+impl CreateFlowResponse {
+    pub fn new(flow: flow::FlowMetadata) -> Self {
+        Self { flow }
     }
 }
 
-impl TryFrom<flow::DebugFlow> for CreateDebugFlowResponse {
+impl TryFrom<flow::Flow> for CreateFlowResponse {
     type Error = flow::Error;
-    fn try_from(debug_flow: flow::DebugFlow) -> Result<Self, flow::Error> {
-        Ok(Self::new(debug_flow.try_into()?))
+    fn try_from(flow: flow::Flow) -> Result<Self, flow::Error> {
+        Ok(Self::new(flow.try_into()?))
     }
 }
 
@@ -103,17 +94,17 @@ impl TryFrom<flow::DebugFlow> for CreateDebugFlowResponse {
     path = "",
     description = "Create a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "Debug Flow created", body = CreateDebugFlowResponse),
+        (status = http::StatusCode::OK, description = "Debug Flow created", body = CreateFlowResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn create_debug_flow(
+async fn create_flow(
     State(app_state): State<web::AppState>,
-    Json(new_debug_flow): Json<CreateDebugFlowRequest>,
-) -> api::Result<CreateDebugFlowResponse> {
-    let resp: CreateDebugFlowResponse = app_state
-        .debug_flow_dir()
-        .create_debug_flow(&new_debug_flow.name, false)
+    Json(new_flow): Json<CreateFlowRequest>,
+) -> api::Result<CreateFlowResponse> {
+    let resp: CreateFlowResponse = app_state
+        .flows_dir()
+        .create_flow(&new_flow.name, false)
         .map_err(|e| api::AppError::InternalServerError(e.to_string()))?
         .try_into()
         .map_err(|e: flow::Error| api::AppError::InternalServerError(e.to_string()))?;
@@ -123,42 +114,43 @@ async fn create_debug_flow(
 
 #[derive(Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct FullDebugFlowRequestResponse {
-    debug_flow: flow::DebugFlowData,
+struct FullFlowRequestResponse {
+    flow: flow::FlowData,
 }
 
-impl FullDebugFlowRequestResponse {
-    pub fn new(debug_flow: flow::DebugFlowData) -> Self {
-        Self { debug_flow }
+impl FullFlowRequestResponse {
+    pub fn new(flow: flow::FlowData) -> Self {
+        Self { flow }
     }
 }
 
-impl From<flow::DebugFlowData> for FullDebugFlowRequestResponse {
-    fn from(value: flow::DebugFlowData) -> Self {
+impl From<flow::FlowData> for FullFlowRequestResponse {
+    fn from(value: flow::FlowData) -> Self {
         Self::new(value)
     }
 }
 
-impl From<&flow::DebugFlowData> for FullDebugFlowRequestResponse {
-    fn from(value: &flow::DebugFlowData) -> Self {
+impl From<&flow::FlowData> for FullFlowRequestResponse {
+    fn from(value: &flow::FlowData) -> Self {
         Self::new(value.clone())
     }
 }
+
 #[utoipa::path(
     get,
     path = "/{id}",
     description = "Get a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "DebugFlow is available", body = FullDebugFlowRequestResponse),
+        (status = http::StatusCode::OK, description = "Debug flow is available", body = FullFlowRequestResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "File not found", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn get_debug_flow(
+async fn get_flow(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
-) -> api::Result<FullDebugFlowRequestResponse> {
-    let debug_flow = match app_state.debug_flow_dir().get_debug_flow_by_id(&id) {
+) -> api::Result<FullFlowRequestResponse> {
+    let flow = match app_state.flows_dir().get_flow_by_id(&id) {
         Ok(p) => p,
         Err(flow::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => {
@@ -173,7 +165,7 @@ async fn get_debug_flow(
         Err(e) => return Err(api::AppError::InternalServerError(e.to_string())),
     };
 
-    Ok(Json(debug_flow.data().into()))
+    Ok(Json(flow.data().into()))
 }
 
 #[utoipa::path(
@@ -181,16 +173,16 @@ async fn get_debug_flow(
     path = "/{id}",
     description = "Delete a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "DebugFlow is deleted", body = api::ApiStatusResponse),
+        (status = http::StatusCode::OK, description = "Debug flow is deleted", body = api::ApiStatusResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "File not found", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn delete_debug_flow(
+async fn delete_flow(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
 ) -> api::Result<api::ApiStatusResponse> {
-    match app_state.debug_flow_dir().delete_debug_flow_by_id(&id) {
+    match app_state.flows_dir().delete_flow_by_id(&id) {
         Ok(_) => Ok(Json(http::StatusCode::OK.into())),
         Err(flow::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => Err(api::AppError::NotFound(id)),
@@ -207,16 +199,16 @@ async fn delete_debug_flow(
     path = "/{id}",
     description = "Store a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "Debug Flow is stored", body = api::ApiStatusResponse),
+        (status = http::StatusCode::OK, description = "Debug flow is stored", body = api::ApiStatusResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn store_debug_flow(
+async fn store_flow(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
-    Json(new_debug_flow): Json<FullDebugFlowRequestResponse>,
+    Json(new_flow): Json<FullFlowRequestResponse>,
 ) -> api::Result<api::ApiStatusResponse> {
-    match app_state.debug_flow_dir().save_debug_flow(&new_debug_flow.debug_flow) {
+    match app_state.flows_dir().save_flow(&new_flow.flow) {
         Ok(_) => Ok(Json(http::StatusCode::OK.into())),
         Err(flow::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => Err(api::AppError::NotFound(id)),

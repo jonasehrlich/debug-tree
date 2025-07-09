@@ -123,13 +123,13 @@ pub mod v1 {
 
     use crate::web;
 
+    mod flows;
     mod git;
-    mod debug_flows;
 
     /// API documentation for the v1 endpoints.
     #[derive(utoipa::OpenApi)]
     #[openapi(nest(
-        (path = "/debug_flows", api = debug_flows::ApiDoc),
+        (path = "/flows", api = flows::ApiDoc),
         (path = "/git", api = git::ApiDoc)
     ))]
     pub(super) struct ApiDoc;
@@ -137,7 +137,7 @@ pub mod v1 {
     /// Get the router for the v1 API.
     pub(super) fn router() -> routing::Router<web::AppState> {
         routing::Router::new()
-            .merge(debug_flows::router())
+            .merge(flows::router())
             .nest("/git", git::router())
     }
 }

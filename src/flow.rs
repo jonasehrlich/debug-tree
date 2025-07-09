@@ -25,14 +25,14 @@ impl fmt::Debug for Error {
 }
 /// Abstraction for a directory containing debug flows
 #[derive(Clone)]
-pub struct DebugFlowDir {
+pub struct FlowsDir {
     /// Path of the debug flow directory
     path: path::PathBuf,
 }
 
-impl DebugFlowDir {
-    pub fn new(path: path::PathBuf) -> Result<DebugFlowDir, Error> {
-        let p = DebugFlowDir { path };
+impl FlowsDir {
+    pub fn new(path: path::PathBuf) -> Result<FlowsDir, Error> {
+        let p = FlowsDir { path };
         match p.create_if_not_exists() {
             Ok(()) => Ok(p),
             Err(e) => Err(e),
@@ -60,25 +60,25 @@ impl DebugFlowDir {
     }
 
     /// Load of create a debug flow in the storage directory
-    pub fn load_or_create_debug_flow(&self, name: &str) -> Result<DebugFlow, Error> {
-        let mut debug_flow_path = self.path.clone();
-        debug_flow_path.push(DebugFlowData::file_name_from_debug_flow_name(name));
+    pub fn load_or_create_flow(&self, name: &str) -> Result<Flow, Error> {
+        let mut flow_path = self.path.clone();
+        flow_path.push(FlowData::file_name_from_flow_name(name));
 
-        if debug_flow_path.exists() {
-            DebugFlow::from_file(&debug_flow_path)
+        if flow_path.exists() {
+            Flow::from_file(&flow_path)
         } else {
-            DebugFlow::from_debug_flow_dir_and_name(&self.path, name)
+            Flow::from_flows_dir_and_name(&self.path, name)
         }
     }
 
     /// Create a debug flow with a name and store it in the debug flow directory
-    pub fn create_debug_flow(&self, name: &str, force: bool) -> Result<DebugFlow, Error> {
-        let mut debug_flow_path = self.path.clone();
-        debug_flow_path.push(DebugFlowData::file_name_from_debug_flow_name(name));
+    pub fn create_flow(&self, name: &str, force: bool) -> Result<Flow, Error> {
+        let mut flow_path = self.path.clone();
+        flow_path.push(FlowData::file_name_from_flow_name(name));
 
-        match !debug_flow_path.is_file() || force {
+        match !flow_path.is_file() || force {
             true => {
-                let p = DebugFlow::new(&self.path, name);
+                let p = Flow::new(&self.path, name);
                 p.to_file()?;
                 Ok(p)
             }
@@ -90,31 +90,29 @@ impl DebugFlowDir {
     }
 
     /// Load a debug flow from the storage directory
-    pub fn get_debug_flow_by_name(&self, name: &str) -> Result<DebugFlow, Error> {
-        DebugFlow::from_debug_flow_dir_and_name(&self.path, name)
+    pub fn get_flow_by_name(&self, name: &str) -> Result<Flow, Error> {
+        Flow::from_flows_dir_and_name(&self.path, name)
     }
 
     /// Load a debug flow from the storage directory
-    pub fn get_debug_flow_by_id(&self, id: &str) -> Result<DebugFlow, Error> {
-        DebugFlow::from_debug_flow_dir_and_id(&self.path, id)
+    pub fn get_flow_by_id(&self, id: &str) -> Result<Flow, Error> {
+        Flow::from_flows_dir_and_id(&self.path, id)
     }
 
-    pub fn delete_debug_flow_by_id(&self, id: &str) -> Result<(), Error> {
+    pub fn delete_flow_by_id(&self, id: &str) -> Result<(), Error> {
         let mut p = self.path.clone();
-        p.push(DebugFlowData::file_name_from_id(id));
+        p.push(FlowData::file_name_from_id(id));
         fs::remove_file(p)?;
         Ok(())
     }
 
     /// Get the metadata objects for all debug flows in the debug flow directory
-    pub fn metadatas(&self) -> Result<impl Iterator<Item = DebugFlowMetadata> + '_, Error> {
-        Ok(self
-            .debug_flow()?
-            .filter_map(|flow| flow.try_into().ok()))
+    pub fn metadatas(&self) -> Result<impl Iterator<Item = FlowMetadata> + '_, Error> {
+        Ok(self.flows()?.filter_map(|flow| flow.try_into().ok()))
     }
 
     /// Get an iterator over all debug flows in the debug flow directory
-    pub fn debug_flow(&self) -> Result<impl Iterator<Item = DebugFlow> + '_, Error> {
+    pub fn flows(&self) -> Result<impl Iterator<Item = Flow> + '_, Error> {
         Ok(fs::read_dir(self.path.clone())
             .map_err(|e| Error::Io(self.path.clone(), e))? // Handle error during initial read_dir
             .filter_map(|entry_result| {
@@ -123,7 +121,7 @@ impl DebugFlowDir {
                     Ok(entry) => {
                         let path = entry.path();
                         if path.is_file() && path.extension() == Some(ffi::OsStr::new("json")) {
-                            match DebugFlow::from_file(&path) {
+                            match Flow::from_file(&path) {
                                 Ok(flow) => Some(flow),
                                 Err(e) => {
                                     log::warn!("Error reading debug flow from '{e}'");
@@ -144,9 +142,9 @@ impl DebugFlowDir {
     }
 
     /// Save a debug flow to the debug flow directory
-    pub fn save_debug_flow(&self, debug_flow: &DebugFlowData) -> Result<(), Error> {
+    pub fn save_flow(&self, debug_flow: &FlowData) -> Result<(), Error> {
         let mut p = self.path.clone();
-        p.push(DebugFlowData::file_name_from_debug_flow_name(&debug_flow.name));
+        p.push(FlowData::file_name_from_flow_name(&debug_flow.name));
         debug_flow.to_file(&p)?;
         Ok(())
     }
@@ -172,16 +170,16 @@ impl ReactFlowState {
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DebugFlowData {
+pub struct FlowData {
     /// Name of the debug flow
     name: String,
     /// Representation of the reactflow state
     reactflow: ReactFlowState,
 }
 
-impl DebugFlowData {
+impl FlowData {
     pub fn new(name: &str) -> Self {
-        DebugFlowData {
+        FlowData {
             name: name.to_string(),
             reactflow: ReactFlowState::new(),
         }
@@ -205,8 +203,8 @@ impl DebugFlowData {
     }
 
     /// Get the file name from the debug flow name
-    pub fn file_name_from_debug_flow_name(name: &str) -> path::PathBuf {
-        DebugFlowData::file_name_from_id(utils::to_kebab_case(name).as_str())
+    pub fn file_name_from_flow_name(name: &str) -> path::PathBuf {
+        FlowData::file_name_from_id(utils::to_kebab_case(name).as_str())
     }
 
     /// Get the file name from the debug flow ID
@@ -217,7 +215,7 @@ impl DebugFlowData {
     }
 
     /// Create debug flow data from a file
-    pub fn from_file(path: &path::PathBuf) -> Result<DebugFlowData, Error> {
+    pub fn from_file(path: &path::PathBuf) -> Result<FlowData, Error> {
         let file_content = std::fs::read_to_string(path)?;
         serde_json::from_str(&file_content).map_err(Error::Json)
     }
@@ -233,49 +231,49 @@ impl DebugFlowData {
     }
 }
 
-pub struct DebugFlow {
+pub struct Flow {
     /// Path of the debug flow
     path: path::PathBuf,
     /// Project data
-    data: DebugFlowData,
+    data: FlowData,
 }
 
-impl DebugFlow {
-    pub fn new(debug_flow_dir: &path::Path, name: &str) -> Self {
-        let mut path = debug_flow_dir.to_path_buf();
-        path.push(DebugFlowData::file_name_from_debug_flow_name(name));
-        DebugFlow {
+impl Flow {
+    pub fn new(flows_dir: &path::Path, name: &str) -> Self {
+        let mut path = flows_dir.to_path_buf();
+        path.push(FlowData::file_name_from_flow_name(name));
+        Flow {
             path,
-            data: DebugFlowData::new(name),
+            data: FlowData::new(name),
         }
     }
 
     /// Create a new object from a debug flow directory and debug flow name
     /// NOTE:
-    pub fn from_debug_flow_dir_and_name(debug_flow_dir: &path::Path, name: &str) -> Result<Self, Error> {
-        let mut path = debug_flow_dir.to_path_buf();
-        path.push(DebugFlowData::file_name_from_debug_flow_name(name));
+    pub fn from_flows_dir_and_name(flows_dir: &path::Path, name: &str) -> Result<Self, Error> {
+        let mut path = flows_dir.to_path_buf();
+        path.push(FlowData::file_name_from_flow_name(name));
 
-        Ok(DebugFlow {
+        Ok(Flow {
             path: path.clone(),
-            data: DebugFlowData::from_file(&path)?,
+            data: FlowData::from_file(&path)?,
         })
     }
 
-    pub fn from_debug_flow_dir_and_id(debug_flow_dir: &path::Path, id: &str) -> Result<Self, Error> {
-        let mut path = debug_flow_dir.to_path_buf();
-        path.push(DebugFlowData::file_name_from_id(id));
+    pub fn from_flows_dir_and_id(flows_dir: &path::Path, id: &str) -> Result<Self, Error> {
+        let mut path = flows_dir.to_path_buf();
+        path.push(FlowData::file_name_from_id(id));
 
-        Ok(DebugFlow {
+        Ok(Flow {
             path: path.clone(),
-            data: DebugFlowData::from_file(&path)?,
+            data: FlowData::from_file(&path)?,
         })
     }
 
-    pub fn from_file(path: &path::PathBuf) -> Result<DebugFlow, Error> {
-        Ok(DebugFlow {
+    pub fn from_file(path: &path::PathBuf) -> Result<Flow, Error> {
+        Ok(Flow {
             path: path.clone(),
-            data: DebugFlowData::from_file(path)?,
+            data: FlowData::from_file(path)?,
         })
     }
 
@@ -290,7 +288,7 @@ impl DebugFlow {
         self.data.to_file(&self.path)
     }
 
-    pub fn data(&self) -> &DebugFlowData {
+    pub fn data(&self) -> &FlowData {
         &self.data
     }
 
@@ -309,7 +307,7 @@ impl DebugFlow {
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct DebugFlowMetadata {
+pub struct FlowMetadata {
     /// ID of the debug flow
     id: String,
     /// Name of the debug flow
@@ -322,12 +320,12 @@ pub struct DebugFlowMetadata {
     num_edges: usize,
 }
 
-impl TryFrom<DebugFlow> for DebugFlowMetadata {
+impl TryFrom<Flow> for FlowMetadata {
     type Error = Error;
 
-    fn try_from(p: DebugFlow) -> Result<Self, Error> {
+    fn try_from(p: Flow) -> Result<Self, Error> {
         let accessed = p.file_metadata()?.accessed()?;
-        Ok(DebugFlowMetadata {
+        Ok(FlowMetadata {
             id: p.id(),
             name: p.name(),
             last_modified_date: accessed.into(),
@@ -344,7 +342,7 @@ mod tests {
     #[test]
     fn test_file_name() {
         assert_eq!(
-            DebugFlowData::file_name_from_debug_flow_name("HELLO WORLD"),
+            FlowData::file_name_from_flow_name("HELLO WORLD"),
             path::Path::new("hello-world.json")
         );
     }

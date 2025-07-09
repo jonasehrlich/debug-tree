@@ -29,13 +29,13 @@ pub struct ApiDoc;
 /// Application state available in all request handlers
 #[derive(Clone)]
 struct AppState {
-    debug_flow_dir: flow::DebugFlowDir,
+    flows_dir: flow::FlowsDir,
     repo: Arc<Mutex<Option<git2::Repository>>>,
 }
 
 impl AppState {
-    pub fn new(debug_flow_dir: flow::DebugFlowDir) -> Self {
-        let repo = match debug_flow_dir.path().parent() {
+    pub fn new(flows_dir: flow::FlowsDir) -> Self {
+        let repo = match flows_dir.path().parent() {
             Some(p) => match git2::Repository::open(p) {
                 Ok(repo) => Some(repo),
                 Err(_) => {
@@ -45,21 +45,21 @@ impl AppState {
             },
             None => {
                 log::warn!(
-                    "Could not get parent director of debug_flow dir '{}'",
-                    debug_flow_dir.path().display()
+                    "Could not get parent director of flows directory '{}'",
+                    flows_dir.path().display()
                 );
                 None
             }
         };
 
         AppState {
-            debug_flow_dir,
+            flows_dir,
             repo: Arc::new(Mutex::new(repo)),
         }
     }
 
-    pub fn debug_flow_dir(&self) -> &flow::DebugFlowDir {
-        &self.debug_flow_dir
+    pub fn flows_dir(&self) -> &flow::FlowsDir {
+        &self.flows_dir
     }
 
     pub fn repo(&self) -> &Arc<Mutex<Option<git2::Repository>>> {
@@ -71,9 +71,9 @@ pub async fn serve(
     host: &str,
     port: u16,
     frontend_proxy_port: u16,
-    debug_flow_dir: crate::flow::DebugFlowDir,
+    flows_dir: crate::flow::FlowsDir,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let app_state = AppState::new(debug_flow_dir);
+    let app_state = AppState::new(flows_dir);
 
     let app = routing::Router::new()
         .nest("/api", api::router())
