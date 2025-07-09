@@ -237,11 +237,15 @@ export const useUiStore = create<UiState>()(
     (set, get) => ({
       isFlowsDialogOpen: false,
       isMiniMapVisible: true,
+      isInlineDiff: false,
       setIsMiniMapVisible: (isVisible) => {
         set({ isMiniMapVisible: isVisible });
       },
       setIsFlowsDialogOpen(isOpen) {
         set({ isFlowsDialogOpen: isOpen });
+      },
+      setIsInlineDiff(isInlineDiff) {
+        set({ isInlineDiff: isInlineDiff });
       },
     }),
     {

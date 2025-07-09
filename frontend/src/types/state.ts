@@ -87,6 +87,8 @@ export interface AppState {
 export interface UiState {
   isFlowsDialogOpen: boolean;
   isMiniMapVisible: boolean;
+  isInlineDiff: boolean;
   setIsMiniMapVisible: (isVisible: boolean) => void;
   setIsFlowsDialogOpen: (isOpen: boolean) => void;
+  setIsInlineDiff: (isInlineDiff: boolean) => void;
 }
