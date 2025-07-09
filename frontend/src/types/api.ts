@@ -4,6 +4,43 @@
  */
 
 export interface paths {
+    "/api/v1/flows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description List all debug flows */
+        get: operations["list_flows"];
+        put?: never;
+        /** @description Create a debug flow */
+        post: operations["create_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Get a debug flow */
+        get: operations["get_flow"];
+        put?: never;
+        /** @description Store a debug flow */
+        post: operations["store_flow"];
+        /** @description Delete a debug flow */
+        delete: operations["delete_flow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/git/commit/{commit_id}": {
         parameters: {
             query?: never;
@@ -33,43 +70,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/projects": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description List all projects */
-        get: operations["list_projects"];
-        put?: never;
-        /** @description Create a project */
-        post: operations["create_project"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/projects/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Get a project */
-        get: operations["get_project"];
-        put?: never;
-        /** @description Store a project */
-        post: operations["store_project"];
-        /** @description Delete a project */
-        delete: operations["delete_project"];
         options?: never;
         head?: never;
         patch?: never;
@@ -111,43 +111,43 @@ export interface components {
             /** Format: date-time */
             time: string;
         };
-        CreateProjectRequest: {
+        CreateFlowRequest: {
             name: string;
         };
-        CreateProjectResponse: {
-            project: components["schemas"]["ProjectMetadata"];
+        CreateFlowResponse: {
+            flow: components["schemas"]["FlowMetadata"];
         };
-        FullProjectRequestResponse: {
-            project: components["schemas"]["ProjectData"];
-        };
-        ListCommitsResponse: {
-            /** @description Array of commits between the base and head commit IDs
-             *     in reverse chronological order. */
-            commits: components["schemas"]["Commit"][];
-        };
-        ListProjectsResponse: {
-            projects: components["schemas"]["ProjectMetadata"][];
-        };
-        ProjectData: {
-            /** @description Name of the project */
+        FlowData: {
+            /** @description Name of the debug flow */
             name: string;
             /** @description Representation of the reactflow state */
             reactflow: components["schemas"]["ReactFlowState"];
         };
-        ProjectMetadata: {
-            /** @description ID of the project */
+        FlowMetadata: {
+            /** @description ID of the debug flow */
             id: string;
             /**
              * Format: date-time
              * @description Last modified date
              */
             lastModifiedDate: string;
-            /** @description Name of the project */
+            /** @description Name of the debug flow */
             name: string;
-            /** @description Number of edges in the project */
+            /** @description Number of edges in the debug flow */
             numEdges: number;
-            /** @description Number of nodes in the project */
+            /** @description Number of nodes in the debug flow */
             numNodes: number;
+        };
+        FullFlowRequestResponse: {
+            flow: components["schemas"]["FlowData"];
+        };
+        ListCommitsResponse: {
+            /** @description Array of commits between the base and head commit IDs
+             *     in reverse chronological order. */
+            commits: components["schemas"]["Commit"][];
+        };
+        ListFlowsResponse: {
+            flows: components["schemas"]["FlowMetadata"][];
         };
         ReactFlowState: {
             /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
@@ -168,6 +168,183 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_flows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List debug flows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListFlowsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    create_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFlowRequest"];
+            };
+        };
+        responses: {
+            /** @description Debug Flow created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateFlowResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    get_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Debug flow is available */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FullFlowRequestResponse"];
+                };
+            };
+            /** @description File not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    store_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FullFlowRequestResponse"];
+            };
+        };
+        responses: {
+            /** @description Debug flow is stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    delete_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Debug flow is deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusResponse"];
+                };
+            };
+            /** @description File not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
     get_commit: {
         parameters: {
             query?: never;
@@ -233,183 +410,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListCommitsResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-        };
-    };
-    list_projects: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List projects */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListProjectsResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-        };
-    };
-    create_project: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateProjectRequest"];
-            };
-        };
-        responses: {
-            /** @description Project created */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CreateProjectResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-        };
-    };
-    get_project: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Project is available */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FullProjectRequestResponse"];
-                };
-            };
-            /** @description File not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-        };
-    };
-    store_project: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FullProjectRequestResponse"];
-            };
-        };
-        responses: {
-            /** @description Project is stored */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-        };
-    };
-    delete_project: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Project is deleted */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusResponse"];
-                };
-            };
-            /** @description File not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
                 };
             };
             /** @description Internal server error */

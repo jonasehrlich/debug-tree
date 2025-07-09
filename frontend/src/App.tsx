@@ -33,7 +33,7 @@ const selector = (state: AppState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
-  saveCurrentProject: state.saveCurrentProject,
+  saveCurrentFlow: state.saveCurrentFlow,
   setEditNodeData: state.setEditNodeData,
   clearGitRevisions: state.clearGitRevisions,
 });
@@ -41,7 +41,7 @@ const selector = (state: AppState) => ({
 const uiStoreSelector = (state: UiState) => ({
   isMiniMapVisible: state.isMiniMapVisible,
   setIsMiniMapVisible: state.setIsMiniMapVisible,
-  setIsProjectDialogOpen: state.setIsProjectDialogOpen,
+  setIsFlowsDialogOpen: state.setIsFlowsDialogOpen,
 });
 
 const fitViewOptions: FitViewOptions = {
@@ -55,7 +55,7 @@ export default function App() {
     onNodesChange,
     onEdgesChange,
     onConnect,
-    saveCurrentProject,
+    saveCurrentFlow,
     setEditNodeData,
     clearGitRevisions,
   } = useStore(useShallow(selector));
@@ -63,7 +63,7 @@ export default function App() {
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
   const { theme } = useTheme();
 
-  const { isMiniMapVisible, setIsProjectDialogOpen } = useUiStore(
+  const { isMiniMapVisible, setIsFlowsDialogOpen } = useUiStore(
     useShallow(uiStoreSelector),
   );
 
@@ -72,7 +72,7 @@ export default function App() {
     (e) => {
       e.preventDefault();
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      saveCurrentProject();
+      saveCurrentFlow();
     },
     {
       description: keybindings.save.description,
@@ -83,7 +83,7 @@ export default function App() {
     keybindings.open.keys,
     (e) => {
       e.preventDefault();
-      setIsProjectDialogOpen(true);
+      setIsFlowsDialogOpen(true);
     },
     {
       description: keybindings.open.description,

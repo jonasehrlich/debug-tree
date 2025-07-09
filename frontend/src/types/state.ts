@@ -4,10 +4,7 @@ import {
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
-import {
-  type ApiStatusDetailResponse,
-  type ProjectMetadata,
-} from "./api-types";
+import { type ApiStatusDetailResponse, type FlowMetadata } from "./api-types";
 import type { EdgeType } from "./edge";
 import type {
   ActionNodeData,
@@ -21,7 +18,7 @@ export interface Error {
   response?: ApiStatusDetailResponse;
 }
 
-export interface ProjectIdAndName {
+export interface FlowIdAndName {
   id: string;
   name: string;
 }
@@ -38,8 +35,8 @@ export interface EditNodeData<
 export interface AppState {
   nodes: AppNode[];
   edges: Edge[];
-  currentProject: ProjectIdAndName | null;
-  projects: ProjectMetadata[];
+  currentFlow: FlowIdAndName | null;
+  flows: FlowMetadata[];
   // Whether there are unsaved modifications
   hasUnsavedChanges: boolean;
   // Whether saving to the API is currently ongoing
@@ -53,18 +50,18 @@ export interface AppState {
   gitRevisions: string[];
   addGitRevision: (rev: string) => void;
   clearGitRevisions: () => void;
-  // Create a project
-  createProject: (name: string) => Promise<void>;
-  // Delete a project
-  deleteProject: (id: string) => Promise<void>;
-  // Load projects metadata and store them
-  loadProjectsMetadata: () => Promise<void>;
-  // Load a project
-  loadProject: (id: string) => Promise<void>;
-  // Save a project
-  saveCurrentProject: () => Promise<void>;
-  // Save and close the current project
-  closeCurrentProject: () => Promise<void>;
+  // Create a flow
+  createFlow: (name: string) => Promise<void>;
+  // Delete a flow
+  deleteFlow: (id: string) => Promise<void>;
+  // Load flows metadata and store them
+  loadFlowsMetadata: () => Promise<void>;
+  // Load a flow
+  loadFlow: (id: string) => Promise<void>;
+  // Save a flow
+  saveCurrentFlow: () => Promise<void>;
+  // Save and close the current flow
+  closeCurrentFlow: () => Promise<void>;
   getNodeById: (nodeId: string) => AppNode | null;
   onNodesChange: OnNodesChange<AppNode>;
   onEdgesChange: OnEdgesChange;
@@ -88,8 +85,8 @@ export interface AppState {
 }
 
 export interface UiState {
-  isProjectDialogOpen: boolean;
+  isFlowsDialogOpen: boolean;
   isMiniMapVisible: boolean;
   setIsMiniMapVisible: (isVisible: boolean) => void;
-  setIsProjectDialogOpen: (isOpen: boolean) => void;
+  setIsFlowsDialogOpen: (isOpen: boolean) => void;
 }

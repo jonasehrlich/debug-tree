@@ -1,4 +1,4 @@
-import { ProjectDialog } from "@/components/project-dialog";
+import { FlowsDialog } from "@/components/flows-dialog";
 import {
   Menubar,
   MenubarCheckboxItem,
@@ -41,12 +41,12 @@ const reactflowSelector = (s: ReactFlowState) => ({
   maxZoomReached: s.transform[2] >= s.maxZoom,
 });
 
-const projectSelector = (s: AppState) => ({
-  currentProject: s.currentProject,
+const flowSelector = (s: AppState) => ({
+  currentFlow: s.currentFlow,
   saveOngoing: s.saveOngoing,
   hasUnsavedChanges: s.hasUnsavedChanges,
-  closeCurrentProject: s.closeCurrentProject,
-  saveCurrentProject: s.saveCurrentProject,
+  closeCurrentFlow: s.closeCurrentFlow,
+  saveCurrentFlow: s.saveCurrentFlow,
   currentEdgeType:
     s.edges.length > 0 && s.edges[0].type ? s.edges[0].type : "bezier",
   setEdgeType: s.setEdgeType,
@@ -55,20 +55,20 @@ const projectSelector = (s: AppState) => ({
 const uiStoreSelector = (s: UiState) => ({
   isMiniMapVisible: s.isMiniMapVisible,
   setIsMiniMapVisible: s.setIsMiniMapVisible,
-  setIsProjectDialogOpen: s.setIsProjectDialogOpen,
+  setIsFlowDialogOpen: s.setIsFlowsDialogOpen,
 });
 
 export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
   const {
     saveOngoing,
-    currentProject,
+    currentFlow,
     hasUnsavedChanges,
-    closeCurrentProject,
-    saveCurrentProject,
+    closeCurrentFlow,
+    saveCurrentFlow,
     currentEdgeType,
     setEdgeType,
-  } = useStore(useShallow(projectSelector));
-  const { isMiniMapVisible, setIsMiniMapVisible, setIsProjectDialogOpen } =
+  } = useStore(useShallow(flowSelector));
+  const { isMiniMapVisible, setIsMiniMapVisible, setIsFlowDialogOpen } =
     useUiStore(useShallow(uiStoreSelector));
   const { theme, setTheme } = useTheme();
   const toggleTheme = () => {
@@ -149,14 +149,14 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
   return (
     <Menubar>
       <MenubarMenu>
-        <ProjectDialog
+        <FlowsDialog
           children={
             <MenubarTrigger>
               <Workflow {...menubarLeftIconProps} />{" "}
-              {currentProject ? currentProject.name : "Project"}
+              {currentFlow ? currentFlow.name : "Flow"}
             </MenubarTrigger>
           }
-        ></ProjectDialog>
+        ></FlowsDialog>
       </MenubarMenu>
       <MenubarMenu>
         <div className="relative">
@@ -173,16 +173,16 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
         <MenubarContent>
           <MenubarItem
             onSelect={() => {
-              setIsProjectDialogOpen(true);
+              setIsFlowDialogOpen(true);
             }}
           >
-            Open / Create Project
+            Open / Create Flow
             <MenubarShortcut>{keybindings.open.repr}</MenubarShortcut>
           </MenubarItem>
           <MenubarItem
             onSelect={() => {
               // eslint-disable-next-line @typescript-eslint/no-floating-promises
-              saveCurrentProject();
+              saveCurrentFlow();
             }}
           >
             Save
@@ -191,7 +191,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           <MenubarSeparator />
           <MenubarItem
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            onSelect={closeCurrentProject}
+            onSelect={closeCurrentFlow}
           >
             Close
           </MenubarItem>
@@ -291,7 +291,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           onClick={() => {
             createNode("actionNode");
           }}
-          disabled={saveOngoing || !currentProject}
+          disabled={saveOngoing || !currentFlow}
         >
           <Plus {...menubarLeftIconProps} /> Action Node{" "}
           <Rocket {...menubarRightIconProps} />
@@ -302,7 +302,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           onClick={() => {
             createNode("statusNode");
           }}
-          disabled={saveOngoing || !currentProject}
+          disabled={saveOngoing || !currentFlow}
         >
           <Plus {...menubarLeftIconProps} /> Status Node{" "}
           <LineChart {...menubarRightIconProps} />

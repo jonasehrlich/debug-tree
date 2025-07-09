@@ -1,5 +1,5 @@
 import { type components } from "./api";
 
-export type ProjectMetadata = components["schemas"]["ProjectMetadata"];
+export type FlowMetadata = components["schemas"]["FlowMetadata"];
 export type ApiStatusDetailResponse =
   components["schemas"]["ApiStatusDetailResponse"];

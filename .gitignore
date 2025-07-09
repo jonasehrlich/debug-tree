@@ -30,5 +30,5 @@ frontend/.vite/
 
 ## Generated OpenAPI schema
 openapi-schema.json
-# Local debug-tree runs
-.debug-tree/
+# Local debug-flow runs
+.debug-flow/

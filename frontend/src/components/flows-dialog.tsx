@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
-import type { UiState } from "@/types/state";
+import type { AppState, UiState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash } from "lucide-react";
 import * as React from "react";
@@ -41,100 +41,105 @@ import { FilterableScrollArea } from "./filterable-scroll-area";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
-interface SelectProjectDialogProps {
+interface FlowsDialogProps {
   // The element that triggers the dialog (e.g., a button).
   children: React.ReactNode;
 }
 
 const formSchema = z.object({
-  projectName: z.string().min(2, {
+  flowName: z.string().min(2, {
     message: "Username must be at least 2 characters.",
   }),
 });
 
-export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
-  children,
-}) => {
-  const currentProject = useStore((state) => state.currentProject);
+const selector = (s: AppState) => ({
+  flows: s.flows,
+  currentFlow: s.currentFlow,
+  createFlow: s.createFlow,
+  loadFlowsMetadata: s.loadFlowsMetadata,
+  deleteFlow: s.deleteFlow,
+  loadFlow: s.loadFlow,
+});
+
+export const FlowsDialog: React.FC<FlowsDialogProps> = ({ children }) => {
   const { isOpen, setIsOpen } = useUiStore(
     useShallow((s: UiState) => ({
-      isOpen: s.isProjectDialogOpen,
-      setIsOpen: s.setIsProjectDialogOpen,
+      isOpen: s.isFlowsDialogOpen,
+      setIsOpen: s.setIsFlowsDialogOpen,
     })),
   );
 
-  const projects = useStore((state) => state.projects);
-  const [isProjectsLoading, setIsProjectsLoading] = useState(false);
-  const loadProjects = useStore((state) => state.loadProjectsMetadata);
-  // Load projects on mount
+  const { flows, loadFlowsMetadata, currentFlow, loadFlow, deleteFlow } =
+    useStore(useShallow(selector));
+  const [isFlowsLoading, setIsFlowsLoading] = useState(false);
+
+  // Load flows on mount
   useEffect(() => {
     try {
-      void loadProjects();
+      void loadFlowsMetadata();
     } finally {
-      setIsProjectsLoading(false);
+      setIsFlowsLoading(false);
     }
-  }, [loadProjects]);
+  }, [loadFlowsMetadata]);
 
-  // When current project is set to null, open the dialog and close it automatically if a current project is set
+  // When current flow is set to null, open the dialog and close it automatically if a current flow is set
   useEffect(() => {
-    if (currentProject === null) {
+    if (currentFlow === null) {
       setIsOpen(true);
     } else {
       setIsOpen(false);
     }
-  }, [setIsOpen, currentProject]);
+  }, [setIsOpen, currentFlow]);
 
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
   const [filterTerm, setFilterTerm] = useState<string>("");
 
-  const loadProject = useStore((state) => state.loadProject);
-  const onLoadProjectClick = () => {
-    if (selectedProject) {
-      void loadProject(selectedProject);
+  const onLoadFlowClick = () => {
+    if (selectedFlow) {
+      void loadFlow(selectedFlow);
     } else {
-      toast.error("No project selected");
+      toast.error("No flow selected");
     }
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      projectName: "",
+      flowName: "",
     },
   });
 
-  const createProject = useStore((state) => state.createProject);
-  const onCreateProject = async (values: z.infer<typeof formSchema>) => {
-    await createProject(values.projectName);
+  const createFlow = useStore((state) => state.createFlow);
+  const onCreateFlow = async (values: z.infer<typeof formSchema>) => {
+    await createFlow(values.flowName);
     form.reset();
   };
 
-  const deleteProject = useStore((state) => state.deleteProject);
-  const onDeleteProjectConfirm = async (id: string) => {
-    await deleteProject(id);
+  const onDeleteFlowConfirm = async (id: string) => {
+    await deleteFlow(id);
   };
 
   const onOpenChange = (open: boolean) => {
-    if (!open && currentProject === null) {
-      // Don't allow closing the dialog if there is no currentProject
+    if (!open && currentFlow === null) {
+      // Don't allow closing the dialog if there is no currentFlow
       return;
     }
     setIsOpen(open);
     if (open) {
-      // Load projects on open
+      // Load flows on open
       try {
-        void loadProjects();
+        void loadFlowsMetadata();
       } finally {
-        setIsProjectsLoading(false);
+        setIsFlowsLoading(false);
       }
     } else {
       form.reset();
-      setSelectedProject(null);
+      setSelectedFlow(null);
     }
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(filterTerm.toLowerCase()),
+  const filteredFlows = flows.filter((flow) =>
+    flow.name.toLowerCase().includes(filterTerm.toLowerCase()),
   );
 
   return (
@@ -142,7 +147,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         className="sm:max-w-[500px] p-0 overflow-hidden"
-        showCloseButton={currentProject !== null}
+        showCloseButton={currentFlow !== null}
       >
         <div className="flex flex-col">
           {" "}
@@ -150,47 +155,45 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
           <div className="p-6">
             {" "}
             <DialogHeader className="mb-4">
-              <DialogTitle>Select a Project to Open</DialogTitle>
-              <DialogDescription>Select a project to open</DialogDescription>
+              <DialogTitle>Select a Flow to Open</DialogTitle>
+              <DialogDescription>Select a flow to open</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <h4 className="mb-4 text-sm leading-none font-medium">
-                Projects
-              </h4>
+              <h4 className="mb-4 text-sm leading-none font-medium">Flows</h4>
               <FilterableScrollArea
                 className="h-72 rounded-md border dark:bg-input/30 "
                 filterTerm={filterTerm}
                 setFilterTerm={setFilterTerm}
                 placeholder="Filter"
               >
-                {isProjectsLoading ? (
+                {isFlowsLoading ? (
                   <>
                     <Skeleton />
                     <Skeleton />
                     <Skeleton />
                   </>
-                ) : filteredProjects.length > 0 ? (
-                  filteredProjects.map((project) => (
+                ) : filteredFlows.length > 0 ? (
+                  filteredFlows.map((flow) => (
                     <div
-                      key={project.id}
+                      key={flow.id}
                       className={cn(
                         "p-2 px-4 border-b cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
                         {
-                          "bg-secondary": selectedProject === project.id,
+                          "bg-secondary": selectedFlow === flow.id,
                         },
                       )}
                       onClick={() => {
-                        setSelectedProject(
-                          selectedProject == project.id ? null : project.id,
+                        setSelectedFlow(
+                          selectedFlow == flow.id ? null : flow.id,
                         );
                       }}
                       onDoubleClick={() => {
-                        // Double click on the project, load it directly
+                        // Double click on the flow, load it directly
                         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                        loadProject(project.id);
+                        loadFlow(flow.id);
                       }}
                     >
-                      {project.name}{" "}
+                      {flow.name}{" "}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -203,17 +206,17 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                            <AlertDialogTitle>Delete Flow</AlertDialogTitle>
                           </AlertDialogHeader>
                           <AlertDialogDescription>
-                            Are you sure you want to delete this project?
+                            Are you sure you want to delete this flow?
                           </AlertDialogDescription>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => {
                                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                                onDeleteProjectConfirm(project.id);
+                                onDeleteFlowConfirm(flow.id);
                               }}
                             >
                               Delete
@@ -225,7 +228,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                   ))
                 ) : (
                   <div className="text-center p-2 text-muted-foreground">
-                    No projects found.
+                    No flows found.
                   </div>
                 )}
               </FilterableScrollArea>{" "}
@@ -235,30 +238,28 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
               <Button
                 size="sm"
                 type="submit"
-                disabled={selectedProject === null}
-                onClick={onLoadProjectClick}
+                disabled={selectedFlow === null}
+                onClick={onLoadFlowClick}
               >
-                Open Project
+                Open Flow
               </Button>
             </div>
           </div>
           {/* Bottom Section  */}
           <div className="p-6">
             <DialogHeader className="mb-4">
-              <DialogTitle>Create a Project</DialogTitle>
-              <DialogDescription>
-                Enter a name for the project.
-              </DialogDescription>
+              <DialogTitle>Create a Flow</DialogTitle>
+              <DialogDescription>Enter a name for the flow.</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                onSubmit={form.handleSubmit(onCreateProject)}
+                onSubmit={form.handleSubmit(onCreateFlow)}
                 className="space-y-8"
               >
                 <FormField
                   control={form.control}
-                  name="projectName"
+                  name="flowName"
                   render={({ field }) => (
                     <FormItem>
                       <div className="grid gap-4 py-4">
@@ -284,7 +285,7 @@ export const ProjectDialog: React.FC<SelectProjectDialogProps> = ({
                     }
                     type="submit"
                   >
-                    Create Project
+                    Create Flow
                   </Button>
                 </div>
               </form>
