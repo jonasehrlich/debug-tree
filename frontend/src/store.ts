@@ -25,8 +25,8 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       nodes: [],
       edges: [],
-      currentProject: null,
-      projects: [],
+      currentFlow: null,
+      flows: [],
       hasUnsavedChanges: false,
       saveOngoing: false,
       editNodeData: null,
@@ -43,73 +43,71 @@ export const useStore = create<AppState>()(
       clearGitRevisions() {
         set({ gitRevisions: [] });
       },
-      createProject: async (name: string) => {
-        console.log(`Creating project ${name}`);
-        const { data, error } = await client.POST("/api/v1/projects", {
+      createFlow: async (name: string) => {
+        const { data, error } = await client.POST("/api/v1/flows", {
           body: { name: name },
         });
         if (data) {
-          // TODO: If current project is set, save it first. Or maybe save every time this dialog is opened
-          set({ currentProject: data.project });
+          // TODO: If current flow is set, save it first. Or maybe save every time this dialog is opened
+          set({ currentFlow: data.flow });
           const store = get();
 
           store.setNodes([]);
           store.setEdges([]);
-          toast.success(`Created Project ${data.project.name}`);
+          toast.success(`Created Flow ${data.flow.name}`);
           // setOpen(false);
         } else {
-          // TODO: set the error instead
-          toast.error(`Error creating project ${name}`, {
+          toast.error(`Error creating flow ${name}`, {
             description: error.message,
           });
         }
       },
-      deleteProject: async (id: string) => {
-        const { data, error } = await client.DELETE("/api/v1/projects/{id}", {
+      deleteFlow: async (id: string) => {
+        const { data, error } = await client.DELETE("/api/v1/flows/{id}", {
           params: { path: { id } },
         });
 
         if (data) {
-          await get().loadProjectsMetadata();
+          await get().loadFlowsMetadata();
         }
         if (error) {
-          toast.error(`Error deleting project ${id}`, {
+          toast.error(`Error deleting flow ${id}`, {
             description: error.message,
           });
         }
       },
-      loadProjectsMetadata: async () => {
-        const { data, error } = await client.GET("/api/v1/projects");
+      loadFlowsMetadata: async () => {
+        const { data, error } = await client.GET("/api/v1/flows");
         if (error) {
-          toast.error("Error loading projects", { description: error.message });
+          toast.error("Error loading flows", { description: error.message });
         }
         if (data) {
           set({
-            projects: data.projects,
+            flows: data.flows,
           });
         }
       },
-      loadProject: async (id: string) => {
-        const { data, error } = await client.GET("/api/v1/projects/{id}", {
+      loadFlow: async (id: string) => {
+        const { data, error } = await client.GET("/api/v1/flows/{id}", {
           params: { path: { id: id } },
         });
         if (error) {
-          toast.error("Error loading project", { description: error.message });
+          toast.error("Error loading flow", { description: error.message });
         }
         if (data) {
-          // The project has been loaded successfully, first set the metadata of the project that is currently loaded
+          // The flow has been loaded successfully, first set the metadata of the flow that is currently loaded
           set({
-            currentProject: { id: id, name: data.project.name },
+            currentFlow: { id: id, name: data.flow.name },
           });
 
           const store = get();
-          store.setNodes(data.project.reactflow.nodes as AppNode[]);
-          store.setEdges(data.project.reactflow.edges as Edge[]);
+          store.setNodes(data.flow.reactflow.nodes as AppNode[]);
+          store.setEdges(data.flow.reactflow.edges as Edge[]);
         }
       },
-      saveCurrentProject: async () => {
+      saveCurrentFlow: async () => {
         const store = get();
-        if (!store.currentProject) {
+        if (!store.currentFlow) {
           return;
         }
         if (!store.hasUnsavedChanges) {
@@ -117,19 +115,19 @@ export const useStore = create<AppState>()(
         }
         set({ saveOngoing: true });
 
-        const { error } = await client.POST("/api/v1/projects/{id}", {
+        const { error } = await client.POST("/api/v1/flows/{id}", {
           params: {
-            path: { id: store.currentProject.id },
+            path: { id: store.currentFlow.id },
           },
           body: {
-            project: {
-              name: store.currentProject.name,
+            flow: {
+              name: store.currentFlow.name,
               reactflow: { nodes: store.nodes, edges: store.edges },
             },
           },
         });
         if (error) {
-          toast.error(`Saving project ${store.currentProject.name} failed`, {
+          toast.error(`Saving flow ${store.currentFlow.name} failed`, {
             description: error.message,
           });
         } else {
@@ -138,10 +136,10 @@ export const useStore = create<AppState>()(
         }
         set({ saveOngoing: false });
       },
-      closeCurrentProject: async () => {
+      closeCurrentFlow: async () => {
         const store = get();
-        await store.saveCurrentProject();
-        set({ currentProject: null });
+        await store.saveCurrentFlow();
+        set({ currentFlow: null });
         store.setNodes([]);
         store.setEdges([]);
       },
@@ -227,7 +225,7 @@ export const useStore = create<AppState>()(
       },
     }),
     {
-      name: "debug-tree-flow-storage",
+      name: "debug-flow-flow-storage",
     },
   ),
 );
@@ -237,17 +235,17 @@ export const useUiStore = create<UiState>()(
     // @ts-expect-error: Keep for now, get will be required later
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (set, get) => ({
-      isProjectDialogOpen: false,
+      isFlowsDialogOpen: false,
       isMiniMapVisible: true,
       setIsMiniMapVisible: (isVisible) => {
         set({ isMiniMapVisible: isVisible });
       },
-      setIsProjectDialogOpen(isOpen) {
-        set({ isProjectDialogOpen: isOpen });
+      setIsFlowsDialogOpen(isOpen) {
+        set({ isFlowsDialogOpen: isOpen });
       },
     }),
     {
-      name: "debug-tree-ui-storage",
+      name: "debug-flow-ui-storage",
     },
   ),
 );
