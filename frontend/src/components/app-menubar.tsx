@@ -47,7 +47,8 @@ const projectSelector = (s: AppState) => ({
   hasUnsavedChanges: s.hasUnsavedChanges,
   closeCurrentProject: s.closeCurrentProject,
   saveCurrentProject: s.saveCurrentProject,
-  currentEdgeType: s.edges[0].type ?? "bezier",
+  currentEdgeType:
+    s.edges.length > 0 && s.edges[0].type ? s.edges[0].type : "bezier",
   setEdgeType: s.setEdgeType,
 });
 
