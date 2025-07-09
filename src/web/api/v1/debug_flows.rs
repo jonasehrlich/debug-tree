@@ -6,49 +6,49 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
-    project,
+    flow,
     web::{self, api},
 };
 
 pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
         .route(
-            "/projects",
-            routing::get(list_projects).post(create_project),
+            "/debug_flows",
+            routing::get(list_debug_flows).post(create_debug_flow),
         )
         .route(
-            "/projects/{id}",
-            routing::get(get_project)
-                .delete(delete_project)
-                .post(store_project),
+            "/debug_flows/{id}",
+            routing::get(get_debug_flow)
+                .delete(delete_debug_flow)
+                .post(store_debug_flow),
         )
 }
 
-/// API documentation for the projects endpoints.
+/// API documentation for the debug_flows endpoints.
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(list_projects, create_project, get_project, delete_project, store_project), tags((name = "Project Management", description="Project related endpoints")) )]
+#[openapi(paths(list_debug_flows, create_debug_flow, get_debug_flow, delete_debug_flow, store_debug_flow), tags((name = "DebugFlow Management", description="DebugFlow related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[derive(Serialize, ToSchema)]
-struct ListProjectsResponse {
-    projects: Vec<project::ProjectMetadata>,
+struct ListDebugFlowsResponse {
+    debug_flows: Vec<flow::DebugFlowMetadata>,
 }
-impl ListProjectsResponse {
+impl ListDebugFlowsResponse {
     pub fn new() -> Self {
-        ListProjectsResponse {
-            projects: Vec::new(),
+        ListDebugFlowsResponse {
+            debug_flows: Vec::new(),
         }
     }
 }
 
-impl<T> FromIterator<T> for ListProjectsResponse
+impl<T> FromIterator<T> for ListDebugFlowsResponse
 where
-    project::ProjectMetadata: From<T>,
+    flow::DebugFlowMetadata: From<T>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-        let mut resp = ListProjectsResponse::new();
+        let mut resp = ListDebugFlowsResponse::new();
         for item in iter {
-            resp.projects.push(item.into());
+            resp.debug_flows.push(item.into());
         }
         resp
     }
@@ -57,110 +57,110 @@ where
 #[utoipa::path(
     get,
     path = "",
-    description = "List all projects",
+    description = "List all debug trees",
     responses(
-        (status = http::StatusCode::OK, description = "List projects", body = ListProjectsResponse),
+        (status = http::StatusCode::OK, description = "List debug trees", body = ListDebugFlowsResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn list_projects(
+async fn list_debug_flows(
     State(app_state): State<web::AppState>,
-) -> api::Result<ListProjectsResponse> {
-    let projects = app_state
-        .project_dir()
+) -> api::Result<ListDebugFlowsResponse> {
+    let debug_flows = app_state
+        .debug_flow_dir()
         .metadatas()
         .map_err(|e| api::AppError::InternalServerError(e.to_string()))?;
-    Ok(Json(projects.collect::<ListProjectsResponse>()))
+    Ok(Json(debug_flows.collect::<ListDebugFlowsResponse>()))
 }
 
 #[derive(Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct CreateProjectRequest {
+struct CreateDebugFlowRequest {
     name: String,
 }
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct CreateProjectResponse {
-    project: project::ProjectMetadata,
+struct CreateDebugFlowResponse {
+    debug_flow: flow::DebugFlowMetadata,
 }
 
-impl CreateProjectResponse {
-    pub fn new(project: project::ProjectMetadata) -> Self {
-        Self { project }
+impl CreateDebugFlowResponse {
+    pub fn new(debug_flow: flow::DebugFlowMetadata) -> Self {
+        Self { debug_flow }
     }
 }
 
-impl TryFrom<project::Project> for CreateProjectResponse {
-    type Error = project::Error;
-    fn try_from(project: project::Project) -> Result<Self, project::Error> {
-        Ok(Self::new(project.try_into()?))
+impl TryFrom<flow::DebugFlow> for CreateDebugFlowResponse {
+    type Error = flow::Error;
+    fn try_from(debug_flow: flow::DebugFlow) -> Result<Self, flow::Error> {
+        Ok(Self::new(debug_flow.try_into()?))
     }
 }
 
 #[utoipa::path(
     post,
     path = "",
-    description = "Create a project",
+    description = "Create a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "Project created", body = CreateProjectResponse),
+        (status = http::StatusCode::OK, description = "Debug Flow created", body = CreateDebugFlowResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn create_project(
+async fn create_debug_flow(
     State(app_state): State<web::AppState>,
-    Json(new_project): Json<CreateProjectRequest>,
-) -> api::Result<CreateProjectResponse> {
-    let resp: CreateProjectResponse = app_state
-        .project_dir()
-        .create_project(&new_project.name, false)
+    Json(new_debug_flow): Json<CreateDebugFlowRequest>,
+) -> api::Result<CreateDebugFlowResponse> {
+    let resp: CreateDebugFlowResponse = app_state
+        .debug_flow_dir()
+        .create_debug_flow(&new_debug_flow.name, false)
         .map_err(|e| api::AppError::InternalServerError(e.to_string()))?
         .try_into()
-        .map_err(|e: project::Error| api::AppError::InternalServerError(e.to_string()))?;
+        .map_err(|e: flow::Error| api::AppError::InternalServerError(e.to_string()))?;
 
     Ok(Json(resp))
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct FullProjectRequestResponse {
-    project: project::ProjectData,
+struct FullDebugFlowRequestResponse {
+    debug_flow: flow::DebugFlowData,
 }
 
-impl FullProjectRequestResponse {
-    pub fn new(project: project::ProjectData) -> Self {
-        Self { project }
+impl FullDebugFlowRequestResponse {
+    pub fn new(debug_flow: flow::DebugFlowData) -> Self {
+        Self { debug_flow }
     }
 }
 
-impl From<project::ProjectData> for FullProjectRequestResponse {
-    fn from(value: project::ProjectData) -> Self {
+impl From<flow::DebugFlowData> for FullDebugFlowRequestResponse {
+    fn from(value: flow::DebugFlowData) -> Self {
         Self::new(value)
     }
 }
 
-impl From<&project::ProjectData> for FullProjectRequestResponse {
-    fn from(value: &project::ProjectData) -> Self {
+impl From<&flow::DebugFlowData> for FullDebugFlowRequestResponse {
+    fn from(value: &flow::DebugFlowData) -> Self {
         Self::new(value.clone())
     }
 }
 #[utoipa::path(
     get,
     path = "/{id}",
-    description = "Get a project",
+    description = "Get a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "Project is available", body = FullProjectRequestResponse),
+        (status = http::StatusCode::OK, description = "DebugFlow is available", body = FullDebugFlowRequestResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "File not found", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn get_project(
+async fn get_debug_flow(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
-) -> api::Result<FullProjectRequestResponse> {
-    let project = match app_state.project_dir().get_project_by_id(&id) {
+) -> api::Result<FullDebugFlowRequestResponse> {
+    let debug_flow = match app_state.debug_flow_dir().get_debug_flow_by_id(&id) {
         Ok(p) => p,
-        Err(project::Error::Io(_, io_err)) => match io_err.kind() {
+        Err(flow::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => {
                 return Err(api::AppError::NotFound(id));
             }
@@ -173,26 +173,26 @@ async fn get_project(
         Err(e) => return Err(api::AppError::InternalServerError(e.to_string())),
     };
 
-    Ok(Json(project.data().into()))
+    Ok(Json(debug_flow.data().into()))
 }
 
 #[utoipa::path(
     delete,
     path = "/{id}",
-    description = "Delete a project",
+    description = "Delete a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "Project is deleted", body = api::ApiStatusResponse),
+        (status = http::StatusCode::OK, description = "DebugFlow is deleted", body = api::ApiStatusResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "File not found", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn delete_project(
+async fn delete_debug_flow(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
 ) -> api::Result<api::ApiStatusResponse> {
-    match app_state.project_dir().delete_project_by_id(&id) {
+    match app_state.debug_flow_dir().delete_debug_flow_by_id(&id) {
         Ok(_) => Ok(Json(http::StatusCode::OK.into())),
-        Err(project::Error::Io(_, io_err)) => match io_err.kind() {
+        Err(flow::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => Err(api::AppError::NotFound(id)),
             _ => Err(api::AppError::InternalServerError(
                 io_err.kind().to_string(),
@@ -205,20 +205,20 @@ async fn delete_project(
 #[utoipa::path(
     post,
     path = "/{id}",
-    description = "Store a project",
+    description = "Store a debug flow",
     responses(
-        (status = http::StatusCode::OK, description = "Project is stored", body = api::ApiStatusResponse),
+        (status = http::StatusCode::OK, description = "Debug Flow is stored", body = api::ApiStatusResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn store_project(
+async fn store_debug_flow(
     State(app_state): State<web::AppState>,
     Path(id): Path<String>,
-    Json(new_project): Json<FullProjectRequestResponse>,
+    Json(new_debug_flow): Json<FullDebugFlowRequestResponse>,
 ) -> api::Result<api::ApiStatusResponse> {
-    match app_state.project_dir().save_project(&new_project.project) {
+    match app_state.debug_flow_dir().save_debug_flow(&new_debug_flow.debug_flow) {
         Ok(_) => Ok(Json(http::StatusCode::OK.into())),
-        Err(project::Error::Io(_, io_err)) => match io_err.kind() {
+        Err(flow::Error::Io(_, io_err)) => match io_err.kind() {
             io::ErrorKind::NotFound => Err(api::AppError::NotFound(id)),
             _ => Err(api::AppError::InternalServerError(
                 io_err.kind().to_string(),

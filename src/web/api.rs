@@ -112,7 +112,7 @@ pub(super) fn router() -> routing::Router<web::AppState> {
             (path = "/v1", api = v1::ApiDoc)
         ),
         info(
-            description = "API for the debug-tree project",
+            description = "API for the debug-flow project",
             license (name= "MIT", url = "https://mit-license.org/")
         )
     )]
@@ -124,12 +124,12 @@ pub mod v1 {
     use crate::web;
 
     mod git;
-    mod projects;
+    mod debug_flows;
 
     /// API documentation for the v1 endpoints.
     #[derive(utoipa::OpenApi)]
     #[openapi(nest(
-        (path = "/projects", api = projects::ApiDoc),
+        (path = "/debug_flows", api = debug_flows::ApiDoc),
         (path = "/git", api = git::ApiDoc)
     ))]
     pub(super) struct ApiDoc;
@@ -137,7 +137,7 @@ pub mod v1 {
     /// Get the router for the v1 API.
     pub(super) fn router() -> routing::Router<web::AppState> {
         routing::Router::new()
-            .merge(projects::router())
+            .merge(debug_flows::router())
             .nest("/git", git::router())
     }
 }

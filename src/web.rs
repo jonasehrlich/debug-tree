@@ -1,4 +1,4 @@
-use crate::project;
+use crate::flow;
 use axum::routing;
 #[cfg(not(debug_assertions))]
 use axum::{http, response::IntoResponse};
@@ -29,13 +29,13 @@ pub struct ApiDoc;
 /// Application state available in all request handlers
 #[derive(Clone)]
 struct AppState {
-    project_dir: project::ProjectDir,
+    debug_flow_dir: flow::DebugFlowDir,
     repo: Arc<Mutex<Option<git2::Repository>>>,
 }
 
 impl AppState {
-    pub fn new(project_dir: project::ProjectDir) -> Self {
-        let repo = match project_dir.path().parent() {
+    pub fn new(debug_flow_dir: flow::DebugFlowDir) -> Self {
+        let repo = match debug_flow_dir.path().parent() {
             Some(p) => match git2::Repository::open(p) {
                 Ok(repo) => Some(repo),
                 Err(_) => {
@@ -45,21 +45,21 @@ impl AppState {
             },
             None => {
                 log::warn!(
-                    "Could not get parent director of project dir '{}'",
-                    project_dir.path().display()
+                    "Could not get parent director of debug_flow dir '{}'",
+                    debug_flow_dir.path().display()
                 );
                 None
             }
         };
 
         AppState {
-            project_dir,
+            debug_flow_dir,
             repo: Arc::new(Mutex::new(repo)),
         }
     }
 
-    pub fn project_dir(&self) -> &project::ProjectDir {
-        &self.project_dir
+    pub fn debug_flow_dir(&self) -> &flow::DebugFlowDir {
+        &self.debug_flow_dir
     }
 
     pub fn repo(&self) -> &Arc<Mutex<Option<git2::Repository>>> {
@@ -71,9 +71,9 @@ pub async fn serve(
     host: &str,
     port: u16,
     frontend_proxy_port: u16,
-    project_dir: crate::project::ProjectDir,
+    debug_flow_dir: crate::flow::DebugFlowDir,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let app_state = AppState::new(project_dir);
+    let app_state = AppState::new(debug_flow_dir);
 
     let app = routing::Router::new()
         .nest("/api", api::router())

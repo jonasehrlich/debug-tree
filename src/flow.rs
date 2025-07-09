@@ -7,8 +7,8 @@ use utoipa::ToSchema;
 pub enum Error {
     #[error("Path '{0}' is not a directory.")]
     NotADirectory(path::PathBuf),
-    #[error("Project '{0}' exists already in project directory '{1}'.")]
-    ProjectExistsAlready(String, path::PathBuf),
+    #[error("Debug flow '{0}' exists already in directory '{1}'.")]
+    DebugFlowExistsAlready(String, path::PathBuf),
     #[error("I/O error")]
     Io(path::PathBuf, #[source] io::Error),
     #[error("Failed to read directory entry: {0}")]
@@ -23,28 +23,28 @@ impl fmt::Debug for Error {
         fmt::Display::fmt(self, f)
     }
 }
-/// Abstraction for a directory containing debug-tree projects
+/// Abstraction for a directory containing debug flows
 #[derive(Clone)]
-pub struct ProjectDir {
-    /// Path of the project directory
+pub struct DebugFlowDir {
+    /// Path of the debug flow directory
     path: path::PathBuf,
 }
 
-impl ProjectDir {
-    pub fn new(path: path::PathBuf) -> Result<ProjectDir, Error> {
-        let p = ProjectDir { path };
+impl DebugFlowDir {
+    pub fn new(path: path::PathBuf) -> Result<DebugFlowDir, Error> {
+        let p = DebugFlowDir { path };
         match p.create_if_not_exists() {
             Ok(()) => Ok(p),
             Err(e) => Err(e),
         }
     }
 
-    /// Get a reference to the path of the project dir
+    /// Get a reference to the path of the debug flow dir
     pub fn path(&self) -> &path::PathBuf {
         &self.path
     }
 
-    /// Create the project directory if it does not exist
+    /// Create the debug flow directory if it does not exist
     fn create_if_not_exists(&self) -> Result<(), Error> {
         // Check if the provided path is actually a directory
         if self.path.exists() {
@@ -59,62 +59,62 @@ impl ProjectDir {
         }
     }
 
-    /// Load of create a project in the project directory
-    pub fn load_or_create_project(&self, name: &str) -> Result<Project, Error> {
-        let mut project_path = self.path.clone();
-        project_path.push(ProjectData::file_name_from_project_name(name));
+    /// Load of create a debug flow in the storage directory
+    pub fn load_or_create_debug_flow(&self, name: &str) -> Result<DebugFlow, Error> {
+        let mut debug_flow_path = self.path.clone();
+        debug_flow_path.push(DebugFlowData::file_name_from_debug_flow_name(name));
 
-        if project_path.exists() {
-            Project::from_file(&project_path)
+        if debug_flow_path.exists() {
+            DebugFlow::from_file(&debug_flow_path)
         } else {
-            Project::from_project_dir_and_name(&self.path, name)
+            DebugFlow::from_debug_flow_dir_and_name(&self.path, name)
         }
     }
 
-    /// Create a project with a name and store it in the project directory
-    pub fn create_project(&self, name: &str, force: bool) -> Result<Project, Error> {
-        let mut project_path = self.path.clone();
-        project_path.push(ProjectData::file_name_from_project_name(name));
+    /// Create a debug flow with a name and store it in the debug flow directory
+    pub fn create_debug_flow(&self, name: &str, force: bool) -> Result<DebugFlow, Error> {
+        let mut debug_flow_path = self.path.clone();
+        debug_flow_path.push(DebugFlowData::file_name_from_debug_flow_name(name));
 
-        match !project_path.is_file() || force {
+        match !debug_flow_path.is_file() || force {
             true => {
-                let p = Project::new(&self.path, name);
+                let p = DebugFlow::new(&self.path, name);
                 p.to_file()?;
                 Ok(p)
             }
-            false => Err(Error::ProjectExistsAlready(
+            false => Err(Error::DebugFlowExistsAlready(
                 name.to_string(),
                 self.path.clone(),
             )),
         }
     }
 
-    /// Load a project from the project directory
-    pub fn get_project_by_name(&self, name: &str) -> Result<Project, Error> {
-        Project::from_project_dir_and_name(&self.path, name)
+    /// Load a debug flow from the storage directory
+    pub fn get_debug_flow_by_name(&self, name: &str) -> Result<DebugFlow, Error> {
+        DebugFlow::from_debug_flow_dir_and_name(&self.path, name)
     }
 
-    /// Load a project from the project directory
-    pub fn get_project_by_id(&self, id: &str) -> Result<Project, Error> {
-        Project::from_project_dir_and_id(&self.path, id)
+    /// Load a debug flow from the storage directory
+    pub fn get_debug_flow_by_id(&self, id: &str) -> Result<DebugFlow, Error> {
+        DebugFlow::from_debug_flow_dir_and_id(&self.path, id)
     }
 
-    pub fn delete_project_by_id(&self, id: &str) -> Result<(), Error> {
+    pub fn delete_debug_flow_by_id(&self, id: &str) -> Result<(), Error> {
         let mut p = self.path.clone();
-        p.push(ProjectData::file_name_from_id(id));
+        p.push(DebugFlowData::file_name_from_id(id));
         fs::remove_file(p)?;
         Ok(())
     }
 
-    /// Get the metadata objects for all projects in the project directory
-    pub fn metadatas(&self) -> Result<impl Iterator<Item = ProjectMetadata> + '_, Error> {
+    /// Get the metadata objects for all debug flows in the debug flow directory
+    pub fn metadatas(&self) -> Result<impl Iterator<Item = DebugFlowMetadata> + '_, Error> {
         Ok(self
-            .projects()?
-            .filter_map(|project| project.try_into().ok()))
+            .debug_flow()?
+            .filter_map(|flow| flow.try_into().ok()))
     }
 
-    /// Get an iterator over all projects in the project directory
-    pub fn projects(&self) -> Result<impl Iterator<Item = Project> + '_, Error> {
+    /// Get an iterator over all debug flows in the debug flow directory
+    pub fn debug_flow(&self) -> Result<impl Iterator<Item = DebugFlow> + '_, Error> {
         Ok(fs::read_dir(self.path.clone())
             .map_err(|e| Error::Io(self.path.clone(), e))? // Handle error during initial read_dir
             .filter_map(|entry_result| {
@@ -123,10 +123,10 @@ impl ProjectDir {
                     Ok(entry) => {
                         let path = entry.path();
                         if path.is_file() && path.extension() == Some(ffi::OsStr::new("json")) {
-                            match Project::from_file(&path) {
-                                Ok(project) => Some(project),
+                            match DebugFlow::from_file(&path) {
+                                Ok(flow) => Some(flow),
                                 Err(e) => {
-                                    log::warn!("Error reading project from '{e}'");
+                                    log::warn!("Error reading debug flow from '{e}'");
                                     None // Propagate error from previous filter_map
                                 }
                             }
@@ -143,11 +143,11 @@ impl ProjectDir {
             }))
     }
 
-    /// Save a project to the project directory
-    pub fn save_project(&self, project: &ProjectData) -> Result<(), Error> {
+    /// Save a debug flow to the debug flow directory
+    pub fn save_debug_flow(&self, debug_flow: &DebugFlowData) -> Result<(), Error> {
         let mut p = self.path.clone();
-        p.push(ProjectData::file_name_from_project_name(&project.name));
-        project.to_file(&p)?;
+        p.push(DebugFlowData::file_name_from_debug_flow_name(&debug_flow.name));
+        debug_flow.to_file(&p)?;
         Ok(())
     }
 }
@@ -172,52 +172,52 @@ impl ReactFlowState {
 
 #[derive(Serialize, Deserialize, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ProjectData {
-    /// Name of the project
+pub struct DebugFlowData {
+    /// Name of the debug flow
     name: String,
     /// Representation of the reactflow state
     reactflow: ReactFlowState,
 }
 
-impl ProjectData {
+impl DebugFlowData {
     pub fn new(name: &str) -> Self {
-        ProjectData {
+        DebugFlowData {
             name: name.to_string(),
             reactflow: ReactFlowState::new(),
         }
     }
 
-    /// Get the ID of the project
+    /// Get the ID of the debug flow
     pub fn id(&self) -> String {
         utils::to_kebab_case(self.name.as_str())
     }
 
-    /// Get the name of the project
+    /// Get the name of the debug flow
     pub fn name(&self) -> String {
         self.name.clone()
     }
 
-    /// Store the project data to a file
+    /// Store the debug flow data to a file
     pub fn to_file(&self, path: &path::PathBuf) -> std::result::Result<(), Error> {
         let json_content = serde_json::to_string(self)?;
         std::fs::write(path, json_content)?;
         Ok(())
     }
 
-    /// Get the file name from the project name
-    pub fn file_name_from_project_name(name: &str) -> path::PathBuf {
-        ProjectData::file_name_from_id(utils::to_kebab_case(name).as_str())
+    /// Get the file name from the debug flow name
+    pub fn file_name_from_debug_flow_name(name: &str) -> path::PathBuf {
+        DebugFlowData::file_name_from_id(utils::to_kebab_case(name).as_str())
     }
 
-    /// Get the file name from the project ID
+    /// Get the file name from the debug flow ID
     pub fn file_name_from_id(id: &str) -> path::PathBuf {
         let mut p = path::PathBuf::from(id);
         p.set_extension("json");
         p
     }
 
-    /// Create project data from a file
-    pub fn from_file(path: &path::PathBuf) -> Result<ProjectData, Error> {
+    /// Create debug flow data from a file
+    pub fn from_file(path: &path::PathBuf) -> Result<DebugFlowData, Error> {
         let file_content = std::fs::read_to_string(path)?;
         serde_json::from_str(&file_content).map_err(Error::Json)
     }
@@ -233,49 +233,49 @@ impl ProjectData {
     }
 }
 
-pub struct Project {
-    /// Path of the project
+pub struct DebugFlow {
+    /// Path of the debug flow
     path: path::PathBuf,
     /// Project data
-    data: ProjectData,
+    data: DebugFlowData,
 }
 
-impl Project {
-    pub fn new(project_dir: &path::Path, name: &str) -> Self {
-        let mut path = project_dir.to_path_buf();
-        path.push(ProjectData::file_name_from_project_name(name));
-        Project {
+impl DebugFlow {
+    pub fn new(debug_flow_dir: &path::Path, name: &str) -> Self {
+        let mut path = debug_flow_dir.to_path_buf();
+        path.push(DebugFlowData::file_name_from_debug_flow_name(name));
+        DebugFlow {
             path,
-            data: ProjectData::new(name),
+            data: DebugFlowData::new(name),
         }
     }
 
-    /// Create a new object from a project directory and project name
+    /// Create a new object from a debug flow directory and debug flow name
     /// NOTE:
-    pub fn from_project_dir_and_name(project_dir: &path::Path, name: &str) -> Result<Self, Error> {
-        let mut path = project_dir.to_path_buf();
-        path.push(ProjectData::file_name_from_project_name(name));
+    pub fn from_debug_flow_dir_and_name(debug_flow_dir: &path::Path, name: &str) -> Result<Self, Error> {
+        let mut path = debug_flow_dir.to_path_buf();
+        path.push(DebugFlowData::file_name_from_debug_flow_name(name));
 
-        Ok(Project {
+        Ok(DebugFlow {
             path: path.clone(),
-            data: ProjectData::from_file(&path)?,
+            data: DebugFlowData::from_file(&path)?,
         })
     }
 
-    pub fn from_project_dir_and_id(project_dir: &path::Path, id: &str) -> Result<Self, Error> {
-        let mut path = project_dir.to_path_buf();
-        path.push(ProjectData::file_name_from_id(id));
+    pub fn from_debug_flow_dir_and_id(debug_flow_dir: &path::Path, id: &str) -> Result<Self, Error> {
+        let mut path = debug_flow_dir.to_path_buf();
+        path.push(DebugFlowData::file_name_from_id(id));
 
-        Ok(Project {
+        Ok(DebugFlow {
             path: path.clone(),
-            data: ProjectData::from_file(&path)?,
+            data: DebugFlowData::from_file(&path)?,
         })
     }
 
-    pub fn from_file(path: &path::PathBuf) -> Result<Project, Error> {
-        Ok(Project {
+    pub fn from_file(path: &path::PathBuf) -> Result<DebugFlow, Error> {
+        Ok(DebugFlow {
             path: path.clone(),
-            data: ProjectData::from_file(path)?,
+            data: DebugFlowData::from_file(path)?,
         })
     }
 
@@ -290,7 +290,7 @@ impl Project {
         self.data.to_file(&self.path)
     }
 
-    pub fn data(&self) -> &ProjectData {
+    pub fn data(&self) -> &DebugFlowData {
         &self.data
     }
 
@@ -309,25 +309,25 @@ impl Project {
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct ProjectMetadata {
-    /// ID of the project
+pub struct DebugFlowMetadata {
+    /// ID of the debug flow
     id: String,
-    /// Name of the project
+    /// Name of the debug flow
     name: String,
     /// Last modified date
     last_modified_date: chrono::DateTime<chrono::Utc>,
-    /// Number of nodes in the project
+    /// Number of nodes in the debug flow
     num_nodes: usize,
-    /// Number of edges in the project
+    /// Number of edges in the debug flow
     num_edges: usize,
 }
 
-impl TryFrom<Project> for ProjectMetadata {
+impl TryFrom<DebugFlow> for DebugFlowMetadata {
     type Error = Error;
 
-    fn try_from(p: Project) -> Result<Self, Error> {
+    fn try_from(p: DebugFlow) -> Result<Self, Error> {
         let accessed = p.file_metadata()?.accessed()?;
-        Ok(ProjectMetadata {
+        Ok(DebugFlowMetadata {
             id: p.id(),
             name: p.name(),
             last_modified_date: accessed.into(),
@@ -344,7 +344,7 @@ mod tests {
     #[test]
     fn test_file_name() {
         assert_eq!(
-            ProjectData::file_name_from_project_name("HELLO WORLD"),
+            DebugFlowData::file_name_from_debug_flow_name("HELLO WORLD"),
             path::Path::new("hello-world.json")
         );
     }
