@@ -23,7 +23,7 @@ export interface FlowIdAndName {
   name: string;
 }
 
-export interface EditNodeData<
+interface EditNodeData<
   NodeType extends string,
   NodeDataType extends Record<string, unknown>,
 > {
@@ -31,6 +31,10 @@ export interface EditNodeData<
   type: NodeType;
   data: NodeDataType;
 }
+
+export type EditAppNodeData =
+  | EditNodeData<"actionNode", ActionNodeData>
+  | EditNodeData<"statusNode", StatusNodeData>;
 
 export interface AppState {
   nodes: AppNode[];
@@ -42,10 +46,7 @@ export interface AppState {
   // Whether saving to the API is currently ongoing
   saveOngoing: boolean;
   // A node that's currently being edited, set it through
-  editNodeData:
-    | EditNodeData<"actionNode", ActionNodeData>
-    | EditNodeData<"statusNode", StatusNodeData>
-    | null;
+  editNodeData: EditAppNodeData | null;
   // Array of revisions to use for a diff
   gitRevisions: string[];
   addGitRevision: (rev: string) => void;
@@ -70,18 +71,9 @@ export interface AppState {
   setNodes: (nodes: AppNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   updateStatusNodeState: (nodeId: string, state: StatusNodeState) => void;
-  editNode: (
-    data:
-      | EditNodeData<"actionNode", ActionNodeData>
-      | EditNodeData<"statusNode", StatusNodeData>,
-  ) => void;
+  editNode: (data: EditAppNodeData) => void;
   // Set the node data to be edited
-  setEditNodeData: (
-    data:
-      | EditNodeData<"actionNode", ActionNodeData>
-      | EditNodeData<"statusNode", StatusNodeData>
-      | null,
-  ) => void;
+  setEditNodeData: (data: EditAppNodeData | null) => void;
 }
 
 export interface UiState {

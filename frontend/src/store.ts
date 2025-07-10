@@ -8,13 +8,8 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { client } from "./client";
-import type {
-  ActionNodeData,
-  AppNode,
-  StatusNode,
-  StatusNodeData,
-} from "./types/nodes";
-import { type AppState, type EditNodeData, type UiState } from "./types/state";
+import type { AppNode, StatusNode } from "./types/nodes";
+import { type AppState, type UiState } from "./types/state";
 
 function isStatusNode(node: AppNode): node is StatusNode {
   return node.type == "statusNode";
@@ -195,11 +190,7 @@ export const useStore = create<AppState>()(
         });
         return null;
       },
-      editNode: (
-        data:
-          | EditNodeData<"actionNode", ActionNodeData>
-          | EditNodeData<"statusNode", StatusNodeData>,
-      ) => {
+      editNode: (data) => {
         set({
           nodes: get().nodes.map((node) => {
             if (node.id === data.id) {

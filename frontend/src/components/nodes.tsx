@@ -2,10 +2,9 @@ import { BaseHandle } from "@/components/base-handle";
 import { BaseNode } from "@/components/base-node";
 import {
   NodeHeader,
-  NodeHeaderAction,
   NodeHeaderActions,
-  NodeHeaderDeleteAction,
   NodeHeaderIcon,
+  NodeHeaderMenuAction,
   NodeHeaderTitle,
 } from "@/components/node-header";
 import { useStore } from "@/store";
@@ -14,58 +13,75 @@ import {
   type StatusNodeState,
   type StatusNode as StatusNodeType,
 } from "@/types/nodes";
-import type { AppState } from "@/types/state";
-import { Position, type NodeProps } from "@xyflow/react";
-import { ChartLine, Pencil, Rocket } from "lucide-react";
-import { memo } from "react";
+import type { AppState, EditAppNodeData } from "@/types/state";
+import { Position, useReactFlow, type NodeProps } from "@xyflow/react";
+import {
+  ChartLine,
+  EllipsisVertical,
+  Pencil,
+  Rocket,
+  Trash,
+} from "lucide-react";
+import { memo, useCallback, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { GitRevision } from "./git-revision";
 import { IconSelector } from "./icon-selector";
 import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
+import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
 
-interface NodeHeaderEditActionProps {
-  onClick: () => void;
-}
+const AppNodeHeaderMenuAction = ({ id, type, data }: EditAppNodeData) => {
+  const { setEditNodeData } = useStore(useShallow(selector));
+  const { setNodes } = useReactFlow();
 
-export const NodeHeaderEditAction = ({
-  onClick,
-}: NodeHeaderEditActionProps) => {
+  const deleteNode = useCallback(() => {
+    setNodes((prevNodes) => prevNodes.filter((node) => node.id !== id));
+  }, [id, setNodes]);
+
+  const ref = useRef<HTMLButtonElement>(null);
   return (
-    <NodeHeaderAction
-      onClick={onClick}
-      variant="ghost"
-      label="Edit node"
-      className="cursor-pointer"
-    >
-      <Pencil />
-    </NodeHeaderAction>
+    <NodeHeaderMenuAction
+      ref={ref}
+      label="App Node Menu"
+      trigger={<EllipsisVertical />}
+      children={
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onSelect={() => {
+              setEditNodeData({
+                id: id,
+                type: type,
+                data: data,
+              } as EditAppNodeData);
+            }}
+          >
+            <Pencil /> Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={deleteNode}>
+            <Trash /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      }
+    ></NodeHeaderMenuAction>
   );
 };
 
-NodeHeaderEditAction.displayName = "NodeHeaderEditAction";
+const selector = (s: AppState) => ({
+  setEditNodeData: s.setEditNodeData,
+  updateNodeState: s.updateStatusNodeState,
+  addGitRevision: s.addGitRevision,
+});
 
 export const ActionNode = memo(
-  ({ id, type, data, selected }: NodeProps<ActionNodeType>) => {
-    const setEditNodeData = useStore((state) => state.setEditNodeData);
-
-    const setThisNodeAsEditNodeData = () => {
-      setEditNodeData({ id: id, type: type, data: data });
-    };
+  ({ id, data, selected }: NodeProps<ActionNodeType>) => {
     return (
-      <BaseNode
-        selected={selected}
-        onDoubleClick={setThisNodeAsEditNodeData}
-        className="px-3 py-2 max-w-md"
-      >
+      <BaseNode selected={selected} className="px-3 py-2 max-w-md">
         <NodeHeader className="-mx-3 -mt-2 border-b">
           <NodeHeaderIcon>
             <Rocket />
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
-            <NodeHeaderEditAction onClick={setThisNodeAsEditNodeData} />
-
-            <NodeHeaderDeleteAction />
+            <AppNodeHeaderMenuAction id={id} type={"actionNode"} data={data} />
           </NodeHeaderActions>
         </NodeHeader>
         <BaseHandle id="target-1" type="target" position={Position.Left} />
@@ -77,21 +93,10 @@ export const ActionNode = memo(
   },
 );
 
-const selector = (s: AppState) => ({
-  updateNodeState: s.updateStatusNodeState,
-  setEditNodeData: s.setEditNodeData,
-  addGitRevision: s.addGitRevision,
-});
-
 export const StatusNode = memo(
-  ({ id, data, type, selected }: NodeProps<StatusNodeType>) => {
-    const { setEditNodeData, updateNodeState, addGitRevision } = useStore(
-      useShallow(selector),
-    );
+  ({ id, data, selected }: NodeProps<StatusNodeType>) => {
+    const { updateNodeState, addGitRevision } = useStore(useShallow(selector));
 
-    const setThisNodeAsEditNodeData = () => {
-      setEditNodeData({ id: id, type: type, data: data });
-    };
     return (
       <BaseNode selected={selected} className="px-3 py-2 max-w-md">
         <NodeHeader className="-mx-3 -mt-2 border-b">
@@ -109,8 +114,7 @@ export const StatusNode = memo(
               iconChoices={statusNodeIconOptions}
               ariaLabel="Select node state"
             />
-            <NodeHeaderEditAction onClick={setThisNodeAsEditNodeData} />
-            <NodeHeaderDeleteAction />
+            <AppNodeHeaderMenuAction id={id} type={"statusNode"} data={data} />
           </NodeHeaderActions>
         </NodeHeader>
         <BaseHandle id="target-1" type="target" position={Position.Left} />
