@@ -7,9 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn, getNodeId } from "@/lib/utils";
 import { useStore } from "@/store";
-import type { ActionNode, StatusNode } from "@/types/nodes";
 import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
@@ -75,43 +74,31 @@ export const CreateNodeDialog = () => {
       setIsOpen(true);
     } else {
       setIsOpen(false);
-      // form.reset({ state: "unknown" });
       form.reset();
     }
   }, [pendingNode, form]);
 
-  // const editNode = useStore((state) => state.editNode);
-  // const setEditNodeData = useStore((state) => state.setEditNodeData);
-
   const { addNodes, addEdges, screenToFlowPosition } = useReactFlow();
 
+  if (pendingNode === null) {
+    return null;
+  }
+
   const submitForm = (values: z.infer<typeof formSchema>) => {
-    if (pendingNode?.type === "actionNode") {
-      const newNode: ActionNode = {
-        id: `action-node-${crypto.randomUUID()}`,
-        type: "actionNode",
-        position: screenToFlowPosition(pendingNode.eventScreenPosition),
-        data: {
-          title: values.title,
-          description: values.description ?? "",
-        },
-      };
-      addNodes(newNode);
-      if (pendingNode.fromNodeId) {
-        addEdges({
-          id: `edge-${crypto.randomUUID()}`,
-          source: pendingNode.fromNodeId,
-          target: newNode.id,
-        });
-      }
-    } else if (pendingNode?.type === "statusNode") {
-      const newNode: StatusNode = {
-        id: `status-node-${crypto.randomUUID()}`,
-        type: "statusNode",
-        position: screenToFlowPosition(pendingNode.eventScreenPosition),
-        data: {
-          title: values.title,
-          description: values.description ?? "",
+    const node = {
+      id: getNodeId(pendingNode.type),
+      type: pendingNode.type,
+      position: screenToFlowPosition(pendingNode.eventScreenPosition),
+      data: {
+        title: values.title,
+        description: values.description ?? "",
+      },
+    };
+
+    if (pendingNode.type === "statusNode") {
+      node.data = {
+        ...node.data,
+        ...{
           state: values.state ?? "unknown",
           git: {
             rev: values.gitRev ?? "",
@@ -119,21 +106,18 @@ export const CreateNodeDialog = () => {
           hasTargetHandle: nodes.length > 0,
         },
       };
-      addNodes(newNode);
-      if (pendingNode.fromNodeId) {
-        addEdges({
-          id: `edge-${crypto.randomUUID()}`,
-          source: pendingNode.fromNodeId,
-          target: newNode.id,
-        });
-      }
+    }
+    addNodes(node);
+    if (pendingNode.fromNodeId) {
+      addEdges({
+        id: `edge-${crypto.randomUUID()}`,
+        source: pendingNode.fromNodeId,
+        target: node.id,
+      });
     }
     setPendingNode(null);
   };
 
-  if (pendingNode === null) {
-    return <div></div>;
-  }
   return (
     <Dialog
       open={isOpen}
