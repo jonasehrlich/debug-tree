@@ -128,13 +128,6 @@ impl DiffFile {
     ) -> Option<DiffFile> {
         let oid = diff_file.id();
         if oid.is_zero() {
-            log::warn!(
-                "OID is zero '{:?}'",
-                diff_file
-                    .path()
-                    .map(|p| { p.to_str().unwrap_or("invalid UTF-8 in path") })
-                    .unwrap_or("unknown-path")
-            );
             return None;
         }
 
@@ -299,12 +292,9 @@ fn get_tree_for_revision<'repo>(
     repo: &'repo git2::Repository,
     rev: &str,
 ) -> Result<git2::Tree<'repo>, api::AppError> {
-    match get_commit_by_prefix(repo, rev)?.tree() {
-        Ok(t) => Ok(t),
-        Err(_) => Err(api::AppError::InternalServerError(
-            format!("Rev {rev} is not a tree").to_string(),
-        )),
-    }
+    get_commit_by_prefix(repo, rev)?.tree().map_err(|_| {
+        api::AppError::InternalServerError(format!("Rev {rev} is not a tree").to_string())
+    })
 }
 
 #[utoipa::path(
