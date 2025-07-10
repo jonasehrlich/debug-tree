@@ -44,17 +44,17 @@ export const useStore = create<AppState>()(
         if (data) {
           // TODO: If current flow is set, save it first. Or maybe save every time this dialog is opened
           set({ currentFlow: data.flow });
-          const store = get();
 
+          const store = get();
           store.setNodes([]);
           store.setEdges([]);
           toast.success(`Created Flow ${data.flow.name}`);
-          // setOpen(false);
-        } else {
-          toast.error(`Error creating flow ${name}`, {
-            description: error.message,
-          });
+          return true;
         }
+        toast.error(`Error creating flow ${name}`, {
+          description: error.message,
+        });
+        return false;
       },
       deleteFlow: async (id: string) => {
         const { data, error } = await client.DELETE("/api/v1/flows/{id}", {

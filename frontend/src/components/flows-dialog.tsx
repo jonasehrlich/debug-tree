@@ -132,20 +132,24 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
       !("current" in reactflowRef) ||
       !reactflowRef.current
     ) {
-      toast.error("No reactflow ref");
+      toast.error("No reactflow ref", {
+        description:
+          "Cannot create flow because positions for initial node is unknown",
+      });
       return;
     }
-    await createFlow(values.flowName);
-    const bounds = reactflowRef.current.getBoundingClientRect();
+    if (await createFlow(values.flowName)) {
+      const bounds = reactflowRef.current.getBoundingClientRect();
 
-    setPendingNode({
-      type: "statusNode",
-      eventScreenPosition: screenToFlowPosition({
-        x: bounds.x + bounds.width / 2,
-        y: bounds.y + bounds.height / 2,
-      }),
-    });
-    form.reset();
+      setPendingNode({
+        type: "statusNode",
+        eventScreenPosition: screenToFlowPosition({
+          x: bounds.x + bounds.width / 2,
+          y: bounds.y + bounds.height / 2,
+        }),
+      });
+      form.reset();
+    }
   };
 
   const onDeleteFlowConfirm = async (id: string) => {

@@ -66,8 +66,9 @@ export interface AppState {
    * @description After successful creation of the flow, it will call {@link setNodes}, {@link setEdges}
    * and set {@link currentFlow}
    * @param name - Name of the new flow
+   * @returns Whether the flow was created successfully
    */
-  createFlow: (name: string) => Promise<void>;
+  createFlow: (name: string) => Promise<boolean>;
   /**
    * Delete a flow on the server through the API and reload the list of available flows
    * @param id - ID of the flow to delete
