@@ -75,12 +75,13 @@ pub async fn serve(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let app_state = AppState::new(flows_dir);
 
+    let rapidoc_path = "/api-docs";
     let app = routing::Router::new()
         .nest("/api", api::router())
         .with_state(app_state)
         .merge(
             utoipa_rapidoc::RapiDoc::with_openapi("/api-docs/openapi.json", ApiDoc::openapi())
-                .path("/api-docs"),
+                .path(rapidoc_path),
         )
         .merge(frontend_router(frontend_proxy_port));
 
@@ -90,6 +91,11 @@ pub async fn serve(
     log::info!(
         "Server running on http://{}",
         listener.local_addr().unwrap()
+    );
+    log::info!(
+        "API docs available on http://{}{}",
+        listener.local_addr().unwrap(),
+        rapidoc_path
     );
     axum::serve(listener, app)
         // .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))

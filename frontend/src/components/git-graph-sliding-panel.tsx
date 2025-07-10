@@ -4,10 +4,13 @@ import type { components } from "@/types/api";
 import type { AppState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
+import { GitCompareArrows } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { GitDiffView } from "./git-diff-view";
 import { SlidingPanel } from "./sliding-panel";
+import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 interface GitGraphSlidingPanelProps {
@@ -19,13 +22,18 @@ const selector = (s: AppState) => ({
   gitRevisions: s.gitRevisions,
 });
 
+interface GitGraphData {
+  commits: components["schemas"]["Commit"][];
+  diffs: components["schemas"]["Diff"][];
+}
+
 export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
   isOpen,
   onClose,
 }) => {
   const { gitRevisions } = useStore(useShallow(selector));
 
-  const [data, setData] = useState<components["schemas"]["Commit"][]>([]);
+  const [data, setData] = useState<GitGraphData>();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,7 +49,10 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
           },
         })
         .then((response) => {
-          setData(response.data?.commits ?? []);
+          setData({
+            commits: response.data?.commits ?? [],
+            diffs: response.data?.diffs ?? [],
+          });
           setLoading(false);
         })
         .catch((error: unknown) => {
@@ -65,8 +76,10 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
   const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
+
+  const [gitDiffIsVisible, setGitDiffIsVisible] = useState(false);
   return (
-    <SlidingPanel title="Git Tree" isOpen={isOpen} onClose={onClose}>
+    <SlidingPanel isOpen={isOpen} onClose={onClose}>
       <div>
         {loading ? (
           <div className="border-b py-4">
@@ -74,60 +87,86 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
             <Skeleton className="h-4 w-[200px]" />
           </div>
         ) : (
-          data.map((commit, index) => {
-            return (
-              <div key={index} className="border-b font-mono">
-                <button
-                  onClick={() => {
-                    toggle(index);
-                  }}
-                  className={`w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
-                }`}
-                >
-                  <div>
-                    <span className="font-bold pr-2">
-                      {commit.id.slice(0, 7)}
-                    </span>
-                    {commit.summary}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {commit.author.name} •{" "}
-                    {formatDistanceToNow(commit.time, { addSuffix: true })}
-                  </div>
-                </button>
-                <AnimatePresence initial={false}>
-                  {openIndex === index && (
-                    <motion.div
-                      key="content"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.1, ease: "easeInOut" }}
-                      className="overflow-hidden p-4 text-sm text-muted-foreground"
-                    >
-                      {commit.body !== "" && <p>{commit.body}</p>}
-                      <p>
-                        <strong>Date:</strong>{" "}
-                        {new Date(commit.time).toLocaleString()}
-                      </p>
-                      <p>
-                        <strong>Author:</strong> {commit.author.name}{" "}
-                        {commit.author.email && (
-                          <span> {commit.author.email}</span>
+          <div className="flex">
+            <GitDiffView
+              isVisible={gitDiffIsVisible}
+              baseRev={gitRevisions[0]}
+              headRev={gitRevisions[1] ?? ""}
+              diffs={data?.diffs ?? []}
+              className="h-screen flex-col flex mr-4"
+            />
+            {/* sliding panel right column */}
+            <div className="flex-none h-screen">
+              <h2 className="text-lg font-semibold mb-4">Git Tree</h2>
+              <Button
+                className="cursor-pointer"
+                onClick={() => {
+                  setGitDiffIsVisible(!gitDiffIsVisible);
+                }}
+              >
+                <GitCompareArrows />
+                {gitDiffIsVisible ? "Hide Diff" : "Show Diff"}
+              </Button>
+              <div className="h-screen flex-1 overflow-y-auto">
+                {data?.commits.map((commit, index) => {
+                  return (
+                    <div key={index} className="border-b font-mono ">
+                      <button
+                        onClick={() => {
+                          toggle(index);
+                        }}
+                        className="w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
+                      >
+                        <div>
+                          <span className="font-bold pr-2">
+                            {commit.id.slice(0, 7)}
+                          </span>
+                          {commit.summary}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {commit.author.name} •{" "}
+                          {formatDistanceToNow(commit.time, {
+                            addSuffix: true,
+                          })}
+                        </div>
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {openIndex === index && (
+                          <motion.div
+                            key="content"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.1, ease: "easeInOut" }}
+                            className="overflow-hidden p-4 text-sm text-muted-foreground"
+                          >
+                            {commit.body !== "" && <p>{commit.body}</p>}
+                            <p>
+                              <strong>Date:</strong>{" "}
+                              {new Date(commit.time).toLocaleString()}
+                            </p>
+                            <p>
+                              <strong>Author:</strong> {commit.author.name}{" "}
+                              {commit.author.email && (
+                                <span> {commit.author.email}</span>
+                              )}
+                            </p>
+                            <p>
+                              <strong>Committer:</strong>{" "}
+                              {commit.committer.name}{" "}
+                              {commit.author.email && (
+                                <span> {commit.committer.email}</span>
+                              )}
+                            </p>
+                          </motion.div>
                         )}
-                      </p>
-                      <p>
-                        <strong>Committer:</strong> {commit.committer.name}{" "}
-                        {commit.author.email && (
-                          <span> {commit.committer.email}</span>
-                        )}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })
+            </div>
+          </div>
         )}
       </div>
     </SlidingPanel>
