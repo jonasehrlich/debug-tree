@@ -20,6 +20,8 @@ export type StatusNodeData = {
   state: StatusNodeState;
   description: string;
   git: GitMetadata;
+  /// If set to true, the node gets a target handle, this is set for the initial node in a flow
+  hasTargetHandle: boolean;
   // TODO: Add ticket reference
 };
 

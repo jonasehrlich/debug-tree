@@ -88,6 +88,7 @@ export const EditNodeDialog = () => {
           git: {
             rev: values.gitRev ?? "",
           },
+          hasTargetHandle: currentEditNode.data.hasTargetHandle,
         },
       });
     } else if (currentEditNode?.type === "actionNode") {

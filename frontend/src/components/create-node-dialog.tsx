@@ -116,6 +116,7 @@ export const CreateNodeDialog = () => {
           git: {
             rev: values.gitRev ?? "",
           },
+          hasTargetHandle: nodes.length > 0,
         },
       };
       addNodes(newNode);
