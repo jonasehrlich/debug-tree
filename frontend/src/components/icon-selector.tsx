@@ -5,7 +5,7 @@ import {
   SelectTriggerIcon,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { IconMap, IconOptions } from "./status-icons";
+import type { IconMap, IconOptions } from "./state-colors-icons";
 
 // Define the props interface for IconSelector
 interface IconSelectorProps<T extends string = string> {

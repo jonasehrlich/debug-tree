@@ -33,9 +33,9 @@ export const GitRevision = ({
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>
-      <GitBranch size={20} />
+      <GitBranch size={16} />
 
-      <span className="flex-1 font-mono px-3 py-1 truncate align-middle">
+      <span className="flex-1 font-mono px-3  truncate align-middle">
         {revision}
       </span>
       {onClickPinRevision && (
@@ -48,9 +48,9 @@ export const GitRevision = ({
           <Button
             ref={ref}
             variant="ghost"
-            className={cn("nodrag size-6 p-1 cursor-pointer")}
+            className={cn("nodrag size-6 cursor-pointer")}
           >
-            <Pin size={20} />
+            <Pin size={16} />
           </Button>
         </DynamicTooltip>
       )}

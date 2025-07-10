@@ -7,6 +7,7 @@ import {
   NodeHeaderMenuAction,
   NodeHeaderTitle,
 } from "@/components/node-header";
+import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
 import {
   type ActionNode as ActionNodeType,
@@ -26,7 +27,11 @@ import { memo, useCallback, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { GitRevision } from "./git-revision";
 import { IconSelector } from "./icon-selector";
-import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
+import {
+  statusNodeIconMap,
+  statusNodeIconOptions,
+  statusNodeStateColorsMap,
+} from "./state-colors-icons";
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
 
 const AppNodeHeaderMenuAction = ({ id, type, data }: EditAppNodeData) => {
@@ -97,10 +102,22 @@ export const StatusNode = memo(
     const { addGitRevision } = useStore(useShallow(selector));
     const { updateNodeData } = useReactFlow();
     return (
-      <BaseNode selected={selected} className="px-3 py-2 max-w-md">
-        <NodeHeader className="-mx-3 -mt-2 border-b">
+      <BaseNode
+        selected={selected}
+        className={cn(
+          "px-2 pt-2 pb-0 max-w-md",
+          statusNodeStateColorsMap[data.state].bg,
+          statusNodeStateColorsMap[data.state].border,
+        )}
+      >
+        <NodeHeader
+          className={cn(
+            "-mx-2 -mt-2 px-2 border-b",
+            statusNodeStateColorsMap[data.state].border,
+          )}
+        >
           <NodeHeaderIcon>
-            <ChartLine />
+            <ChartLine size="16" />
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
@@ -119,9 +136,16 @@ export const StatusNode = memo(
         {data.hasTargetHandle && (
           <BaseHandle id="target-1" type="target" position={Position.Left} />
         )}
-        {data.description && <div className="mt-2">{data.description}</div>}
+        {data.description && <div className="py-2">{data.description}</div>}
         {data.git.rev !== "" && (
-          <NodeHeader className="-mx-3 -mb-2 mt-2 border-t">
+          <NodeHeader
+            className={cn(
+              "-mx-2 px-2",
+              data.description
+                ? cn("border-t", statusNodeStateColorsMap[data.state].border)
+                : "",
+            )}
+          >
             <GitRevision
               revision={data.git.rev}
               onClickPinRevision={addGitRevision}
