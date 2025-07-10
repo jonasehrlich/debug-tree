@@ -28,8 +28,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
+import type { AppNode } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useReactFlow } from "@xyflow/react";
 import { Trash } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -44,11 +46,13 @@ import { Skeleton } from "./ui/skeleton";
 interface FlowsDialogProps {
   // The element that triggers the dialog (e.g., a button).
   children: React.ReactNode;
+  /// Ref to the reactflow component
+  reactflowRef: React.Ref<HTMLDivElement>;
 }
 
 const formSchema = z.object({
   flowName: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
+    message: "Flow name must be at least 2 characters.",
   }),
 });
 
@@ -59,9 +63,13 @@ const selector = (s: AppState) => ({
   loadFlowsMetadata: s.loadFlowsMetadata,
   deleteFlow: s.deleteFlow,
   loadFlow: s.loadFlow,
+  setPendingNode: s.setPendingNodeData,
 });
 
-export const FlowsDialog: React.FC<FlowsDialogProps> = ({ children }) => {
+export const FlowsDialog: React.FC<FlowsDialogProps> = ({
+  children,
+  reactflowRef,
+}) => {
   const { isOpen, setIsOpen } = useUiStore(
     useShallow((s: UiState) => ({
       isOpen: s.isFlowsDialogOpen,
@@ -69,8 +77,15 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({ children }) => {
     })),
   );
 
-  const { flows, loadFlowsMetadata, currentFlow, loadFlow, deleteFlow } =
-    useStore(useShallow(selector));
+  const {
+    flows,
+    loadFlowsMetadata,
+    currentFlow,
+    loadFlow,
+    createFlow,
+    deleteFlow,
+    setPendingNode,
+  } = useStore(useShallow(selector));
   const [isFlowsLoading, setIsFlowsLoading] = useState(false);
 
   // Load flows on mount
@@ -109,9 +124,27 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({ children }) => {
     },
   });
 
-  const createFlow = useStore((state) => state.createFlow);
+  const { screenToFlowPosition } = useReactFlow<AppNode>();
   const onCreateFlow = async (values: z.infer<typeof formSchema>) => {
+    if (
+      !reactflowRef ||
+      typeof reactflowRef !== "object" ||
+      !("current" in reactflowRef) ||
+      !reactflowRef.current
+    ) {
+      toast.error("No reactflow ref");
+      return;
+    }
     await createFlow(values.flowName);
+    const bounds = reactflowRef.current.getBoundingClientRect();
+
+    setPendingNode({
+      type: "statusNode",
+      eventScreenPosition: screenToFlowPosition({
+        x: bounds.x + bounds.width / 2,
+        y: bounds.y + bounds.height / 2,
+      }),
+    });
     form.reset();
   };
 

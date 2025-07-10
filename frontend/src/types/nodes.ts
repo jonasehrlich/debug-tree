@@ -27,3 +27,24 @@ export type AppNodeType = "actionNode" | "statusNode";
 export type StatusNode = Node<StatusNodeData, "statusNode">;
 export type AppNodeData = StatusNodeData | ActionNodeData;
 export type AppNode = StatusNode | ActionNode;
+
+interface PendingNodeData<NodeType extends string> {
+  // Position included in the event where the edge was dropped
+  eventScreenPosition: Node["position"];
+  // Node type to create
+  type: NodeType;
+  // Node the dropped edge is connected to
+  fromNodeId?: string;
+}
+
+export type PendingAppNodeData =
+  | PendingNodeData<"actionNode">
+  | PendingNodeData<"statusNode">;
+
+export function isStatusNode(node: Node): node is StatusNode {
+  return node.type == "statusNode";
+}
+
+export function isActionNode(node: Node): node is StatusNode {
+  return node.type == "actionNode";
+}
