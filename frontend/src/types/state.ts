@@ -5,20 +5,14 @@ import {
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
-import { type ApiStatusDetailResponse, type FlowMetadata } from "./api-types";
+import { type FlowMetadata } from "./api-types";
 import type { EdgeType } from "./edge";
 import type {
   ActionNodeData,
   AppNode,
   PendingAppNodeData,
   StatusNodeData,
-  StatusNodeState,
 } from "./nodes";
-
-export interface Error {
-  message: string;
-  response?: ApiStatusDetailResponse;
-}
 
 export interface FlowIdAndName {
   id: string;
@@ -39,53 +33,104 @@ export type EditAppNodeData =
   | EditNodeData<"statusNode", StatusNodeData>;
 
 export interface AppState {
+  /** Nodes of the currently opened flow */
   nodes: AppNode[];
+  /** Edges of the currently opened flow */
   edges: Edge[];
+  /** Currently opened flow. If no current flow is open, the {@link FlowsDialog} is opened */
   currentFlow: FlowIdAndName | null;
+  /** Available flows on the server */
   flows: FlowMetadata[];
-  // Whether there are unsaved modifications
+  /** Whether there are unsaved modifications in the nodes or edges */
   hasUnsavedChanges: boolean;
-  // Whether saving to the API is currently ongoing
-  saveOngoing: boolean;
-  // A node that's currently being edited, set it through
-  editNodeData: EditAppNodeData | null;
+  /** A node that's currently being edited, set it through {@link setCurrentEditNodeData} */
+  currentEditNodeData: EditAppNodeData | null;
+  /** Set the node data to be edited */
+  setCurrentEditNodeData: (data: EditAppNodeData | null) => void;
+  /** Data of a note that is pending to be created. If this is set the CreateNodeDialog will be opened */
   pendingNodeData: PendingAppNodeData | null;
+  /** Set the {@link pendingNodeData} */
   setPendingNodeData: (nodeData: PendingAppNodeData | null) => void;
-  // Array of revisions to use for a diff
+  /** Array of revisions pinned for a diff. The array can only con */
   gitRevisions: string[];
+  /**
+   * Add a Git revision to the {@link gitRevisions}
+   * @description If two revisions are in the array already, the second one is replaced
+   * @param rev - Revision to add
+   */
   addGitRevision: (rev: string) => void;
+  /** Clear the Git revisions array */
   clearGitRevisions: () => void;
-  // Create a flow
+  /**
+   * Create a flow on the server through the API
+   * @description After successful creation of the flow, it will call {@link setNodes}, {@link setEdges}
+   * and set {@link currentFlow}
+   * @param name - Name of the new flow
+   */
   createFlow: (name: string) => Promise<void>;
-  // Delete a flow
+  /**
+   * Delete a flow on the server through the API and reload the list of available flows
+   * @param id - ID of the flow to delete
+   */
   deleteFlow: (id: string) => Promise<void>;
-  // Load flows metadata and store them
+  /** Load flows metadata and store them in {@link flows} */
   loadFlowsMetadata: () => Promise<void>;
-  // Load a flow
+  /**
+   * Load a flow from the server and store its {@link nodes} and {@link edges}
+   * @param id - ID of the flow to load
+   */
   loadFlow: (id: string) => Promise<void>;
-  // Save a flow
+  /** Save the {@link nodes} and {@link edges} of the {@link currentFlow} to the server */
   saveCurrentFlow: () => Promise<void>;
-  // Save and close the current flow
+  /** Save the {@link currentFlow} to the server and close it the current flow */
   closeCurrentFlow: () => Promise<void>;
-  getNodeById: (nodeId: string) => AppNode | null;
+  /** ReactFlow onNodesChange callback */
   onNodesChange: OnNodesChange<AppNode>;
+  /** ReactFlow onEdgesChange callback */
   onEdgesChange: OnEdgesChange;
+  /** ReactFlow onConnect callback */
   onConnect: OnConnect;
+  /** ReactFlow onConnectEnd callback */
   onConnectEnd: OnConnectEnd;
+  /**
+   * Set the globally used edge type
+   * @param newType - New edge type to use
+   */
   setEdgeType: (newType: EdgeType) => void;
+  /**
+   * Set the nodes of the flow. This is required to set the nodes from outside React components.
+   * @see useReactFlow().setNodes for operations inside React components
+   * @param nodes - List of nodes to set
+   */
   setNodes: (nodes: AppNode[]) => void;
+  /**
+   * Set the edges of the flow. This is required to set the nodes from outside React components.
+   * @see useReactFlow().setNodes for operations inside React components
+   * @param nodes - List of nodes to set
+   */
   setEdges: (edges: Edge[]) => void;
-  updateStatusNodeState: (nodeId: string, state: StatusNodeState) => void;
-  editNode: (data: EditAppNodeData) => void;
-  // Set the node data to be edited
-  setEditNodeData: (data: EditAppNodeData | null) => void;
 }
 
 export interface UiState {
+  /** Whether the flows dialog was opened manually. It is forcefully opened if {@link AppState::currentFlow} is null */
   isFlowsDialogOpen: boolean;
-  isMiniMapVisible: boolean;
-  isInlineDiff: boolean;
-  setIsMiniMapVisible: (isVisible: boolean) => void;
+  /**
+   * Set {@link isFlowsDialogOpen}
+   * @param isOpen Whether to manually open or close
+   */
   setIsFlowsDialogOpen: (isOpen: boolean) => void;
+  /** Whether the minimap should be visible */
+  isMiniMapVisible: boolean;
+  /**
+   * Set {@link isMiniMapVisible}
+   * @param isVisible - Whether the Minimap should be visible
+   */
+  setIsMiniMapVisible: (isVisible: boolean) => void;
+  /** Whether to use inline diffs for the diff view */
+  isInlineDiff: boolean;
+  /**
+   * Set {@link isInlineDiff}
+   * @param isInlineDiff - Whether to use an inline diff
+   */
   setIsInlineDiff: (isInlineDiff: boolean) => void;
 }

@@ -66,8 +66,7 @@ const AppNodeHeaderMenuAction = ({ id, type, data }: EditAppNodeData) => {
 };
 
 const selector = (s: AppState) => ({
-  setEditNodeData: s.setEditNodeData,
-  updateNodeState: s.updateStatusNodeState,
+  setEditNodeData: s.setCurrentEditNodeData,
   addGitRevision: s.addGitRevision,
 });
 
@@ -95,8 +94,8 @@ export const ActionNode = memo(
 
 export const StatusNode = memo(
   ({ id, data, selected }: NodeProps<StatusNodeType>) => {
-    const { updateNodeState, addGitRevision } = useStore(useShallow(selector));
-
+    const { addGitRevision } = useStore(useShallow(selector));
+    const { updateNodeData } = useReactFlow();
     return (
       <BaseNode selected={selected} className="px-3 py-2 max-w-md">
         <NodeHeader className="-mx-3 -mt-2 border-b">
@@ -108,7 +107,7 @@ export const StatusNode = memo(
             <IconSelector<StatusNodeState>
               selectedIcon={data.state}
               onSelectChange={(newState) => {
-                updateNodeState(id, newState);
+                updateNodeData(id, { state: newState });
               }}
               availableIcons={statusNodeIconMap}
               iconChoices={statusNodeIconOptions}
