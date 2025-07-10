@@ -118,16 +118,21 @@ export interface components {
             flow: components["schemas"]["FlowMetadata"];
         };
         Diff: {
+            /** @description Type of the diff */
+            diffType: components["schemas"]["DiffType"];
             new?: null | components["schemas"]["DiffFile"];
             old?: null | components["schemas"]["DiffFile"];
+            /** @description Patch between old and new */
+            patch: string;
         };
         DiffFile: {
+            /** @description Content of the diff file */
             content?: string | null;
-            fileType: components["schemas"]["DiffFileType"];
+            /** @description Path to the diff file */
             path?: string | null;
         };
         /** @enum {string} */
-        DiffFileType: "binary" | "text";
+        DiffType: "binary" | "text";
         FlowData: {
             /** @description Name of the debug flow */
             name: string;
