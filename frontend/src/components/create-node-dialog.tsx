@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useShallow } from "zustand/react/shallow";
-import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
+import { statusNodeIconMap, statusNodeIconOptions } from "./state-colors-icons";
 import { Button } from "./ui/button";
 import {
   Form,
