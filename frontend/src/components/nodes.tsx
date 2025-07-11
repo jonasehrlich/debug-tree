@@ -78,10 +78,12 @@ const selector = (s: AppState) => ({
 export const ActionNode = memo(
   ({ id, data, selected }: NodeProps<ActionNodeType>) => {
     return (
-      <BaseNode selected={selected} className="px-3 py-2 max-w-md">
-        <NodeHeader className="-mx-3 -mt-2 border-b">
+      <BaseNode selected={selected} className="px-2 pt-2 pb-0 max-w-md">
+        <NodeHeader
+          className={cn("-mx-2 -mt-2 px-2", data.description && "border-b")}
+        >
           <NodeHeaderIcon>
-            <Rocket />
+            <Rocket size="16" />
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
@@ -89,8 +91,7 @@ export const ActionNode = memo(
           </NodeHeaderActions>
         </NodeHeader>
         <BaseHandle id="target-1" type="target" position={Position.Left} />
-        {data.description && <div className="mt-2">{data.description}</div>}
-
+        {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
       </BaseNode>
     );
@@ -112,8 +113,10 @@ export const StatusNode = memo(
       >
         <NodeHeader
           className={cn(
-            "-mx-2 -mt-2 px-2 border-b",
-            statusNodeStateColorsMap[data.state].border,
+            "-mx-2 -mt-2 px-2",
+            data.description || data.git.rev
+              ? cn("border-b", statusNodeStateColorsMap[data.state].border)
+              : "",
           )}
         >
           <NodeHeaderIcon>
