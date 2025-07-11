@@ -238,7 +238,14 @@ export const CreateNodeDialog = () => {
                   <Button variant="outline">Cancel</Button>
                 </DialogClose>
               )}
-              <Button type="submit">Create</Button>
+              <Button
+                disabled={
+                  !form.formState.isValid || form.formState.isSubmitting
+                }
+                type="submit"
+              >
+                Create
+              </Button>
             </DialogFooter>
           </form>
         </Form>

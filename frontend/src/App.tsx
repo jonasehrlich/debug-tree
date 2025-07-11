@@ -36,7 +36,7 @@ const selector = (state: AppState) => ({
   onConnect: state.onConnect,
   onConnectEnd: state.onConnectEnd,
   saveCurrentFlow: state.saveCurrentFlow,
-  setEditNodeData: state.setEditNodeData,
+  setCurrentEditNodeData: state.setCurrentEditNodeData,
   clearGitRevisions: state.clearGitRevisions,
 });
 
@@ -59,7 +59,7 @@ export default function App() {
     onConnect,
     onConnectEnd,
     saveCurrentFlow,
-    setEditNodeData,
+    setCurrentEditNodeData,
     clearGitRevisions,
   } = useStore(useShallow(selector));
 
@@ -115,14 +115,13 @@ export default function App() {
           onNodeDoubleClick={(_e, node: AppNode) => {
             // typescript is stupid
             if (node.type === "statusNode") {
-              // it's important to create a new object here, to inform React Flow about the changes
-              setEditNodeData({
+              setCurrentEditNodeData({
                 id: node.id,
                 type: node.type,
                 data: node.data,
               });
             } else {
-              setEditNodeData({
+              setCurrentEditNodeData({
                 id: node.id,
                 type: node.type,
                 data: node.data,

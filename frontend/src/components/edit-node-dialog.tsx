@@ -9,10 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
+import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useReactFlow } from "@xyflow/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useShallow } from "zustand/react/shallow";
 import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
 import { Button } from "./ui/button";
 import {
@@ -47,9 +50,16 @@ const formSchema = z.object({
     .optional(),
 });
 
+const selector = (s: AppState) => ({
+  currentEditNode: s.currentEditNodeData,
+  setCurrentEditNodeData: s.setCurrentEditNodeData,
+});
+
 export const EditNodeDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const currentEditNode = useStore((state) => state.editNodeData);
+  const { setCurrentEditNodeData, currentEditNode } = useStore(
+    useShallow(selector),
+  );
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
@@ -71,39 +81,31 @@ export const EditNodeDialog = () => {
       form.reset();
     }
   }, [currentEditNode, form]);
+  const { updateNodeData } = useReactFlow();
 
-  const editNode = useStore((state) => state.editNode);
-
-  const setEditNodeData = useStore((state) => state.setEditNodeData);
-
+  if (currentEditNode === null) {
+    return null;
+  }
   const submitForm = (values: z.infer<typeof formSchema>) => {
-    if (currentEditNode?.type === "statusNode") {
-      editNode({
-        id: currentEditNode.id,
-        type: currentEditNode.type,
-        data: {
-          title: values.title,
-          description: values.description,
+    let data = {
+      title: values.title,
+      description: values.description,
+    };
+
+    if (currentEditNode.type === "statusNode") {
+      data = {
+        ...data,
+        ...{
           state: values.state ?? "unknown",
           git: {
             rev: values.gitRev ?? "",
           },
           hasTargetHandle: currentEditNode.data.hasTargetHandle,
         },
-      });
-    } else if (currentEditNode?.type === "actionNode") {
-      editNode({
-        id: currentEditNode.id,
-        type: currentEditNode.type,
-        data: {
-          title: values.title,
-          description: values.description,
-        },
-      });
-    } else {
-      throw new Error("Unknown node type");
+      };
     }
-    setEditNodeData(null);
+    updateNodeData(currentEditNode.id, data);
+    setCurrentEditNodeData(null);
   };
 
   return (
@@ -111,7 +113,7 @@ export const EditNodeDialog = () => {
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) {
-          setEditNodeData(null);
+          setCurrentEditNodeData(null);
         }
         setIsOpen(open);
       }}
@@ -151,7 +153,7 @@ export const EditNodeDialog = () => {
                 </FormItem>
               )}
             />
-            {currentEditNode?.type === "statusNode" && (
+            {currentEditNode.type === "statusNode" && (
               <div className="space-y-8">
                 <FormField
                   control={form.control}

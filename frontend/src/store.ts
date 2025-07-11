@@ -19,9 +19,7 @@ export const useStore = create<AppState>()(
       currentFlow: null,
       flows: [],
       hasUnsavedChanges: false,
-      saveOngoing: false,
-      editNodeData: null,
-      pendingStatusNode: null,
+      currentEditNodeData: null,
       pendingNodeData: null,
       setPendingNodeData(nodeData) {
         set({ pendingNodeData: nodeData });
@@ -46,17 +44,17 @@ export const useStore = create<AppState>()(
         if (data) {
           // TODO: If current flow is set, save it first. Or maybe save every time this dialog is opened
           set({ currentFlow: data.flow });
-          const store = get();
 
+          const store = get();
           store.setNodes([]);
           store.setEdges([]);
           toast.success(`Created Flow ${data.flow.name}`);
-          // setOpen(false);
-        } else {
-          toast.error(`Error creating flow ${name}`, {
-            description: error.message,
-          });
+          return true;
         }
+        toast.error(`Error creating flow ${name}`, {
+          description: error.message,
+        });
+        return false;
       },
       deleteFlow: async (id: string) => {
         const { data, error } = await client.DELETE("/api/v1/flows/{id}", {
@@ -109,7 +107,6 @@ export const useStore = create<AppState>()(
         if (!store.hasUnsavedChanges) {
           return;
         }
-        set({ saveOngoing: true });
 
         const { error } = await client.POST("/api/v1/flows/{id}", {
           params: {
@@ -130,7 +127,6 @@ export const useStore = create<AppState>()(
           toast.success("Saved", { duration: 800 });
           set({ hasUnsavedChanges: false });
         }
-        set({ saveOngoing: false });
       },
       closeCurrentFlow: async () => {
         const store = get();
@@ -193,58 +189,17 @@ export const useStore = create<AppState>()(
       setEdges: (edges) => {
         set({ edges });
       },
-      updateStatusNodeState: (nodeId, state) => {
-        set({
-          nodes: get().nodes.map((node) => {
-            if (node.id === nodeId && isStatusNode(node)) {
-              // it's important to create a new object here, to inform React Flow about the changes
-              return { ...node, data: { ...node.data, state } };
-            }
-
-            return node;
-          }),
-        });
-      },
-      getNodeById: (nodeId) => {
-        get().nodes.map((node) => {
-          if (node.id === nodeId) {
-            return node;
-          }
-        });
-        return null;
-      },
-      editNode: (data) => {
-        set({
-          nodes: get().nodes.map((node) => {
-            if (node.id === data.id) {
-              // typescript is stupid
-              if (node.type === "statusNode" && data.type === "statusNode") {
-                // it's important to create a new object here, to inform React Flow about the changes
-                return { ...node, data: data.data };
-              } else if (
-                node.type === "actionNode" &&
-                data.type === "actionNode"
-              ) {
-                return { ...node, data: data.data };
-              }
-            }
-
-            return node;
-          }),
-        });
-        set({ editNodeData: null });
-      },
-      setEditNodeData: (data) => {
-        set({ editNodeData: data });
+      setCurrentEditNodeData: (data) => {
+        set({ currentEditNodeData: data });
       },
     }),
     {
-      partialize: (state) =>
-        Object.fromEntries(
-          Object.entries(state).filter(
-            ([key]) => !["pendingNodeData"].includes(key),
-          ),
-        ),
+      partialize: (state) => ({
+        nodes: state.nodes,
+        edges: state.edges,
+        currentFlow: state.currentFlow,
+        hasUnsavedChanges: state.hasUnsavedChanges,
+      }),
       name: "debug-flow-flow-storage",
     },
   ),
