@@ -1,42 +1,59 @@
 import type { StatusNodeState } from "@/types/nodes";
 import { Ban, CircleCheck, CircleQuestionMark, TrendingUp } from "lucide-react";
+import type React from "react";
 
-// A generic string key maps to a ReactNode (JSX.Element), these are the icons shown for the individual elements
-export type IconMap<T extends string = string> = Record<T, React.ReactNode>;
-
-// Define the type for a single icon option
-export interface IconOption<T extends string = string> {
-  value: T;
-  label: string;
+/**
+ * Configuration of options. Each of the options has a key and a label.
+ *
+ * Additionally each option must have a entry in the map, mapping an object of type {@link MapValueType}
+ * for each option.
+ */
+export interface OptionListAndValueMap<Keys extends string, MapValueType> {
+  /** List of available options */
+  options: {
+    /** Key of the option */
+    key: Keys;
+    /** Label of the option */
+    label: string;
+  }[];
+  /** Mapping a {@link MapValueType} for each option*/
+  map: Record<Keys, MapValueType>;
 }
 
-// Define the type for the iconOptions array
-export type IconOptions<T extends string = string> = IconOption<T>[];
-
-// Map status note states to labels
-export const statusNodeIconOptions: IconOptions<StatusNodeState> = [
-  { value: "unknown", label: "Unknown" },
-  { value: "progress", label: "Progress" },
-  { value: "fail", label: "Fail" },
-  { value: "success", label: "Success" },
-] as const;
-
-// Map status note states to icons
-export const statusNodeIconMap: IconMap<StatusNodeState> = {
-  unknown: <CircleQuestionMark size={16} className="stroke-zinc-400" />,
-  progress: <TrendingUp size={16} className="stroke-amber-400" />,
-  fail: <Ban size={16} className="stroke-red-400" />,
-  success: <CircleCheck size={16} className="stroke-emerald-400" />,
+/**
+ *
+ */
+export const statusNodeStateIconConfig: OptionListAndValueMap<
+  StatusNodeState,
+  React.ReactNode
+> = {
+  options: [
+    { key: "unknown", label: "Unknown" },
+    { key: "progress", label: "Progress" },
+    { key: "fail", label: "Fail" },
+    { key: "success", label: "Success" },
+  ],
+  map: {
+    unknown: <CircleQuestionMark size={16} className="stroke-zinc-400" />,
+    progress: <TrendingUp size={16} className="stroke-amber-400" />,
+    fail: <Ban size={16} className="stroke-red-400" />,
+    success: <CircleCheck size={16} className="stroke-emerald-400" />,
+  },
 } as const;
 
-interface StatusNodeStateColors {
-  bg: string;
-  border: string;
-}
-
-export const statusNodeStateColorsMap: Record<
+/**
+ * Mapping status node states to node classes for the border and background, the colors are
+ * chosen to provide enough contrast with the icons defined in {@link statusNodeStateIconConfig}
+ * and to work with light and dark mode.
+ */
+export const statusNodeStateClasses: Record<
   StatusNodeState,
-  StatusNodeStateColors
+  {
+    /** Background classes */
+    bg: string;
+    /** Border classes */
+    border: string;
+  }
 > = {
   unknown: {
     bg: "bg-zinc-100 dark:bg-zinc-700",
