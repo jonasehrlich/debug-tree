@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { HotkeysProvider, useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
+import { CreateNodeDialog } from "./components/create-node-dialog";
 import { EditNodeDialog } from "./components/edit-node-dialog";
 import { GitGraphSlidingPanel } from "./components/git-graph-sliding-panel";
 import { GitRevisionsPanel } from "./components/git-revisions-panel";
@@ -33,6 +34,7 @@ const selector = (state: AppState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
+  onConnectEnd: state.onConnectEnd,
   saveCurrentFlow: state.saveCurrentFlow,
   setEditNodeData: state.setEditNodeData,
   clearGitRevisions: state.clearGitRevisions,
@@ -55,6 +57,7 @@ export default function App() {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    onConnectEnd,
     saveCurrentFlow,
     setEditNodeData,
     clearGitRevisions,
@@ -108,6 +111,7 @@ export default function App() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectEnd={onConnectEnd}
           onNodeDoubleClick={(_e, node: AppNode) => {
             // typescript is stupid
             if (node.type === "statusNode") {
@@ -135,6 +139,7 @@ export default function App() {
           {isMiniMapVisible && <MiniMap position="top-right" />}
           <Background />
           <EditNodeDialog />
+          <CreateNodeDialog />
           <GitRevisionsPanel
             openGitGraph={() => {
               setIsGitGraphPanelOpen(true);

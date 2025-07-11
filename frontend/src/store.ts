@@ -8,12 +8,8 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { client } from "./client";
-import type { AppNode, StatusNode } from "./types/nodes";
+import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
-
-function isStatusNode(node: AppNode): node is StatusNode {
-  return node.type == "statusNode";
-}
 
 export const useStore = create<AppState>()(
   persist(
@@ -25,6 +21,11 @@ export const useStore = create<AppState>()(
       hasUnsavedChanges: false,
       saveOngoing: false,
       editNodeData: null,
+      pendingStatusNode: null,
+      pendingNodeData: null,
+      setPendingNodeData(nodeData) {
+        set({ pendingNodeData: nodeData });
+      },
       gitRevisions: [],
       addGitRevision(rev) {
         const revs = get().gitRevisions;
@@ -156,6 +157,28 @@ export const useStore = create<AppState>()(
           hasUnsavedChanges: true,
         });
       },
+      onConnectEnd: (event, connectionState) => {
+        console.log("onConnectEnd called");
+        const connectedToAnotherNode = connectionState.isValid;
+        if (connectedToAnotherNode) {
+          return;
+        }
+        const { clientX, clientY } =
+          "changedTouches" in event ? event.changedTouches[0] : event;
+        const fromNode = connectionState.fromNode;
+        if (fromNode === null) {
+          return;
+        }
+        const nodeType: AppNodeType = isStatusNode(fromNode)
+          ? "actionNode"
+          : "statusNode";
+
+        get().setPendingNodeData({
+          eventScreenPosition: { x: clientX, y: clientY },
+          type: nodeType,
+          fromNodeId: fromNode.id,
+        });
+      },
       setEdgeType: (newType) => {
         set((state) => ({
           edges: state.edges.map((edge) => ({
@@ -216,6 +239,12 @@ export const useStore = create<AppState>()(
       },
     }),
     {
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(
+            ([key]) => !["pendingNodeData"].includes(key),
+          ),
+        ),
       name: "debug-flow-flow-storage",
     },
   ),

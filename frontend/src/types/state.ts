@@ -1,6 +1,7 @@
 import {
   type Edge,
   type OnConnect,
+  type OnConnectEnd,
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
@@ -9,6 +10,7 @@ import type { EdgeType } from "./edge";
 import type {
   ActionNodeData,
   AppNode,
+  PendingAppNodeData,
   StatusNodeData,
   StatusNodeState,
 } from "./nodes";
@@ -47,6 +49,8 @@ export interface AppState {
   saveOngoing: boolean;
   // A node that's currently being edited, set it through
   editNodeData: EditAppNodeData | null;
+  pendingNodeData: PendingAppNodeData | null;
+  setPendingNodeData: (nodeData: PendingAppNodeData | null) => void;
   // Array of revisions to use for a diff
   gitRevisions: string[];
   addGitRevision: (rev: string) => void;
@@ -67,6 +71,7 @@ export interface AppState {
   onNodesChange: OnNodesChange<AppNode>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  onConnectEnd: OnConnectEnd;
   setEdgeType: (newType: EdgeType) => void;
   setNodes: (nodes: AppNode[]) => void;
   setEdges: (edges: Edge[]) => void;

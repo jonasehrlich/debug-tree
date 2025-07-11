@@ -117,7 +117,9 @@ export const StatusNode = memo(
             <AppNodeHeaderMenuAction id={id} type={"statusNode"} data={data} />
           </NodeHeaderActions>
         </NodeHeader>
-        <BaseHandle id="target-1" type="target" position={Position.Left} />
+        {data.hasTargetHandle && (
+          <BaseHandle id="target-1" type="target" position={Position.Left} />
+        )}
         {data.description && <div className="mt-2">{data.description}</div>}
         {data.git.rev !== "" && (
           <NodeHeader className="-mx-3 -mb-2 mt-2 border-t">

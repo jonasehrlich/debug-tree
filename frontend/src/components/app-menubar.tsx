@@ -17,7 +17,7 @@ import {
 import { keybindings } from "@/keybindings";
 import { useStore, useUiStore } from "@/store";
 import { edgeTypes, type EdgeType } from "@/types/edge";
-import type { ActionNode, AppNode, StatusNode } from "@/types/nodes";
+import type { AppNode } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import {
   useReactFlow,
@@ -25,9 +25,8 @@ import {
   useStoreApi as useReactFlowStoreApi,
   type ReactFlowState,
 } from "@xyflow/react";
-import { LineChart, Plus, Rocket, Workflow } from "lucide-react";
+import { Workflow } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 interface AppMenubarProps {
@@ -43,7 +42,6 @@ const reactflowSelector = (s: ReactFlowState) => ({
 
 const flowSelector = (s: AppState) => ({
   currentFlow: s.currentFlow,
-  saveOngoing: s.saveOngoing,
   hasUnsavedChanges: s.hasUnsavedChanges,
   closeCurrentFlow: s.closeCurrentFlow,
   saveCurrentFlow: s.saveCurrentFlow,
@@ -60,7 +58,6 @@ const uiStoreSelector = (s: UiState) => ({
 
 export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
   const {
-    saveOngoing,
     currentFlow,
     hasUnsavedChanges,
     closeCurrentFlow,
@@ -78,8 +75,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
   const { isInteractive, minZoomReached, maxZoomReached } = useReactFlowStore(
     useShallow(reactflowSelector),
   );
-  const { addNodes, screenToFlowPosition, zoomIn, zoomOut, fitView } =
-    useReactFlow<AppNode>();
+  const { zoomIn, zoomOut, fitView } = useReactFlow<AppNode>();
 
   const reactflowStore = useReactFlowStoreApi();
   const onSetIsInteractiveHandler = (isInteractive: boolean) => {
@@ -90,61 +86,10 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
     });
   };
 
-  const createNode = useCallback(
-    (type: "actionNode" | "statusNode") => {
-      if (
-        !reactflowRef ||
-        typeof reactflowRef !== "object" ||
-        !("current" in reactflowRef) ||
-        !reactflowRef.current
-      )
-        return;
-
-      const bounds = reactflowRef.current.getBoundingClientRect();
-      const position = screenToFlowPosition({
-        x: bounds.x + bounds.width / 2,
-        y: bounds.y + bounds.height / 2,
-      });
-
-      if (type === "actionNode") {
-        const newNode: ActionNode = {
-          id: `action-node-${crypto.randomUUID()}`,
-          type: "actionNode",
-          position,
-          data: {
-            title: "Action Node",
-            description: "A new action node",
-          },
-        };
-        addNodes(newNode);
-      } else {
-        const newNode: StatusNode = {
-          id: `status-node-${crypto.randomUUID()}`,
-          type: "statusNode",
-          position,
-          data: {
-            title: "Status Node",
-            description: "A new status node",
-            state: "unknown",
-            git: {
-              rev: "",
-            },
-          },
-        };
-        addNodes(newNode);
-      }
-    },
-    [addNodes, reactflowRef, screenToFlowPosition],
-  );
-
   const menubarIconSize = 15;
   const menubarLeftIconProps = {
     size: menubarIconSize,
     className: "mr-2",
-  };
-  const menubarRightIconProps = {
-    size: menubarIconSize,
-    className: "ml-2",
   };
   return (
     <Menubar>
@@ -156,6 +101,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
               {currentFlow ? currentFlow.name : "Flow"}
             </MenubarTrigger>
           }
+          reactflowRef={reactflowRef}
         ></FlowsDialog>
       </MenubarMenu>
       <MenubarMenu>
@@ -284,29 +230,6 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
             </MenubarSubContent>
           </MenubarSub>
         </MenubarContent>
-      </MenubarMenu>
-      {/* TODO: Fix behavior of these two buttons, or figure out another UI paradigm*/}
-      <MenubarMenu>
-        <MenubarTrigger
-          onClick={() => {
-            createNode("actionNode");
-          }}
-          disabled={saveOngoing || !currentFlow}
-        >
-          <Plus {...menubarLeftIconProps} /> Action Node{" "}
-          <Rocket {...menubarRightIconProps} />
-        </MenubarTrigger>
-      </MenubarMenu>
-      <MenubarMenu>
-        <MenubarTrigger
-          onClick={() => {
-            createNode("statusNode");
-          }}
-          disabled={saveOngoing || !currentFlow}
-        >
-          <Plus {...menubarLeftIconProps} /> Status Node{" "}
-          <LineChart {...menubarRightIconProps} />
-        </MenubarTrigger>
       </MenubarMenu>
     </Menubar>
   );

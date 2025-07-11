@@ -7,12 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn, getNodeId } from "@/lib/utils";
 import { useStore } from "@/store";
+import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useReactFlow } from "@xyflow/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useShallow } from "zustand/react/shallow";
 import { statusNodeIconMap, statusNodeIconOptions } from "./status-icons";
 import { Button } from "./ui/button";
 import {
@@ -37,7 +40,7 @@ const formSchema = z.object({
   title: z.string().min(2, {
     message: "Title must be at least 2 characters.",
   }),
-  description: z.string(),
+  description: z.string().optional(),
   state: z.enum(["unknown", "progress", "fail", "success"]).optional(),
   gitRev: z
     .string()
@@ -47,79 +50,96 @@ const formSchema = z.object({
     .optional(),
 });
 
-export const EditNodeDialog = () => {
+const selector = (state: AppState) => ({
+  nodes: state.nodes,
+  pendingNode: state.pendingNodeData,
+  setPendingNode: state.setPendingNodeData,
+});
+
+export const CreateNodeDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const currentEditNode = useStore((state) => state.editNodeData);
+  const { pendingNode, setPendingNode, nodes } = useStore(useShallow(selector));
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      state: "unknown",
+      description: "",
+      title: "",
+      gitRev: "",
+    },
   });
 
   useEffect(() => {
-    if (currentEditNode) {
+    if (pendingNode) {
       setIsOpen(true);
-      // Set initial form values
-      form.reset({
-        title: currentEditNode.data.title,
-        description: currentEditNode.data.description,
-      });
-      if (currentEditNode.type === "statusNode") {
-        form.setValue("state", currentEditNode.data.state);
-        form.setValue("gitRev", currentEditNode.data.git.rev);
-      }
     } else {
       setIsOpen(false);
       form.reset();
     }
-  }, [currentEditNode, form]);
+  }, [pendingNode, form]);
 
-  const editNode = useStore((state) => state.editNode);
+  const { addNodes, addEdges, screenToFlowPosition } = useReactFlow();
 
-  const setEditNodeData = useStore((state) => state.setEditNodeData);
+  if (pendingNode === null) {
+    return null;
+  }
 
   const submitForm = (values: z.infer<typeof formSchema>) => {
-    if (currentEditNode?.type === "statusNode") {
-      editNode({
-        id: currentEditNode.id,
-        type: currentEditNode.type,
-        data: {
-          title: values.title,
-          description: values.description,
+    const node = {
+      id: getNodeId(pendingNode.type),
+      type: pendingNode.type,
+      position: screenToFlowPosition(pendingNode.eventScreenPosition),
+      data: {
+        title: values.title,
+        description: values.description ?? "",
+      },
+    };
+
+    if (pendingNode.type === "statusNode") {
+      node.data = {
+        ...node.data,
+        ...{
           state: values.state ?? "unknown",
           git: {
             rev: values.gitRev ?? "",
           },
-          hasTargetHandle: currentEditNode.data.hasTargetHandle,
+          hasTargetHandle: nodes.length > 0,
         },
-      });
-    } else if (currentEditNode?.type === "actionNode") {
-      editNode({
-        id: currentEditNode.id,
-        type: currentEditNode.type,
-        data: {
-          title: values.title,
-          description: values.description,
-        },
-      });
-    } else {
-      throw new Error("Unknown node type");
+      };
     }
-    setEditNodeData(null);
+    addNodes(node);
+    if (pendingNode.fromNodeId) {
+      addEdges({
+        id: `edge-${crypto.randomUUID()}`,
+        source: pendingNode.fromNodeId,
+        target: node.id,
+      });
+    }
+    setPendingNode(null);
   };
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) {
-          setEditNodeData(null);
+        if (!open && nodes.length == 0) {
+          return;
         }
         setIsOpen(open);
       }}
     >
-      <DialogContent className="md:max-w-[700px]">
+      <DialogContent
+        className="md:max-w-[700px]"
+        showCloseButton={nodes.length > 0}
+      >
         <DialogHeader>
-          <DialogTitle>Edit Node</DialogTitle>
-          <DialogDescription>Update node attributes.</DialogDescription>
+          <DialogTitle>
+            New{" "}
+            {pendingNode.type.charAt(0).toUpperCase() +
+              pendingNode.type.replace("Node", "").slice(1)}{" "}
+            Node
+          </DialogTitle>
+          <DialogDescription>Create a new node</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -151,7 +171,7 @@ export const EditNodeDialog = () => {
                 </FormItem>
               )}
             />
-            {currentEditNode?.type === "statusNode" && (
+            {pendingNode.type === "statusNode" && (
               <div className="space-y-8">
                 <FormField
                   control={form.control}
@@ -213,10 +233,12 @@ export const EditNodeDialog = () => {
               </div>
             )}
             <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit">Save changes</Button>
+              {nodes.length > 0 && (
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+              )}
+              <Button type="submit">Create</Button>
             </DialogFooter>
           </form>
         </Form>
