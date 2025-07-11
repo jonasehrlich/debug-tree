@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
 import {
+  formatGitRevision,
   type ActionNode as ActionNodeType,
   type StatusNodeState,
   type StatusNode as StatusNodeType,
@@ -113,7 +114,7 @@ export const StatusNode = memo(
         <NodeHeader
           className={cn(
             "-mx-2 -mt-2 px-2",
-            data.description || data.git.rev
+            data.description || data.git
               ? cn("border-b", statusNodeStateClasses[data.state].border)
               : "",
           )}
@@ -138,7 +139,7 @@ export const StatusNode = memo(
           <BaseHandle id="target-1" type="target" position={Position.Left} />
         )}
         {data.description && <div className="py-2">{data.description}</div>}
-        {data.git.rev !== "" && (
+        {data.git && (
           <NodeHeader
             className={cn(
               "-mx-2 px-2",
@@ -148,7 +149,7 @@ export const StatusNode = memo(
             )}
           >
             <GitRevision
-              revision={data.git.rev}
+              revision={formatGitRevision(data.git)}
               onClickPinRevision={addGitRevision}
             />
           </NodeHeader>

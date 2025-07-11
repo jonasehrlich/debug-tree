@@ -1,9 +1,24 @@
 import type { Node } from "@xyflow/react";
 import { z } from "zod";
 
-interface GitMetadata {
+export interface GitMetadata {
+  /** Tag or commit ID */
   rev: string;
+  /** Summary of the  */
+  summary: string;
+  /** Whether {@link rev} refers to a tag */
+  isTag: boolean;
 }
+
+/**
+ * Format the revision of a {@link GitMetadata} object. If it is a tag, the {@link GitMetadata.rev}
+ * is returned, otherwise the first 7 characters are returned
+ * @param git - Git metadata to format
+ * @returns Git revision
+ */
+export const formatGitRevision = (git: GitMetadata) => {
+  return git.isTag ? git.rev : git.rev.slice(0, 7);
+};
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ActionNodeData = {
@@ -20,7 +35,7 @@ export type StatusNodeData = {
   title: string;
   state: StatusNodeState;
   description: string;
-  git: GitMetadata;
+  git: GitMetadata | null;
   /// If set to true, the node gets a target handle, this is set for the initial node in a flow
   hasTargetHandle: boolean;
   // TODO: Add ticket reference
@@ -48,20 +63,34 @@ export function isStatusNode(node: Node): node is StatusNode {
   return node.type == "statusNode";
 }
 
-export function isActionNode(node: Node): node is StatusNode {
+export function isActionNode(node: Node): node is ActionNode {
   return node.type == "actionNode";
 }
 
-export const appNodeFormSchema = z.object({
-  title: z.string().min(2, {
-    message: "Title must be at least 2 characters.",
-  }),
+const commonNodeDataFields = {
+  title: z.string().min(2),
   description: z.string(),
-  state: z.enum(["unknown", "progress", "fail", "success"]).optional(),
-  gitRev: z
-    .string()
-    .regex(/[0-9a-fA-F]*/, {
-      message: "Invalid Git revision",
-    })
-    .optional(),
-});
+};
+
+export const AppNodeSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("actionNode"),
+    data: z.object({
+      ...commonNodeDataFields,
+    }),
+  }),
+  z.object({
+    type: z.literal("statusNode"),
+    data: z.object({
+      ...commonNodeDataFields,
+      state: z.enum(["unknown", "progress", "fail", "success"]),
+      git: z
+        .object({
+          rev: z.string(),
+          isTag: z.boolean(),
+          summary: z.string(),
+        })
+        .nullable(),
+    }),
+  }),
+]);

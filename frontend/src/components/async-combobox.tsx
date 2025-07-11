@@ -1,0 +1,179 @@
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { debounce } from "lodash";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { Button } from "./ui/button";
+
+interface AsyncCombobox<ItemType> {
+  /** Current value of the dropdown */
+  value: ItemType | null;
+  /**
+   * Called when a new value is selected or the input should be cleared
+   * @param item The item that was selected, or null if the value should be cleared
+   */
+  onChange: (item: ItemType | null) => void;
+  /** Function to call to populate the dropdown based on the input */
+  fetchItems: (value: string) => Promise<ItemType[]>;
+  /** Callback to notify the parent component when the dropdown is open */
+  onDropdownOpenChange?: (isOpen: boolean) => void;
+  /** Placeholder to display in the button */
+  placeholder?: string;
+  /** Whether this input is disabled */
+  disabled?: boolean;
+  /** Render function for dropdown items */
+  renderDropdownItem: (item: ItemType) => React.ReactElement;
+  /** Render the current value in the input button */
+  renderValue: (item: ItemType) => ReactNode;
+  /**
+   * Get the value to use for a ItemType. This is used to check if a dropdown item is the current
+   * value and as the key for dropdown elements
+   */
+  getItemValue: (item: ItemType) => string;
+  /** Font family for the button, the input and the dropdown items */
+  fontFamily?: "font-sans" | "font-serif" | "font-mono" | "";
+  /** Classes to apply for the button triggering the dropdown */
+  buttonClasses?: string;
+}
+
+export const AsyncCombobox = <ItemType,>({
+  fetchItems,
+  value,
+  onChange,
+  placeholder = "Select an option",
+  onDropdownOpenChange,
+  renderDropdownItem,
+  getItemValue,
+  renderValue,
+  disabled,
+  fontFamily = "",
+  buttonClasses = "",
+}: AsyncCombobox<ItemType>) => {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [items, setItems] = useState<ItemType[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const debouncedFetch = useCallback(
+    debounce(async (input: string) => {
+      if (!input) {
+        return;
+      }
+      setLoading(true);
+      try {
+        const results = await fetchItems(input);
+        setLoading(false);
+
+        setItems(results);
+      } catch (err) {
+        console.error(err);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300),
+    [],
+  );
+
+  useEffect(() => {
+    if (input.trim().length > 0) {
+      void debouncedFetch(input);
+    } else {
+      setItems([]);
+    }
+  }, [input, debouncedFetch]);
+
+  // Notify the parent component about the dropdown being open, to e.g. disabling form submit
+  useEffect(() => {
+    onDropdownOpenChange?.(open);
+  }, [open, onDropdownOpenChange]);
+
+  const handleClear = () => {
+    onChange(null);
+    setInput("");
+    setItems([]);
+    setOpen(false);
+  };
+  const currentValueString = value ? getItemValue(value) : "";
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className={cn("justify-between flex", fontFamily, buttonClasses)}
+        >
+          <div className="flex-1 truncate overflow-hidden whitespace-nowrap text-ellipsis text-left">
+            {value ? renderValue(value) : placeholder}
+          </div>
+          <ChevronsUpDown className=" ml-2 size-4 opacity-50 justify-end" />
+        </Button>
+      </PopoverTrigger>
+      {value && (
+        <Button variant="outline" onClick={handleClear}>
+          Clear
+        </Button>
+      )}
+      <PopoverContent className="w-[500px] p-0 " align="start">
+        <Command className={fontFamily}>
+          <CommandInput
+            value={input}
+            onValueChange={setInput}
+            placeholder="Search..."
+          />
+          <CommandList>
+            {loading && <CommandItem disabled>Loading...</CommandItem>}
+            {!loading && (
+              <>
+                {items.length === 0 ? (
+                  <CommandEmpty>No results found.</CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {items.map((item) => {
+                      const v = getItemValue(item);
+                      return (
+                        <CommandItem
+                          key={v}
+                          value={v}
+                          onSelect={() => {
+                            onChange(item);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              currentValueString === v
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {renderDropdownItem(item)}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                )}
+              </>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};

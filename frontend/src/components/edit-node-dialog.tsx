@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/store";
-import { appNodeFormSchema } from "@/types/nodes";
+import { AppNodeSchema } from "@/types/nodes";
 import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
@@ -28,22 +28,14 @@ export const EditNodeDialog = () => {
   const { setCurrentEditNodeData, currentEditNode } = useStore(
     useShallow(selector),
   );
-  const form = useForm<z.infer<typeof appNodeFormSchema>>({
-    resolver: zodResolver(appNodeFormSchema),
+  const form = useForm<z.infer<typeof AppNodeSchema>>({
+    resolver: zodResolver(AppNodeSchema),
   });
 
   useEffect(() => {
     if (currentEditNode) {
       setIsOpen(true);
-      // Set initial form values
-      form.reset({
-        title: currentEditNode.data.title,
-        description: currentEditNode.data.description,
-      });
-      if (currentEditNode.type === "statusNode") {
-        form.setValue("state", currentEditNode.data.state);
-        form.setValue("gitRev", currentEditNode.data.git.rev);
-      }
+      form.reset(currentEditNode);
     } else {
       setIsOpen(false);
       form.reset();
@@ -54,24 +46,8 @@ export const EditNodeDialog = () => {
   if (currentEditNode === null) {
     return null;
   }
-  const submitForm = (values: z.infer<typeof appNodeFormSchema>) => {
-    let data = {
-      title: values.title,
-      description: values.description,
-    };
-
-    if (currentEditNode.type === "statusNode") {
-      data = {
-        ...data,
-        ...{
-          state: values.state ?? "unknown",
-          git: {
-            rev: values.gitRev ?? "",
-          },
-          hasTargetHandle: currentEditNode.data.hasTargetHandle,
-        },
-      };
-    }
+  const submitForm = (values: z.infer<typeof AppNodeSchema>) => {
+    const data = { ...currentEditNode.data, ...values.data };
     updateNodeData(currentEditNode.id, data);
     setCurrentEditNodeData(null);
   };

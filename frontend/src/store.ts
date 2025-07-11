@@ -154,7 +154,6 @@ export const useStore = create<AppState>()(
         });
       },
       onConnectEnd: (event, connectionState) => {
-        console.log("onConnectEnd called");
         const connectedToAnotherNode = connectionState.isValid;
         if (connectedToAnotherNode) {
           return;
@@ -199,6 +198,7 @@ export const useStore = create<AppState>()(
         edges: state.edges,
         currentFlow: state.currentFlow,
         hasUnsavedChanges: state.hasUnsavedChanges,
+        pendingNodeData: state.pendingNodeData,
       }),
       name: "debug-flow-flow-storage",
     },
