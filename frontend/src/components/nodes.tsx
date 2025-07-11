@@ -26,11 +26,10 @@ import {
 import { memo, useCallback, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { GitRevision } from "./git-revision";
-import { IconSelector } from "./icon-selector";
+import { IconSelect } from "./icon-select";
 import {
-  statusNodeIconMap,
-  statusNodeIconOptions,
-  statusNodeStateColorsMap,
+  statusNodeStateClasses,
+  statusNodeStateIconConfig,
 } from "./state-colors-icons";
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
 
@@ -107,15 +106,15 @@ export const StatusNode = memo(
         selected={selected}
         className={cn(
           "px-2 pt-2 pb-0 max-w-md",
-          statusNodeStateColorsMap[data.state].bg,
-          statusNodeStateColorsMap[data.state].border,
+          statusNodeStateClasses[data.state].bg,
+          statusNodeStateClasses[data.state].border,
         )}
       >
         <NodeHeader
           className={cn(
             "-mx-2 -mt-2 px-2",
             data.description || data.git.rev
-              ? cn("border-b", statusNodeStateColorsMap[data.state].border)
+              ? cn("border-b", statusNodeStateClasses[data.state].border)
               : "",
           )}
         >
@@ -124,13 +123,12 @@ export const StatusNode = memo(
           </NodeHeaderIcon>
           <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
           <NodeHeaderActions>
-            <IconSelector<StatusNodeState>
+            <IconSelect<StatusNodeState>
               selectedIcon={data.state}
               onSelectChange={(newState) => {
                 updateNodeData(id, { state: newState });
               }}
-              availableIcons={statusNodeIconMap}
-              iconChoices={statusNodeIconOptions}
+              optionsAndIcons={statusNodeStateIconConfig}
               ariaLabel="Select node state"
             />
             <AppNodeHeaderMenuAction id={id} type={"statusNode"} data={data} />
@@ -145,7 +143,7 @@ export const StatusNode = memo(
             className={cn(
               "-mx-2 px-2",
               data.description
-                ? cn("border-t", statusNodeStateColorsMap[data.state].border)
+                ? cn("border-t", statusNodeStateClasses[data.state].border)
                 : "",
             )}
           >

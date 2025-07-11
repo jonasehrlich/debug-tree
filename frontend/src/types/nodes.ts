@@ -1,4 +1,5 @@
 import type { Node } from "@xyflow/react";
+import { z } from "zod";
 
 interface GitMetadata {
   rev: string;
@@ -50,3 +51,17 @@ export function isStatusNode(node: Node): node is StatusNode {
 export function isActionNode(node: Node): node is StatusNode {
   return node.type == "actionNode";
 }
+
+export const appNodeFormSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  description: z.string(),
+  state: z.enum(["unknown", "progress", "fail", "success"]).optional(),
+  gitRev: z
+    .string()
+    .regex(/[0-9a-fA-F]*/, {
+      message: "Invalid Git revision",
+    })
+    .optional(),
+});
