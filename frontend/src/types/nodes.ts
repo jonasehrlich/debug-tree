@@ -58,10 +58,5 @@ export const appNodeFormSchema = z.object({
   }),
   description: z.string(),
   state: z.enum(["unknown", "progress", "fail", "success"]).optional(),
-  gitRev: z
-    .string()
-    .regex(/[0-9a-fA-F]*/, {
-      message: "Invalid Git revision",
-    })
-    .optional(),
+  gitRev: z.string().optional().nullable(),
 });

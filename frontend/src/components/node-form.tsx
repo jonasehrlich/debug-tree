@@ -1,7 +1,10 @@
+import { client } from "@/client";
 import type { AppNodeType } from "@/types/nodes";
 import { appNodeFormSchema } from "@/types/nodes";
+import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
+import { AsyncCombobox, type ComboboxItem } from "./async-combobox";
 import { IconSelectContent } from "./icon-select-content";
 import { statusNodeStateIconConfig } from "./state-colors-icons";
 import { Button } from "./ui/button";
@@ -16,6 +19,14 @@ import {
 import { Input } from "./ui/input";
 import { Select, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
+
+const GitRevCommandItem = ({ id, label }: ComboboxItem) => {
+  return (
+    <div className="font-mono">
+      <span className="font-bold">{id}</span> • {label}
+    </div>
+  );
+};
 
 interface NodeFormProps {
   /** Node type  */
@@ -37,6 +48,28 @@ export const NodeForm = ({
   submitButtonText,
   cancelComponent,
 }: NodeFormProps) => {
+  const fetchGitRevisions = async (value: string): Promise<ComboboxItem[]> => {
+    console.log("fetching revs", value);
+    const { data, error } = await client.GET("/api/v1/git/revs/match", {
+      params: { query: { revPrefix: value } },
+    });
+    if (data) {
+      return [
+        ...data.tags.map((tag) => {
+          return { id: tag.tag, label: tag.commit.summary };
+        }),
+        ...data.commits.map((commit) => {
+          return {
+            id: commit.id.slice(0, 7),
+            label: commit.summary,
+          };
+        }),
+      ];
+    }
+    throw new Error(`Failed to fetch Git revisions: ${error.message}`);
+  };
+
+  const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] = useState(false);
   return (
     <Form {...form}>
       <form
@@ -82,7 +115,7 @@ export const NodeForm = ({
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
-                      <SelectTrigger className="w-[180px] ">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select a status" />
                       </SelectTrigger>
                       <IconSelectContent
@@ -100,10 +133,17 @@ export const NodeForm = ({
                 <FormItem className="flex gap-4">
                   <FormLabel className="w-24">Git Revision</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      autoComplete="off"
-                      className="font-mono w-[180px]"
+                    <AsyncCombobox
+                      fetchItems={fetchGitRevisions}
+                      value={field.value ?? ""}
+                      onChange={(item) => {
+                        field.onChange(item ? item.id : null);
+                      }}
+                      placeholder="Select revision"
+                      onDropdownOpenChange={setGitRevSuggestionIsOpen}
+                      renderItem={GitRevCommandItem}
+                      fontFamily="font-mono"
+                      buttonClasses="w-[200px]"
                     />
                   </FormControl>
                   <FormMessage />
@@ -115,7 +155,11 @@ export const NodeForm = ({
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           {cancelComponent}
           <Button
-            disabled={!form.formState.isValid || form.formState.isSubmitting}
+            disabled={
+              !form.formState.isValid ||
+              form.formState.isSubmitting ||
+              gitRevSuggestionsIsOpen
+            }
             type="submit"
           >
             {submitButtonText}
