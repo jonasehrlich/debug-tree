@@ -96,8 +96,8 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
               className="h-screen flex-col flex mr-4"
             />
             {/* sliding panel right column */}
-            <div className="flex-none h-screen">
-              <h2 className="text-lg font-semibold mb-4">Git Tree</h2>
+            <div className="flex-none h-screen space-y-4">
+              <h2 className="text-lg font-semibold">Git Tree</h2>
               <Button
                 className="cursor-pointer"
                 onClick={() => {
@@ -107,63 +107,68 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
                 <GitCompareArrows />
                 {gitDiffIsVisible ? "Hide Diff" : "Show Diff"}
               </Button>
-              <div className="h-screen flex-1 overflow-y-auto">
-                {data?.commits.map((commit, index) => {
-                  return (
-                    <div key={index} className="border-b font-mono ">
-                      <button
-                        onClick={() => {
-                          toggle(index);
-                        }}
-                        className="w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
-                      >
-                        <div>
-                          <span className="font-bold pr-2">
-                            {commit.id.slice(0, 7)}
-                          </span>
-                          {commit.summary}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {commit.author.name} •{" "}
-                          {formatDistanceToNow(commit.time, {
-                            addSuffix: true,
-                          })}
-                        </div>
-                      </button>
-                      <AnimatePresence initial={false}>
-                        {openIndex === index && (
-                          <motion.div
-                            key="content"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.1, ease: "easeInOut" }}
-                            className="overflow-hidden p-4 text-sm text-muted-foreground"
+              <div className="h-screen flex-1 overflow-y-auto font-mono">
+                {data?.commits.length == 0
+                  ? `No commits available for range ${gitRevisions[0]}..${gitRevisions[1]}`
+                  : data?.commits.map((commit, index) => {
+                      return (
+                        <div key={index} className="border-b">
+                          <button
+                            onClick={() => {
+                              toggle(index);
+                            }}
+                            className="w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
                           >
-                            {commit.body !== "" && <p>{commit.body}</p>}
-                            <p>
-                              <strong>Date:</strong>{" "}
-                              {new Date(commit.time).toLocaleString()}
-                            </p>
-                            <p>
-                              <strong>Author:</strong> {commit.author.name}{" "}
-                              {commit.author.email && (
-                                <span> {commit.author.email}</span>
-                              )}
-                            </p>
-                            <p>
-                              <strong>Committer:</strong>{" "}
-                              {commit.committer.name}{" "}
-                              {commit.author.email && (
-                                <span> {commit.committer.email}</span>
-                              )}
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
+                            <div>
+                              <span className="font-bold pr-2">
+                                {commit.id.slice(0, 7)}
+                              </span>
+                              {commit.summary}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {commit.author.name} •{" "}
+                              {formatDistanceToNow(commit.time, {
+                                addSuffix: true,
+                              })}
+                            </div>
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {openIndex === index && (
+                              <motion.div
+                                key="content"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{
+                                  duration: 0.1,
+                                  ease: "easeInOut",
+                                }}
+                                className="overflow-hidden p-4 text-sm text-muted-foreground"
+                              >
+                                {commit.body !== "" && <p>{commit.body}</p>}
+                                <p>
+                                  <strong>Date:</strong>{" "}
+                                  {new Date(commit.time).toLocaleString()}
+                                </p>
+                                <p>
+                                  <strong>Author:</strong> {commit.author.name}{" "}
+                                  {commit.author.email && (
+                                    <span> {commit.author.email}</span>
+                                  )}
+                                </p>
+                                <p>
+                                  <strong>Committer:</strong>{" "}
+                                  {commit.committer.name}{" "}
+                                  {commit.author.email && (
+                                    <span> {commit.committer.email}</span>
+                                  )}
+                                </p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
               </div>
             </div>
           </div>
