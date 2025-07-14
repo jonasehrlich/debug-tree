@@ -46,7 +46,7 @@ const flowSelector = (s: AppState) => ({
   closeCurrentFlow: s.closeCurrentFlow,
   saveCurrentFlow: s.saveCurrentFlow,
   currentEdgeType:
-    s.edges.length > 0 && s.edges[0].type ? s.edges[0].type : "bezier",
+    s.edges.length > 0 && s.edges[0].type ? s.edges[0].type : "default",
   setEdgeType: s.setEdgeType,
 });
 
