@@ -1,11 +1,3 @@
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { Slot } from "@radix-ui/react-slot";
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import { EllipsisVertical, Trash } from "lucide-react";
 import {
@@ -14,7 +6,17 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
 import { type ButtonProps } from "./ui/button-props";
+
 /* NODE HEADER -------------------------------------------------------------- */
 
 export type NodeHeaderProps = HTMLAttributes<HTMLElement>;
@@ -188,12 +190,7 @@ export const NodeHeaderDeleteAction = () => {
   }, [id, setNodes]);
 
   return (
-    <NodeHeaderAction
-      onClick={handleClick}
-      variant="ghost"
-      label="Delete node"
-      className="cursor-pointer"
-    >
+    <NodeHeaderAction onClick={handleClick} variant="ghost" label="Delete node">
       <Trash />
     </NodeHeaderAction>
   );

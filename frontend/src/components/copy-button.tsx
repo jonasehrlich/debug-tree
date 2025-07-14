@@ -1,9 +1,9 @@
 import { DynamicTooltip } from "@/components/dynamic-tooltip";
 import { cn } from "@/lib/utils";
 import { Copy } from "lucide-react";
-import { useCallback, type Ref } from "react";
+import { type Ref, useCallback } from "react";
 import { Button } from "./ui/button";
-import { type ButtonProps } from "./ui/button-props";
+import type { ButtonProps } from "./ui/button-props";
 
 /**
  * @interface CopyButtonProps
@@ -11,11 +11,11 @@ import { type ButtonProps } from "./ui/button-props";
  * @property {string} text - The text string to be copied to the clipboard.
  * @property {string} whatToCopy - What the text is to be copied, the tooltip will then show "Copy "+whatToCopy
  */
-type CopyButtonProps = ButtonProps & {
+interface CopyButtonProps {
   ref: Ref<HTMLButtonElement | null>;
   text: string;
   contentName?: string;
-};
+}
 
 export const CopyButton = ({
   className,
@@ -23,7 +23,7 @@ export const CopyButton = ({
   contentName,
   ref,
   ...props
-}: CopyButtonProps) => {
+}: CopyButtonProps & ButtonProps) => {
   const handleCopyAction = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(text);
