@@ -210,17 +210,25 @@ export const useUiStore = create<UiState>()(
     // @ts-expect-error: Keep for now, get will be required later
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (set, get) => ({
-      isFlowsDialogOpen: false,
       isMiniMapVisible: true,
-      isInlineDiff: false,
       setIsMiniMapVisible: (isVisible) => {
         set({ isMiniMapVisible: isVisible });
       },
+      isFlowsDialogOpen: false,
       setIsFlowsDialogOpen(isOpen) {
         set({ isFlowsDialogOpen: isOpen });
       },
+      isInlineDiff: false,
       setIsInlineDiff(isInlineDiff) {
         set({ isInlineDiff: isInlineDiff });
+      },
+      isHelpDialogOpen: false,
+      setIsHelpDialogOpen(isOpen) {
+        set({ isHelpDialogOpen: isOpen });
+      },
+      isKeybindingsDialogOpen: false,
+      setIsKeybindingsDialogOpen(isOpen) {
+        set({ isKeybindingsDialogOpen: isOpen });
       },
     }),
     {

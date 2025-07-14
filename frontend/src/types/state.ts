@@ -134,4 +134,18 @@ export interface UiState {
    * @param isInlineDiff - Whether to use an inline diff
    */
   setIsInlineDiff: (isInlineDiff: boolean) => void;
+  /** Whether the help dialog should be displayed */
+  isHelpDialogOpen: boolean;
+  /**
+   * Set {@link isHelpDialogOpen}
+   * @param isOpen - Whether the dialog should be opened or closed
+   */
+  setIsHelpDialogOpen: (isOpen: boolean) => void;
+  /** Whether the keybindings dialog should be displayed */
+  isKeybindingsDialogOpen: boolean;
+  /**
+   * Set {@link isKeybindingsDialogOpen}
+   * @param isOpen - Whether the dialog should be opened or closed
+   */
+  setIsKeybindingsDialogOpen: (isOpen: boolean) => void;
 }

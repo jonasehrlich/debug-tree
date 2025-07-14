@@ -16,6 +16,7 @@ import { CreateNodeDialog } from "./components/create-node-dialog";
 import { EditNodeDialog } from "./components/edit-node-dialog";
 import { GitGraphSlidingPanel } from "./components/git-graph-sliding-panel";
 import { GitRevisionsPanel } from "./components/git-revisions-panel";
+import { HelpDialog, KeybindingsDialog } from "./components/help-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
 import { keybindings } from "./keybindings";
@@ -44,6 +45,7 @@ const uiStoreSelector = (state: UiState) => ({
   isMiniMapVisible: state.isMiniMapVisible,
   setIsMiniMapVisible: state.setIsMiniMapVisible,
   setIsFlowsDialogOpen: state.setIsFlowsDialogOpen,
+  setIsHelpDialogOpen: state.setIsHelpDialogOpen,
 });
 
 const fitViewOptions: FitViewOptions = {
@@ -92,6 +94,7 @@ export default function App() {
       description: keybindings.open.description,
     },
   );
+
   const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = useState(false);
   return (
     <HotkeysProvider>
@@ -137,6 +140,8 @@ export default function App() {
           </Panel>
           {isMiniMapVisible && <MiniMap position="top-right" />}
           <Background />
+          <HelpDialog />
+          <KeybindingsDialog />
           <EditNodeDialog />
           <CreateNodeDialog />
           <GitRevisionsPanel

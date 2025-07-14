@@ -54,6 +54,8 @@ const uiStoreSelector = (s: UiState) => ({
   isMiniMapVisible: s.isMiniMapVisible,
   setIsMiniMapVisible: s.setIsMiniMapVisible,
   setIsFlowDialogOpen: s.setIsFlowsDialogOpen,
+  setIsHelpDialogOpen: s.setIsHelpDialogOpen,
+  setIsKeybindingsDialogOpen: s.setIsKeybindingsDialogOpen,
 });
 
 export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
@@ -65,8 +67,13 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
     currentEdgeType,
     setEdgeType,
   } = useStore(useShallow(flowSelector));
-  const { isMiniMapVisible, setIsMiniMapVisible, setIsFlowDialogOpen } =
-    useUiStore(useShallow(uiStoreSelector));
+  const {
+    isMiniMapVisible,
+    setIsMiniMapVisible,
+    setIsFlowDialogOpen,
+    setIsHelpDialogOpen,
+    setIsKeybindingsDialogOpen,
+  } = useUiStore(useShallow(uiStoreSelector));
   const { theme, setTheme } = useTheme();
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -229,6 +236,25 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
               </MenubarRadioGroup>
             </MenubarSubContent>
           </MenubarSub>
+        </MenubarContent>
+      </MenubarMenu>
+      <MenubarMenu>
+        <MenubarTrigger>Help</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem
+            onSelect={() => {
+              setIsHelpDialogOpen(true);
+            }}
+          >
+            Help
+          </MenubarItem>
+          <MenubarItem
+            onSelect={() => {
+              setIsKeybindingsDialogOpen(true);
+            }}
+          >
+            Keybindings
+          </MenubarItem>
         </MenubarContent>
       </MenubarMenu>
     </Menubar>
