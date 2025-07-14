@@ -7,7 +7,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { debounce } from "lodash";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
   Popover,
@@ -67,26 +67,33 @@ export const AsyncCombobox = <ItemType,>({
   const [items, setItems] = useState<ItemType[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const debouncedFetch = useCallback(
-    debounce(async (input: string) => {
-      if (!input) {
-        return;
-      }
-      setLoading(true);
-      try {
-        const results = await fetchItems(input);
-        setLoading(false);
+  const debouncedFetch = useMemo(
+    () =>
+      debounce(async (input: string) => {
+        if (!input) {
+          return;
+        }
+        setLoading(true);
+        try {
+          const results = await fetchItems(input);
+          setLoading(false);
 
-        setItems(results);
-      } catch (err) {
-        console.error(err);
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 300),
-    [],
+          setItems(results);
+        } catch (err) {
+          console.error(err);
+          setItems([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 100),
+    [fetchItems],
   );
+
+  useEffect(() => {
+    return () => {
+      debouncedFetch.cancel();
+    };
+  }, [debouncedFetch]);
 
   useEffect(() => {
     if (input.trim().length > 0) {
