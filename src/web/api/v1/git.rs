@@ -9,6 +9,7 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
         .route("/revs/match", routing::get(get_matching_revisions))
+        .route("/tags", routing::get(list_tags))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -62,7 +63,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits, get_matching_revisions), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits, get_matching_revisions, list_tags), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -202,7 +203,7 @@ struct ListCommitsResponse {
 }
 
 impl ListCommitsResponse {
-    pub fn from_commits_and_diffs<I, D>(
+    pub fn try_from_commits_and_diffs<I, D>(
         commits_iter: I,
         diffs_iter: D,
     ) -> Result<Self, api::AppError>
@@ -342,7 +343,7 @@ async fn list_commits(
             }
         });
 
-    Ok(Json(ListCommitsResponse::from_commits_and_diffs(
+    Ok(Json(ListCommitsResponse::try_from_commits_and_diffs(
         commits, diffs_iter,
     )?))
 }
@@ -454,15 +455,71 @@ async fn get_matching_revisions(
                 .to_string()
                 .to_lowercase()
                 .starts_with(&query.rev_prefix.to_lowercase());
-            let summary_matches = commit.summary().map_or(false, |s| {
-                s.to_lowercase()
-                    .contains(&query.rev_prefix.to_lowercase())
-            });
+            let summary_matches = commit
+                .summary()
+                .is_some_and(|s| s.to_lowercase().contains(&query.rev_prefix.to_lowercase()));
             id_matches || summary_matches
         })
-        .map(|commit| Commit::from(commit));
+        .map(Commit::from);
     Ok(Json(MatchRevisionsResponse::try_from_commits_and_tags(
         commits,
+        tagged_commits,
+    )?))
+}
+
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct ListTagsQuery {
+    /// Prefix of the tag names to list
+    prefix: Option<String>,
+}
+
+#[derive(ToSchema, Serialize)]
+struct ListTagsResponse {
+    tags: Vec<TaggedCommit>,
+}
+impl ListTagsResponse {
+    fn try_from_tagged_commits<T>(iter: T) -> Result<Self, api::AppError>
+    where
+        T: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
+    {
+        Ok(ListTagsResponse {
+            tags: iter
+                .into_iter()
+                .collect::<Result<Vec<_>, api::AppError>>()?,
+        })
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/tags",
+    summary = "List tags",
+    description = "List the tags in the repository",
+    params(ListTagsQuery),
+    responses(
+        (status = http::StatusCode::OK, description = "List of tags", body = ListTagsResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn list_tags(
+    State(state): State<web::AppState>,
+    Query(query): Query<ListTagsQuery>,
+) -> Result<Json<ListTagsResponse>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let tag_names = repo
+        .tag_names(query.prefix.as_deref().map(to_safe_glob).as_deref())
+        .map_err(|e| api::AppError::InternalServerError(format!("Could not get tags: {e}")))?;
+
+    let tagged_commits = tag_names
+        .iter()
+        .flatten()
+        .map(|name| TaggedCommit::try_from_repo_and_tag_name(repo, name));
+    Ok(Json(ListTagsResponse::try_from_tagged_commits(
         tagged_commits,
     )?))
 }

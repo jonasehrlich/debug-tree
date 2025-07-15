@@ -105,6 +105,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/git/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List tags
+         * @description List the tags in the repository
+         */
+        get: operations["list_tags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -196,6 +216,9 @@ export interface components {
         };
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];
+        };
+        ListTagsResponse: {
+            tags: components["schemas"]["TaggedCommit"][];
         };
         MatchRevisionsResponse: {
             /** @description Matching commit names */
@@ -506,6 +529,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MatchRevisionsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    list_tags: {
+        parameters: {
+            query?: {
+                /** @description Prefix of the tag names to list */
+                prefix?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of tags */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListTagsResponse"];
                 };
             };
             /** @description Internal server error */
