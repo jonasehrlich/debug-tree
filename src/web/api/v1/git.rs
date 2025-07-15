@@ -8,6 +8,7 @@ pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
+        .route("/revs/match", routing::get(get_matching_revisions))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -61,16 +62,21 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits, get_matching_revisions), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
     get,
-    path = "/commit/{commit_id}",
+    path = "/commit/{rev}",
     params(
-        ("commit_id", description = "The ID of the commit to retrieve", example = "abc123"),
+        ("rev",
+        description = "The revision of the commit to retrieve.\n\n\
+            This can be the short hash, full hash, a tag, or any other \
+            reference such as HEAD or a branch name", example = "HEAD"),
     ),
-    description = "Get a commit",
+    summary="Get commit",
+    description = "Get a single commit by its revision.\n\n\
+    The revision can be anything accepted by `git rev-parse`.",
     responses(
         (status = http::StatusCode::OK, description = "Commit exists", body = Commit),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -86,23 +92,7 @@ async fn get_commit(
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    Ok(Json(get_commit_by_prefix(repo, &commit_id)?.into()))
-}
-
-fn get_commit_by_prefix<'repo>(
-    repo: &'repo git2::Repository,
-    rev: &str,
-) -> Result<git2::Commit<'repo>, api::AppError> {
-    let oid = get_object_for_revision(repo, rev)?.id();
-    repo.find_commit(oid).map_err(|e| match e.code() {
-        git2::ErrorCode::Invalid => {
-            api::AppError::BadRequest(format!("Invalid base commit ID '{rev}': {e}"))
-        }
-        git2::ErrorCode::NotFound => {
-            api::AppError::NotFound(format!("Base commit '{rev}' not found: {e}"))
-        }
-        _ => api::AppError::InternalServerError(format!("Failed to find base commit '{rev}': {e}")),
-    })
+    Ok(Json(get_commit_for_revision(repo, &commit_id)?.into()))
 }
 
 #[derive(Serialize, ToSchema, PartialEq)]
@@ -207,6 +197,7 @@ struct ListCommitsResponse {
     /// Array of commits between the base and head commit IDs
     /// in reverse chronological order.
     commits: Vec<Commit>,
+    /// Array of diffs in this commit range
     diffs: Vec<Diff>,
 }
 
@@ -233,9 +224,11 @@ impl ListCommitsResponse {
 #[derive(Serialize, ToSchema, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct CommitRangeQuery {
-    /// The base revision of the range, if empty, the first commit is used.
+    /// The base revision of the range, this can be short hash, full hash, a tag,
+    /// or any other reference such a branch name. If empty, the first commit is used.
     base_rev: Option<String>,
-    /// The head revision of the range, if empty, the current HEAD is used.
+    /// The head revision of the range, this can be short hash, full hash, a tag,
+    /// or any other reference such a branch name. If empty, the current HEAD is used.
     head_rev: Option<String>,
 }
 
@@ -279,28 +272,12 @@ impl CommitRangeQuery {
     }
 }
 
-fn get_object_for_revision<'repo>(
-    repo: &'repo git2::Repository,
-    rev: &str,
-) -> Result<git2::Object<'repo>, api::AppError> {
-    repo.revparse_single(rev).map_err(|e| {
-        api::AppError::InternalServerError(format!("Failed to find revision '{rev}': {e}",))
-    })
-}
-
-fn get_tree_for_revision<'repo>(
-    repo: &'repo git2::Repository,
-    rev: &str,
-) -> Result<git2::Tree<'repo>, api::AppError> {
-    get_commit_by_prefix(repo, rev)?.tree().map_err(|_| {
-        api::AppError::InternalServerError(format!("Rev {rev} is not a tree").to_string())
-    })
-}
-
 #[utoipa::path(
     get,
     path = "/commits",
-    description = "List commits",
+    summary = "List commits",
+    description = "List the commits in a range similar to `git log`, \
+    the commits are always ordered from newest to oldest in the tree.",
     params(CommitRangeQuery),
     responses(
         (status = http::StatusCode::OK, description = "List of commits", body = ListCommitsResponse),
@@ -368,4 +345,167 @@ async fn list_commits(
     Ok(Json(ListCommitsResponse::from_commits_and_diffs(
         commits, diffs_iter,
     )?))
+}
+
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct MatchRevisionsQuery {
+    /// Start of the revision to match using glob
+    rev_prefix: String,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct TaggedCommit {
+    /// Tag on the commit
+    tag: String,
+    /// Commit the tag is on
+    commit: Commit,
+}
+
+impl TaggedCommit {
+    pub fn try_from_repo_and_tag_name(
+        repo: &git2::Repository,
+        tag_name: &str,
+    ) -> Result<Self, api::AppError> {
+        Ok(Self {
+            tag: tag_name.to_string(),
+            commit: get_commit_for_revision(repo, tag_name)?.into(),
+        })
+    }
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct MatchRevisionsResponse {
+    /// Matching commit names
+    commits: Vec<Commit>,
+    /// Matching tag names
+    tags: Vec<TaggedCommit>,
+}
+
+impl MatchRevisionsResponse {
+    pub fn try_from_commits_and_tags<Commits, TaggedCommits>(
+        commits: Commits,
+        tagged_commits: TaggedCommits,
+    ) -> Result<Self, api::AppError>
+    where
+        Commits: IntoIterator<Item = Result<Commit, api::AppError>>,
+        TaggedCommits: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
+    {
+        Ok(Self {
+            commits: commits
+                .into_iter()
+                .collect::<Result<Vec<_>, api::AppError>>()?,
+            tags: tagged_commits
+                .into_iter()
+                .collect::<Result<Vec<_>, api::AppError>>()?,
+        })
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/revs/match",
+    summary = "List matching revisions",
+    description = "List all tags and commits that match the given prefix.\n\n\
+    Tags are filtered by their name and commits are filtered by their prefix. \
+    The tags are sorted alphabetically, while commits are sorted by their commit date",
+    params(MatchRevisionsQuery),
+    responses(
+        (status = http::StatusCode::OK, description = "List of commits and tags matching the name", body = MatchRevisionsResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn get_matching_revisions(
+    State(state): State<web::AppState>,
+    Query(query): Query<MatchRevisionsQuery>,
+) -> Result<Json<MatchRevisionsResponse>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let pattern = to_safe_glob(&query.rev_prefix);
+    // Collect matching tags
+    let tag_names = repo
+        .tag_names(Some(&pattern))
+        .map_err(|e| api::AppError::InternalServerError(format!("Error getting tag names: {e}")))?;
+    let tagged_commits = tag_names
+        .into_iter()
+        .flatten()
+        .map(|name| TaggedCommit::try_from_repo_and_tag_name(repo, name));
+
+    // Collect matching commits via revwalk
+    let mut revwalk = repo.revwalk().map_err(|e| {
+        api::AppError::InternalServerError(format!("Failed to create revwalk: {e}"))
+    })?;
+    revwalk.push_head().map_err(|e| {
+        api::AppError::InternalServerError(format!("Error pushing HEAD to revwalk: {e}"))
+    })?;
+    revwalk.set_sorting(git2::Sort::TIME).map_err(|e| {
+        api::AppError::InternalServerError(format!("Error setting revwalk sort: {e}"))
+    })?;
+
+    let commits = revwalk
+        .filter_map(Result::ok)
+        .filter(|oid| {
+            oid.to_string()
+                .starts_with(&query.rev_prefix.to_lowercase())
+        })
+        .map(|oid| {
+            Ok(Commit::from(repo.find_commit(oid).map_err(|e| {
+                api::AppError::InternalServerError(format!(
+                    "Could not find commit for OID {:.7}: {}",
+                    oid.to_string(),
+                    e
+                ))
+            })?))
+        });
+    Ok(Json(MatchRevisionsResponse::try_from_commits_and_tags(
+        commits,
+        tagged_commits,
+    )?))
+}
+
+fn get_commit_for_revision<'repo>(
+    repo: &'repo git2::Repository,
+    rev: &str,
+) -> Result<git2::Commit<'repo>, api::AppError> {
+    let oid = get_object_for_revision(repo, rev)?.id();
+    repo.find_commit(oid).map_err(|e| match e.code() {
+        git2::ErrorCode::Invalid => {
+            api::AppError::BadRequest(format!("Invalid base commit ID '{rev}': {e}"))
+        }
+        git2::ErrorCode::NotFound => {
+            api::AppError::NotFound(format!("Base commit '{rev}' not found: {e}"))
+        }
+        _ => api::AppError::InternalServerError(format!("Failed to find base commit '{rev}': {e}")),
+    })
+}
+
+fn get_object_for_revision<'repo>(
+    repo: &'repo git2::Repository,
+    rev: &str,
+) -> Result<git2::Object<'repo>, api::AppError> {
+    repo.revparse_single(rev).map_err(|e| {
+        api::AppError::InternalServerError(format!("Failed to find revision '{rev}': {e}",))
+    })
+}
+
+fn get_tree_for_revision<'repo>(
+    repo: &'repo git2::Repository,
+    rev: &str,
+) -> Result<git2::Tree<'repo>, api::AppError> {
+    get_commit_for_revision(repo, rev)?.tree().map_err(|_| {
+        api::AppError::InternalServerError(format!("Rev {rev} is not a tree").to_string())
+    })
+}
+
+fn to_safe_glob(prefix: &str) -> String {
+    let escaped = prefix
+        .replace('*', "\\*")
+        .replace('[', "\\[")
+        .replace('?', "\\?");
+    format!("{escaped}*")
 }

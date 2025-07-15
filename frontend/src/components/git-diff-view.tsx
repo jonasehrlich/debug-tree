@@ -57,7 +57,7 @@ export const GitDiffView = memo(
                 id="inline-diff"
                 className="cursor-pointer"
                 checked={isInlineDiff}
-                onCheckedChange={(checked) => {
+                onCheckedChange={(checked: boolean) => {
                   setIsInlineDiff(checked);
                 }}
               />

@@ -41,14 +41,19 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git/commit/{commit_id}": {
+    "/api/v1/git/commit/{rev}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Get a commit */
+        /**
+         * Get commit
+         * @description Get a single commit by its revision.
+         *
+         *     The revision can be anything accepted by `git rev-parse`.
+         */
         get: operations["get_commit"];
         put?: never;
         post?: never;
@@ -65,8 +70,33 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List commits */
+        /**
+         * List commits
+         * @description List the commits in a range similar to `git log`, the commits are always ordered from newest to oldest in the tree.
+         */
         get: operations["list_commits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/git/revs/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List matching revisions
+         * @description List all tags and commits that match the given prefix.
+         *
+         *     Tags are filtered by their name and commits are filtered by their prefix. The tags are sorted alphabetically, while commits are sorted by their commit date
+         */
+        get: operations["get_matching_revisions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -161,10 +191,17 @@ export interface components {
             /** @description Array of commits between the base and head commit IDs
              *     in reverse chronological order. */
             commits: components["schemas"]["Commit"][];
+            /** @description Array of diffs in this commit range */
             diffs: components["schemas"]["Diff"][];
         };
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];
+        };
+        MatchRevisionsResponse: {
+            /** @description Matching commit names */
+            commits: components["schemas"]["Commit"][];
+            /** @description Matching tag names */
+            tags: components["schemas"]["TaggedCommit"][];
         };
         ReactFlowState: {
             /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
@@ -175,6 +212,12 @@ export interface components {
         Signature: {
             email: string;
             name: string;
+        };
+        TaggedCommit: {
+            /** @description Commit the tag is on */
+            commit: components["schemas"]["Commit"];
+            /** @description Tag on the commit */
+            tag: string;
         };
     };
     responses: never;
@@ -368,10 +411,12 @@ export interface operations {
             header?: never;
             path: {
                 /**
-                 * @description The ID of the commit to retrieve
-                 * @example abc123
+                 * @description The revision of the commit to retrieve.
+                 *
+                 *     This can be the short hash, full hash, a tag, or any other reference such as HEAD or a branch name
+                 * @example HEAD
                  */
-                commit_id: string;
+                rev: string;
             };
             cookie?: never;
         };
@@ -409,9 +454,11 @@ export interface operations {
     list_commits: {
         parameters: {
             query?: {
-                /** @description The base revision of the range, if empty, the first commit is used. */
+                /** @description The base revision of the range, this can be short hash, full hash, a tag,
+                 *     or any other reference such a branch name. If empty, the first commit is used. */
                 baseRev?: string | null;
-                /** @description The head revision of the range, if empty, the current HEAD is used. */
+                /** @description The head revision of the range, this can be short hash, full hash, a tag,
+                 *     or any other reference such a branch name. If empty, the current HEAD is used. */
                 headRev?: string | null;
             };
             header?: never;
@@ -427,6 +474,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListCommitsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    get_matching_revisions: {
+        parameters: {
+            query: {
+                /** @description Start of the revision to match using glob */
+                revPrefix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of commits and tags matching the name */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchRevisionsResponse"];
                 };
             };
             /** @description Internal server error */

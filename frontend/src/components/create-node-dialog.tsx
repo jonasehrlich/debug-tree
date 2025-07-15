@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { getNodeId } from "@/lib/utils";
 import { useStore } from "@/store";
-import { appNodeFormSchema } from "@/types/nodes";
+import { AppNodeSchema } from "@/types/nodes";
 import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
@@ -28,24 +28,30 @@ const selector = (state: AppState) => ({
 export const CreateNodeDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { pendingNode, setPendingNode, nodes } = useStore(useShallow(selector));
-  const form = useForm<z.infer<typeof appNodeFormSchema>>({
-    resolver: zodResolver(appNodeFormSchema),
-    defaultValues: {
-      state: "unknown",
-      description: "",
-      title: "",
-      gitRev: "",
-    },
+  const form = useForm<z.infer<typeof AppNodeSchema>>({
+    resolver: zodResolver(AppNodeSchema),
   });
 
   useEffect(() => {
     if (pendingNode) {
+      if (pendingNode.type === "statusNode") {
+        form.reset({
+          data: { title: "", description: "", state: "unknown", git: null },
+          type: pendingNode.type,
+        });
+      } else {
+        form.reset({
+          data: { title: "", description: "" },
+          type: pendingNode.type,
+        });
+      }
+
       setIsOpen(true);
     } else {
       setIsOpen(false);
       form.reset();
     }
-  }, [pendingNode, form]);
+  }, [pendingNode, form, nodes]);
 
   const { addNodes, addEdges, screenToFlowPosition } = useReactFlow();
 
@@ -53,25 +59,18 @@ export const CreateNodeDialog = () => {
     return null;
   }
 
-  const submitForm = (values: z.infer<typeof appNodeFormSchema>) => {
+  const submitForm = (values: z.infer<typeof AppNodeSchema>) => {
     const node = {
       id: getNodeId(pendingNode.type),
       type: pendingNode.type,
       position: screenToFlowPosition(pendingNode.eventScreenPosition),
-      data: {
-        title: values.title,
-        description: values.description,
-      },
+      data: values.data,
     };
 
     if (pendingNode.type === "statusNode") {
       node.data = {
         ...node.data,
         ...{
-          state: values.state ?? "unknown",
-          git: {
-            rev: values.gitRev ?? "",
-          },
           hasTargetHandle: nodes.length > 0,
         },
       };
