@@ -5,8 +5,8 @@ import { useTheme } from "next-themes";
 import { memo, useEffect, useState } from "react";
 import ReactDiffViewer from "react-diff-viewer-continued";
 import { useShallow } from "zustand/react/shallow";
-import { Label } from "./ui/label";
-import { Switch } from "./ui/switch";
+import { ButtonGroup } from "./button-group";
+
 interface GitDiffDialogProps {
   isVisible: boolean;
   baseRev: string;
@@ -53,15 +53,23 @@ export const GitDiffView = memo(
               {baseRev}..{headRev}
             </h3>
             <div className="flex items-center space-x-2 gap-2 mb-4">
-              <Switch
-                id="inline-diff"
-                className="cursor-pointer"
-                checked={isInlineDiff}
-                onCheckedChange={(checked: boolean) => {
-                  setIsInlineDiff(checked);
+              <ButtonGroup
+                selectedButton={isInlineDiff ? "inline" : "split"}
+                onChange={(key) => {
+                  setIsInlineDiff(key === "inline");
                 }}
+                variant="outline"
+                buttons={[
+                  {
+                    key: "inline",
+                    label: "Inline View",
+                  },
+                  {
+                    key: "split",
+                    label: "Split View",
+                  },
+                ]}
               />
-              <Label htmlFor="inline-diff">Inline Diff</Label>
             </div>
           </div>
           <div className="overflow-y-auto flex-1 space-y-4">
