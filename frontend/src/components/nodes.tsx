@@ -90,7 +90,12 @@ export const ActionNode = memo(
             <AppNodeHeaderMenuAction id={id} type={"actionNode"} data={data} />
           </NodeHeaderActions>
         </NodeHeader>
-        <BaseHandle id="target-1" type="target" position={Position.Left} />
+        <BaseHandle
+          id="target-1"
+          type="target"
+          position={Position.Left}
+          isConnectable={false}
+        />
         {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
       </BaseNode>
@@ -136,7 +141,12 @@ export const StatusNode = memo(
           </NodeHeaderActions>
         </NodeHeader>
         {data.hasTargetHandle && (
-          <BaseHandle id="target-1" type="target" position={Position.Left} />
+          <BaseHandle
+            id="target-1"
+            type="target"
+            position={Position.Left}
+            isConnectable={false}
+          />
         )}
         {data.description && <div className="py-2">{data.description}</div>}
         {data.git && (
