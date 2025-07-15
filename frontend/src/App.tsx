@@ -8,7 +8,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { HotkeysProvider, useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
@@ -39,6 +39,7 @@ const selector = (state: AppState) => ({
   saveCurrentFlow: state.saveCurrentFlow,
   setCurrentEditNodeData: state.setCurrentEditNodeData,
   clearGitRevisions: state.clearGitRevisions,
+  pushToUndoStack: state.pushToUndoStack,
 });
 
 const uiStoreSelector = (state: UiState) => ({
@@ -63,6 +64,7 @@ export default function App() {
     saveCurrentFlow,
     setCurrentEditNodeData,
     clearGitRevisions,
+    pushToUndoStack,
   } = useStore(useShallow(selector));
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
@@ -94,6 +96,29 @@ export default function App() {
       description: keybindings.open.description,
     },
   );
+  const doPushToUndoStack = useCallback(pushToUndoStack, [pushToUndoStack]);
+
+  useHotkeys(
+    keybindings.undo.keys,
+    (e) => {
+      console.log("undo");
+      e.preventDefault();
+      doPushToUndoStack();
+    },
+    {
+      description: keybindings.undo.description,
+    },
+  );
+  useHotkeys(
+    keybindings.redo.keys,
+    (e) => {
+      e.preventDefault();
+      doPushToUndoStack();
+    },
+    {
+      description: keybindings.redo.description,
+    },
+  );
 
   const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = useState(false);
   return (
@@ -115,6 +140,7 @@ export default function App() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onConnectEnd={onConnectEnd}
+          onNodeDragStart={doPushToUndoStack}
           onNodeDoubleClick={(_e, node: AppNode) => {
             // typescript is stupid
             if (node.type === "statusNode") {

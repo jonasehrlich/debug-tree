@@ -19,3 +19,7 @@ const appNodeTypeToIdPrefixMap: Record<AppNodeType, string> = {
 export const getNodeId = (nodeType: AppNodeType) => {
   return `${appNodeTypeToIdPrefixMap[nodeType]}-${crypto.randomUUID()}`;
 };
+
+export const funcName = () => {
+  return funcName.caller.name;
+};
