@@ -28,6 +28,11 @@ interface EditNodeData<
   data: NodeDataType;
 }
 
+interface NodesAndEdges {
+  nodes: AppNode[];
+  edges: Edge[];
+}
+
 export type EditAppNodeData =
   | EditNodeData<"actionNode", ActionNodeData>
   | EditNodeData<"statusNode", StatusNodeData>;
@@ -37,6 +42,20 @@ export interface AppState {
   nodes: AppNode[];
   /** Edges of the currently opened flow */
   edges: Edge[];
+  /** Undo stack, array of nodes and edges to get back to */
+  undoStack: NodesAndEdges[];
+  /** Whether an undo is currently in progress.
+   * This is used to avoid pushing node changes while an undo is in progress to the undo stack
+   */
+  undoInProgress: boolean;
+  /** Undo and go back to the previous state */
+  undo: () => void;
+  /** Push current nodes and edges to the undo stack */
+  pushToUndoStack: () => void;
+  /** Undo stack, array of nodes and edges to go forward to */
+  redoStack: NodesAndEdges[];
+  /** Redo and go back to the state that was just undone */
+  redo: () => void;
   /** Currently opened flow. If no current flow is open, the {@link FlowsDialog} is opened */
   currentFlow: FlowIdAndName | null;
   /** Available flows on the server */

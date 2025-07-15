@@ -3,6 +3,8 @@ import {
   applyEdgeChanges,
   applyNodeChanges,
   type Edge,
+  type EdgeChange,
+  type NodeChange,
 } from "@xyflow/react";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -11,11 +13,90 @@ import { client } from "./client";
 import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
 
+const shouldSaveNodeChanges = (
+  changes: NodeChange<AppNode>[],
+  nodes: AppNode[],
+) => {
+  if (nodes.length === 0) {
+    return false;
+  }
+  return changes.some((change) => {
+    if (change.type === "position") {
+      return false;
+    }
+    if (change.type === "select") {
+      return false;
+    }
+    return true;
+    //   if (change.type === "position" && change.dragging === false) {
+    //     console.log(changes);
+    //     return true;
+    //   } else if (["add", "remove", "replace"].includes(change.type)) {
+    //     console.log(changes);
+    //     return true;
+    //   }
+    //   return false;
+  });
+};
+
+const shouldSaveEdgeChanges = (
+  changes: EdgeChange<Edge>[],
+  nodes: AppNode[],
+) => {
+  if (nodes.length === 0) {
+    return false;
+  }
+
+  return changes.some((change) => {
+    if (change.type === "select") {
+      return false;
+    }
+    return true;
+  });
+};
+
+// function typedCloneDeep<T>(value: T): T {
+//   return cloneDeep(value) as T;
+// }
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       nodes: [],
       edges: [],
+      undoStack: [],
+      undoInProgress: false,
+      undo() {
+        const { undoStack, redoStack, nodes, edges } = get();
+        if (undoStack.length === 0) return;
+        const prev = undoStack[undoStack.length - 1];
+        console.log(prev.nodes[0]);
+        set({ undoInProgress: true });
+        set({
+          ...prev,
+          undoStack: undoStack.slice(0, -1),
+          redoStack: [...redoStack, { nodes, edges }],
+        });
+        set({ undoInProgress: false });
+      },
+      pushToUndoStack() {
+        const { nodes, edges, undoStack } = get();
+        console.log("push to undo stack");
+        console.log(undoStack);
+        set({ undoStack: [...undoStack, { nodes, edges }], redoStack: [] });
+      },
+      redoStack: [],
+      redo() {
+        const { undoStack, redoStack, nodes, edges } = get();
+        if (redoStack.length === 0) return;
+
+        const next = redoStack[redoStack.length - 1];
+        set({
+          ...next,
+          redoStack: redoStack.slice(0, -1),
+          undoStack: [...undoStack, { nodes, edges }],
+        });
+      },
       currentFlow: null,
       flows: [],
       hasUnsavedChanges: false,
@@ -129,21 +210,39 @@ export const useStore = create<AppState>()(
         }
       },
       closeCurrentFlow: async () => {
-        const store = get();
-        await store.saveCurrentFlow();
-        set({ currentFlow: null });
-        store.setNodes([]);
-        store.setEdges([]);
+        const { saveCurrentFlow } = get();
+        await saveCurrentFlow();
+        set({
+          nodes: [],
+          edges: [],
+          currentFlow: null,
+          undoStack: [],
+          redoStack: [],
+        });
       },
       onNodesChange: (changes) => {
+        const { nodes, undoInProgress, pushToUndoStack } = get();
+        if (!undoInProgress && shouldSaveNodeChanges(changes, nodes)) {
+          pushToUndoStack();
+        }
+        const newNodes = applyNodeChanges(changes, nodes);
+
         set({
-          nodes: applyNodeChanges(changes, get().nodes),
+          nodes: newNodes,
           hasUnsavedChanges: true,
         });
       },
       onEdgesChange: (changes) => {
+        const { edges, nodes, undoStack } = get();
+        if (shouldSaveEdgeChanges(changes, nodes)) {
+          set({
+            undoStack: [...undoStack, { nodes, edges }],
+            redoStack: [],
+          });
+        }
+
         set({
-          edges: applyEdgeChanges(changes, get().edges),
+          edges: applyEdgeChanges(changes, edges),
           hasUnsavedChanges: true,
         });
       },

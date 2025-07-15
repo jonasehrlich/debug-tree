@@ -48,6 +48,10 @@ const flowSelector = (s: AppState) => ({
   currentEdgeType:
     s.edges.length > 0 && s.edges[0].type ? s.edges[0].type : "default",
   setEdgeType: s.setEdgeType,
+  undo: s.undo,
+  canUndo: s.undoStack.length > 0,
+  redo: s.redo,
+  canRedo: s.redoStack.length > 0,
 });
 
 const uiStoreSelector = (s: UiState) => ({
@@ -66,6 +70,10 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
     saveCurrentFlow,
     currentEdgeType,
     setEdgeType,
+    undo,
+    canUndo,
+    redo,
+    canRedo,
   } = useStore(useShallow(flowSelector));
   const {
     isMiniMapVisible,
@@ -153,10 +161,10 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
       <MenubarMenu>
         <MenubarTrigger>Edit</MenubarTrigger>
         <MenubarContent>
-          <MenubarItem disabled>
+          <MenubarItem onSelect={undo} disabled={!canUndo}>
             Undo <MenubarShortcut>⌘Z</MenubarShortcut>
           </MenubarItem>
-          <MenubarItem disabled>
+          <MenubarItem onSelect={redo} disabled={!canRedo}>
             Redo <MenubarShortcut>⇧⌘Z</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator />

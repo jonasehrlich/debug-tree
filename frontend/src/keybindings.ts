@@ -15,7 +15,18 @@ export const keybindings: Record<string, Keybinding> = {
   },
   open: {
     keys: `${isMac ? "Meta" : "Control"}+o`,
-    repr: isMac ? "⌘o" : "^o",
+    repr: isMac ? "⌘O" : "^O",
     description: "Open a flow",
+  },
+  undo: {
+    keys: `${isMac ? "Meta" : "Control"}+z`,
+    repr: isMac ? "⌘Z" : "^Z",
+    description: "Undo a modification",
+  },
+
+  redo: {
+    keys: `${isMac ? "Meta" : "Control"}+Shift+z`,
+    repr: isMac ? "⌘⇧Z" : "^⇧Z",
+    description: "Redo a modification",
   },
 };
