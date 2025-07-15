@@ -390,13 +390,11 @@ impl MatchRevisionsResponse {
         tagged_commits: TaggedCommits,
     ) -> Result<Self, api::AppError>
     where
-        Commits: IntoIterator<Item = Result<Commit, api::AppError>>,
+        Commits: IntoIterator<Item = Commit>,
         TaggedCommits: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
     {
         Ok(Self {
-            commits: commits
-                .into_iter()
-                .collect::<Result<Vec<_>, api::AppError>>()?,
+            commits: commits.into_iter().collect::<Vec<_>>(),
             tags: tagged_commits
                 .into_iter()
                 .collect::<Result<Vec<_>, api::AppError>>()?,
@@ -449,19 +447,20 @@ async fn get_matching_revisions(
 
     let commits = revwalk
         .filter_map(Result::ok)
-        .filter(|oid| {
-            oid.to_string()
-                .starts_with(&query.rev_prefix.to_lowercase())
+        .filter_map(|oid| get_commit_for_oid(repo, oid).ok())
+        .filter(|commit| {
+            let id_matches = commit
+                .id()
+                .to_string()
+                .to_lowercase()
+                .starts_with(&query.rev_prefix.to_lowercase());
+            let summary_matches = commit.summary().map_or(false, |s| {
+                s.to_lowercase()
+                    .contains(&query.rev_prefix.to_lowercase())
+            });
+            id_matches || summary_matches
         })
-        .map(|oid| {
-            Ok(Commit::from(repo.find_commit(oid).map_err(|e| {
-                api::AppError::InternalServerError(format!(
-                    "Could not find commit for OID {:.7}: {}",
-                    oid.to_string(),
-                    e
-                ))
-            })?))
-        });
+        .map(|commit| Commit::from(commit));
     Ok(Json(MatchRevisionsResponse::try_from_commits_and_tags(
         commits,
         tagged_commits,
@@ -473,14 +472,21 @@ fn get_commit_for_revision<'repo>(
     rev: &str,
 ) -> Result<git2::Commit<'repo>, api::AppError> {
     let oid = get_object_for_revision(repo, rev)?.id();
+    get_commit_for_oid(repo, oid)
+}
+
+fn get_commit_for_oid<'repo>(
+    repo: &'repo git2::Repository,
+    oid: git2::Oid,
+) -> Result<git2::Commit<'repo>, api::AppError> {
     repo.find_commit(oid).map_err(|e| match e.code() {
         git2::ErrorCode::Invalid => {
-            api::AppError::BadRequest(format!("Invalid base commit ID '{rev}': {e}"))
+            api::AppError::BadRequest(format!("Invalid commit ID '{oid}': {e}"))
         }
         git2::ErrorCode::NotFound => {
-            api::AppError::NotFound(format!("Base commit '{rev}' not found: {e}"))
+            api::AppError::NotFound(format!("Commit '{oid}' not found: {e}"))
         }
-        _ => api::AppError::InternalServerError(format!("Failed to find base commit '{rev}': {e}")),
+        _ => api::AppError::InternalServerError(format!("Failed to find commit '{oid}': {e}")),
     })
 }
 

@@ -8,7 +8,7 @@ import {
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { AsyncCombobox } from "./async-combobox";
+import { AsyncCombobox} from "./async-combobox";
 import { IconSelectContent } from "./icon-select-content";
 import { statusNodeStateIconConfig } from "./state-colors-icons";
 import { Button } from "./ui/button";
@@ -156,6 +156,7 @@ export const NodeForm = ({
                       }}
                       fontFamily="font-mono"
                       buttonClasses="w-[200px]"
+                      commandProps={{shouldFilter : false}}
                     />
                   </FormControl>
                   <FormMessage />
