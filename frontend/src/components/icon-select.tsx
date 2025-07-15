@@ -1,5 +1,6 @@
-import { Select, SelectTriggerIcon } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
 import { IconSelectContent } from "./icon-select-content";
+import { SelectTriggerIcon } from "./select-trigger-icon";
 import type { OptionListAndValueMap } from "./state-colors-icons";
 
 interface IconSelectProps<T extends string = string> {

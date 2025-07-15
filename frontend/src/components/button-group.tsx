@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import { type VariantProps } from "class-variance-authority";
 import React from "react";
-import { Button } from "./ui/button";
-import { type buttonVariants } from "./ui/button-props";
+import { Button, type buttonVariants } from "./ui/button";
 
 interface ButtonGroupButtonProps<ButtonKey extends string> {
   /** Key of the button */
