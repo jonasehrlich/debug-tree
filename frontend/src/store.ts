@@ -6,12 +6,15 @@ import {
   type EdgeChange,
   type NodeChange,
 } from "@xyflow/react";
+import log from "loglevel";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { client } from "./client";
 import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
+
+const logger = log.getLogger("store");
 
 /**
  * Whether the state before a set of {@link NodeChange}s should be added to the undo stack
@@ -61,8 +64,7 @@ export const useStore = create<AppState>()(
         const { undoStack, redoStack, nodes, edges } = get();
         if (undoStack.length === 0) return;
         const prev = undoStack[undoStack.length - 1];
-        // TODO: logging
-        // console.log(prev.nodes[0]);
+        logger.debug("undo, new nodes", nodes);
         set({ undoInProgress: true });
         set({
           ...prev,
@@ -73,8 +75,7 @@ export const useStore = create<AppState>()(
       },
       pushToUndoStack() {
         const { nodes, edges, undoStack } = get();
-        // TODO: logging
-        // console.log("push to undo stack", undoStack);
+        logger.debug("push to undo stack", undoStack);
         const newUndoStack = [...undoStack, { nodes, edges }];
         set({ undoStack: newUndoStack, redoStack: [] });
       },
