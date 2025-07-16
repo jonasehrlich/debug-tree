@@ -357,50 +357,9 @@ struct MatchRevisionsQuery {
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-struct TaggedCommit {
-    /// Tag on the commit
-    tag: String,
-    /// Commit the tag is on
-    commit: Commit,
-}
-
-impl TaggedCommit {
-    pub fn try_from_repo_and_tag_name(
-        repo: &git2::Repository,
-        tag_name: &str,
-    ) -> Result<Self, api::AppError> {
-        Ok(Self {
-            tag: tag_name.to_string(),
-            commit: get_commit_for_revision(repo, tag_name)?.into(),
-        })
-    }
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
 struct MatchRevisionsResponse {
     /// Matching commit names
     commits: Vec<Commit>,
-    /// Matching tag names
-    tags: Vec<TaggedCommit>,
-}
-
-impl MatchRevisionsResponse {
-    pub fn try_from_commits_and_tags<Commits, TaggedCommits>(
-        commits: Commits,
-        tagged_commits: TaggedCommits,
-    ) -> Result<Self, api::AppError>
-    where
-        Commits: IntoIterator<Item = Commit>,
-        TaggedCommits: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
-    {
-        Ok(Self {
-            commits: commits.into_iter().collect::<Vec<_>>(),
-            tags: tagged_commits
-                .into_iter()
-                .collect::<Result<Vec<_>, api::AppError>>()?,
-        })
-    }
 }
 
 #[utoipa::path(
@@ -424,17 +383,6 @@ async fn get_matching_revisions(
     let repo = guard
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-
-    let pattern = to_safe_glob(&query.rev_prefix);
-    // Collect matching tags
-    let tag_names = repo
-        .tag_names(Some(&pattern))
-        .map_err(|e| api::AppError::InternalServerError(format!("Error getting tag names: {e}")))?;
-    let tagged_commits = tag_names
-        .into_iter()
-        .flatten()
-        .map(|name| TaggedCommit::try_from_repo_and_tag_name(repo, name));
-
     // Collect matching commits via revwalk
     let mut revwalk = repo.revwalk().map_err(|e| {
         api::AppError::InternalServerError(format!("Failed to create revwalk: {e}"))
@@ -460,11 +408,10 @@ async fn get_matching_revisions(
                 .is_some_and(|s| s.to_lowercase().contains(&query.rev_prefix.to_lowercase()));
             id_matches || summary_matches
         })
-        .map(Commit::from);
-    Ok(Json(MatchRevisionsResponse::try_from_commits_and_tags(
-        commits,
-        tagged_commits,
-    )?))
+        .map(Commit::from)
+        .collect();
+
+    Ok(Json(MatchRevisionsResponse { commits }))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -472,6 +419,27 @@ async fn get_matching_revisions(
 struct ListTagsQuery {
     /// Prefix of the tag names to list
     prefix: Option<String>,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct TaggedCommit {
+    /// Tag on the commit
+    tag: String,
+    /// Commit the tag is on
+    commit: Commit,
+}
+
+impl TaggedCommit {
+    pub fn try_from_repo_and_tag_name(
+        repo: &git2::Repository,
+        tag_name: &str,
+    ) -> Result<Self, api::AppError> {
+        Ok(Self {
+            tag: tag_name.to_string(),
+            commit: get_commit_for_revision(repo, tag_name)?.into(),
+        })
+    }
 }
 
 #[derive(ToSchema, Serialize)]

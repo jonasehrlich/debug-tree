@@ -8,7 +8,7 @@ import {
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { AsyncCombobox} from "./async-combobox";
+import { AsyncCombobox } from "./async-combobox";
 import { IconSelectContent } from "./icon-select-content";
 import { statusNodeStateIconConfig } from "./state-colors-icons";
 import { Button } from "./ui/button";
@@ -59,9 +59,6 @@ export const NodeForm = ({
     });
     if (data) {
       return [
-        ...data.tags.map((tag) => {
-          return { rev: tag.tag, isTag: true, summary: tag.commit.summary };
-        }),
         ...data.commits.map((commit) => {
           return {
             rev: commit.id,
@@ -156,7 +153,7 @@ export const NodeForm = ({
                       }}
                       fontFamily="font-mono"
                       buttonClasses="w-[200px]"
-                      commandProps={{shouldFilter : false}}
+                      commandProps={{ shouldFilter: false }}
                     />
                   </FormControl>
                   <FormMessage />

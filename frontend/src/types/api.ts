@@ -223,8 +223,6 @@ export interface components {
         MatchRevisionsResponse: {
             /** @description Matching commit names */
             commits: components["schemas"]["Commit"][];
-            /** @description Matching tag names */
-            tags: components["schemas"]["TaggedCommit"][];
         };
         ReactFlowState: {
             /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
