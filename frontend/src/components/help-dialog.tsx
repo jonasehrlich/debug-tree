@@ -12,7 +12,6 @@ import type { UiState } from "@/types/state";
 import { Pin } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "./ui/button";
-import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
 
 const uIStoreSelector = (s: UiState) => ({
@@ -147,12 +146,9 @@ export const KeybindingsDialog = () => {
           {Object.entries(keybindings).map(([key, value]) => {
             return (
               <div key={key} className="flex space-x-3 items-center">
-                <Label
-                  htmlFor={key}
-                  className="font-mono p-2 bg-accent rounded-md"
-                >
+                <span className="font-mono px-2 py-1 bg-accent rounded-md min-w-12 text-center text-sm">
                   {value.repr}
-                </Label>
+                </span>
                 <div>{value.description}</div>
               </div>
             );
