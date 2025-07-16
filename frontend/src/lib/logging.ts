@@ -18,3 +18,10 @@ log.methodFactory = (methodName, logLevel, loggerName) => {
 };
 log.setDefaultLevel(process.env.NODE_ENV === "production" ? "warn" : "info");
 log.rebuild();
+
+if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+  // @ts-expect-error For the debug env getLogger should be exposed in the debug console
+  window.getLogger = (name: string) => {
+    return log.getLogger(name);
+  };
+}
