@@ -27,7 +27,7 @@ import type { AppState, UiState } from "./types/state";
 const nodeTypes = {
   actionNode: ActionNode,
   statusNode: StatusNode,
-};
+} as const;
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,

@@ -88,16 +88,17 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
   } = useStore(useShallow(selector));
   const [isFlowsLoading, setIsFlowsLoading] = useState(false);
 
-  // Load flows on mount
+  // Load flows when isOpen is changed to true
   useEffect(() => {
-    try {
+    if (isOpen) {
+      setIsFlowsLoading(true);
       void loadFlowsMetadata();
-    } finally {
       setIsFlowsLoading(false);
     }
-  }, [loadFlowsMetadata]);
+  }, [loadFlowsMetadata, isOpen]);
 
-  // When current flow is set to null, open the dialog and close it automatically if a current flow is set
+  // When current flow is set to null, open the dialog and close it automatically if a current
+  // flow is set. This might trigger other useEffect hooks.
   useEffect(() => {
     if (currentFlow === null) {
       setIsOpen(true);
@@ -162,14 +163,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
       return;
     }
     setIsOpen(open);
-    if (open) {
-      // Load flows on open
-      try {
-        void loadFlowsMetadata();
-      } finally {
-        setIsFlowsLoading(false);
-      }
-    } else {
+    if (!open) {
       form.reset();
       setSelectedFlow(null);
     }
