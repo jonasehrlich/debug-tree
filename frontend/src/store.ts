@@ -13,29 +13,27 @@ import { client } from "./client";
 import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
 
-const shouldSaveNodeChanges = (
+/**
+ * Whether the state before a set of {@link NodeChange}s should be added to the undo stack
+ * @param changes - Array of changes passed to {@link AppState.onNodesChange}
+ * @param nodes - Nodes existing before the changes are applied
+ * @returns Whether the changes should be added to the undo stack
+ */
+const shouldObserveNodeChangesForUndo = (
   changes: NodeChange<AppNode>[],
   nodes: AppNode[],
 ) => {
   if (nodes.length === 0) {
+    /// Don't allow undoing creation of the initial node
     return false;
   }
+
   return changes.some((change) => {
-    if (change.type === "position") {
-      return false;
-    }
-    if (change.type === "select") {
-      return false;
-    }
-    return true;
-    //   if (change.type === "position" && change.dragging === false) {
-    //     console.log(changes);
-    //     return true;
-    //   } else if (["add", "remove", "replace"].includes(change.type)) {
-    //     console.log(changes);
-    //     return true;
-    //   }
-    //   return false;
+    return (
+      change.type === "remove" ||
+      change.type === "add" ||
+      change.type === "replace"
+    );
   });
 };
 
@@ -48,16 +46,9 @@ const shouldSaveEdgeChanges = (
   }
 
   return changes.some((change) => {
-    if (change.type === "select") {
-      return false;
-    }
-    return true;
+    return change.type !== "select";
   });
 };
-
-// function typedCloneDeep<T>(value: T): T {
-//   return cloneDeep(value) as T;
-// }
 
 export const useStore = create<AppState>()(
   persist(
@@ -70,7 +61,8 @@ export const useStore = create<AppState>()(
         const { undoStack, redoStack, nodes, edges } = get();
         if (undoStack.length === 0) return;
         const prev = undoStack[undoStack.length - 1];
-        console.log(prev.nodes[0]);
+        // TODO: logging
+        // console.log(prev.nodes[0]);
         set({ undoInProgress: true });
         set({
           ...prev,
@@ -81,9 +73,10 @@ export const useStore = create<AppState>()(
       },
       pushToUndoStack() {
         const { nodes, edges, undoStack } = get();
-        console.log("push to undo stack");
-        console.log(undoStack);
-        set({ undoStack: [...undoStack, { nodes, edges }], redoStack: [] });
+        // TODO: logging
+        // console.log("push to undo stack", undoStack);
+        const newUndoStack = [...undoStack, { nodes, edges }];
+        set({ undoStack: newUndoStack, redoStack: [] });
       },
       redoStack: [],
       redo() {
@@ -222,7 +215,10 @@ export const useStore = create<AppState>()(
       },
       onNodesChange: (changes) => {
         const { nodes, undoInProgress, pushToUndoStack } = get();
-        if (!undoInProgress && shouldSaveNodeChanges(changes, nodes)) {
+        if (
+          !undoInProgress &&
+          shouldObserveNodeChangesForUndo(changes, nodes)
+        ) {
           pushToUndoStack();
         }
         const newNodes = applyNodeChanges(changes, nodes);
