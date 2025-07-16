@@ -1,5 +1,5 @@
-import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+import { useRef } from "react";
 
 interface SlidingPanelProps {
   isOpen: boolean;
@@ -8,45 +8,34 @@ interface SlidingPanelProps {
   children: React.ReactNode;
 }
 
-const panelVariants = {
-  hidden: { x: "100%" },
-  visible: { x: 0 },
-  exit: { x: "100%" },
-};
-
 export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   isOpen,
   onClose,
   children,
 }) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  if (!isOpen) return null;
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            className="fixed inset-0 bg-background bg-opacity-80 z-40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.8 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.div
-            className="fixed top-0 right-0 w-fit h-screen bg-background shadow-lg z-50 p-4"
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={panelVariants}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <div className="flex justify-end items-center m-4">
-              <button onClick={onClose} aria-label="Close">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div>{children}</div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    <div
+      onClick={(e) => {
+        if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+          onClose();
+        }
+      }}
+      className="bg-muted/30 fixed inset-0 z-40 backdrop-blur-sm justify-end"
+    >
+      <div
+        ref={panelRef}
+        className="fixed top-0 right-0 h-full p-4 fit-content bg-muted shadow-lg z-50"
+      >
+        <div className="flex justify-end items-center m-4">
+          <button onClick={onClose} aria-label="Close">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="w-full overflow-hidden">{children}</div>
+      </div>
+    </div>
   );
 };
