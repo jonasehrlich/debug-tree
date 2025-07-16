@@ -41,6 +41,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/git/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List branches
+         * @description List all local branches in the repository, optionally filtered by a glob pattern.
+         */
+        get: operations["list_branches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/git/commit/{rev}": {
         parameters: {
             query?: never;
@@ -129,6 +149,12 @@ export interface components {
              * @description HTTP status code
              */
             status: number;
+        };
+        Branch: {
+            /** @description Commit ID of the branch head */
+            head: components["schemas"]["Commit"];
+            /** @description Name of the branch */
+            name: string;
         };
         Commit: {
             author: components["schemas"]["Signature"];
@@ -387,6 +413,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    list_branches: {
+        parameters: {
+            query?: {
+                /** @description Glob filter for */
+                filter?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of branches */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Branch"][];
                 };
             };
             /** @description Internal server error */

@@ -1,4 +1,5 @@
 use crate::{web, web::api};
+
 use axum::extract::{Path, Query, State};
 use axum::{Json, routing};
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,7 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
         .route("/tags", routing::get(list_tags))
+        .route("/branches", routing::get(list_branches))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -68,7 +70,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits,  list_tags), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits,  list_tags, list_branches), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -431,6 +433,68 @@ async fn list_tags(
     Ok(Json(ListTagsResponse::try_from_tagged_commits(
         tagged_commits,
     )?))
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct Branch {
+    /// Name of the branch
+    name: String,
+    /// Commit ID of the branch head
+    head: Commit,
+}
+
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct ListBranchesQuery {
+    /// Glob filter for
+    filter: Option<String>,
+}
+
+/// List branches in the repository
+#[utoipa::path(
+    get,
+    path = "/branches",
+    summary = "List branches",
+    description = "List all local branches in the repository, optionally filtered by a glob pattern.",
+    params(ListBranchesQuery),
+    responses(
+        (status = http::StatusCode::OK, description = "List of branches", body = Vec<Branch>),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn list_branches(
+    State(state): State<web::AppState>,
+    Query(query): Query<ListBranchesQuery>,
+) -> Result<Json<Vec<Branch>>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let filter = &query.filter.unwrap_or("".to_string());
+    let local_branches = repo
+        .branches(Some(git2::BranchType::Local))
+        .map_err(|e| api::AppError::InternalServerError(format!("Failed to list branches: {e}")))?;
+    let branches = local_branches
+        .filter_map(Result::ok)
+        .filter_map(|(b, _)| {
+            let name = b.name().ok()??;
+            if !name.contains(filter) {
+                return None; // Skip branches that do not match the filter
+            }
+
+            let rev = b.get();
+            let commit = rev.peel_to_commit().ok()?;
+            let branch = Branch {
+                name: name.to_string(),
+                head: Commit::from(commit),
+            };
+            Some(branch)
+        })
+        .collect();
+
+    Ok(Json(branches))
 }
 
 fn get_commit_for_revision<'repo>(
