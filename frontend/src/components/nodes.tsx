@@ -34,7 +34,12 @@ import {
 } from "./state-colors-icons";
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
 
-const AppNodeHeaderMenuAction = ({ id, type, data }: EditAppNodeData) => {
+const AppNodeHeaderMenuAction = ({
+  id,
+  type,
+  data,
+  deletable = true,
+}: EditAppNodeData & { deletable?: boolean }) => {
   const { setEditNodeData } = useStore(useShallow(selector));
   const { setNodes } = useReactFlow();
 
@@ -61,9 +66,11 @@ const AppNodeHeaderMenuAction = ({ id, type, data }: EditAppNodeData) => {
           >
             <Pencil /> Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={deleteNode}>
-            <Trash /> Delete
-          </DropdownMenuItem>
+          {deletable && (
+            <DropdownMenuItem onSelect={deleteNode}>
+              <Trash /> Delete
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       }
     ></NodeHeaderMenuAction>
@@ -137,10 +144,15 @@ export const StatusNode = memo(
               optionsAndIcons={statusNodeStateIconConfig}
               ariaLabel="Select node state"
             />
-            <AppNodeHeaderMenuAction id={id} type={"statusNode"} data={data} />
+            <AppNodeHeaderMenuAction
+              id={id}
+              type={"statusNode"}
+              data={data}
+              deletable={!data.isRootNode}
+            />
           </NodeHeaderActions>
         </NodeHeader>
-        {data.hasTargetHandle && (
+        {!data.isRootNode && (
           <BaseHandle
             id="target-1"
             type="target"

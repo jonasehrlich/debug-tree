@@ -36,9 +36,8 @@ export type StatusNodeData = {
   state: StatusNodeState;
   description: string;
   git: GitMetadata | null;
-  /// If set to true, the node gets a target handle, this is set for the initial node in a flow
-  hasTargetHandle: boolean;
-  // TODO: Add ticket reference
+  /// If set to true, the node does not get a target handle, and is not deletable
+  isRootNode: boolean;
 };
 
 export type AppNodeType = "actionNode" | "statusNode";

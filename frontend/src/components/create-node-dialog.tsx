@@ -60,18 +60,20 @@ export const CreateNodeDialog = () => {
   }
 
   const submitForm = (values: z.infer<typeof AppNodeSchema>) => {
+    const isRootNode = nodes.length === 0;
     const node = {
       id: getNodeId(pendingNode.type),
       type: pendingNode.type,
       position: screenToFlowPosition(pendingNode.eventScreenPosition),
       data: values.data,
+      deletable: !isRootNode,
     };
 
     if (pendingNode.type === "statusNode") {
       node.data = {
         ...node.data,
         ...{
-          hasTargetHandle: nodes.length > 0,
+          isRootNode: isRootNode,
         },
       };
     }
