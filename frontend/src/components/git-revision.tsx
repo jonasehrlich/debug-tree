@@ -1,6 +1,13 @@
 import { cn } from "@/lib/utils";
-import { GitBranch, Pin } from "lucide-react";
-import { useCallback, useRef, type RefObject } from "react";
+import { formatGitRevision, type GitMetadata } from "@/types/nodes";
+import { GitBranch, Pin, Tag } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { CopyButton } from "./copy-button";
 import { DynamicTooltip } from "./dynamic-tooltip";
 import { Button } from "./ui/button";
@@ -10,7 +17,7 @@ import { Button } from "./ui/button";
  * @property {string} revision - The text string to be copied to the clipboard.
  */
 interface GitRevisionProps {
-  revision: string;
+  revision: GitMetadata;
   onClickPinRevision?: (rev: string) => void;
 }
 
@@ -19,24 +26,28 @@ export const GitRevision = ({
   onClickPinRevision: onClickPinRevision,
 }: GitRevisionProps) => {
   const ref = useRef<HTMLButtonElement>(null);
+  const [formattedRev, setFormattedRev] = useState(formatGitRevision(revision));
+  useEffect(() => {
+    setFormattedRev(formatGitRevision(revision));
+  }, [setFormattedRev, revision]);
 
   const handlePinCommitId = useCallback(() => {
     if (!onClickPinRevision) {
       return Promise.resolve(false);
     }
-    onClickPinRevision(revision);
+    onClickPinRevision(formattedRev);
     return Promise.resolve(true);
-  }, [revision, onClickPinRevision]);
+  }, [formattedRev, onClickPinRevision]);
 
   const contentName = "revision";
   const paddedContentName = " " + contentName;
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>
-      <GitBranch size={16} />
+      {revision.isTag ? <Tag size={16} /> : <GitBranch size={16} />}
 
       <span className="flex-1 font-mono px-3  truncate align-middle">
-        {revision}
+        {formattedRev}
       </span>
       {onClickPinRevision && (
         <DynamicTooltip
@@ -55,7 +66,7 @@ export const GitRevision = ({
         </DynamicTooltip>
       )}
       <CopyButton
-        text={revision}
+        text={formattedRev}
         contentName={contentName}
         ref={ref as RefObject<HTMLButtonElement>}
       />
