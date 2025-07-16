@@ -6,9 +6,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Command as CommandPrimitive } from "cmdk";
 import debounce from "lodash.debounce";
-import { Command as CommandPrimitive } from "cmdk"
-import { debounce } from "lodash";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
