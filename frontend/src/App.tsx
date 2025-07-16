@@ -21,6 +21,7 @@ import { HelpDialog, KeybindingsDialog } from "./components/help-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
 import { Toaster } from "./components/ui/sonner";
 import { keybindings } from "./keybindings";
+import { isApple } from "./lib/utils";
 import { useStore, useUiStore } from "./store";
 import type { AppNode } from "./types/nodes";
 import type { AppState, UiState } from "./types/state";
@@ -118,6 +119,7 @@ export default function App() {
     keybindings.undo.keys,
     () => {
       console.log("undo");
+      undo();
     },
     {
       description: keybindings.undo.description,
@@ -127,8 +129,8 @@ export default function App() {
 
   useHotkeys(
     keybindings.redo.keys,
-    (e) => {
-      e.preventDefault();
+    () => {
+      redo();
     },
     {
       description: keybindings.redo.description,
@@ -146,7 +148,7 @@ export default function App() {
         isKeybindingsDialogOpen ||
         isHelpDialogOpen
       );
-      if (!shouldHandle) {
+      if (!shouldHandle || !isApple) {
         return;
       }
       if (e.metaKey && e.key === "z") {
