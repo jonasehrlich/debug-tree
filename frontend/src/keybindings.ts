@@ -10,7 +10,7 @@ const isMac = (() => {
 export const keybindings: Record<string, Keybinding> = {
   save: {
     keys: `${isMac ? "Meta" : "Control"}+s`,
-    repr: isMac ? "⌘s" : "^s",
+    repr: isMac ? "⌘S" : "^S",
     description: "Save the current flow",
   },
   open: {
@@ -23,10 +23,9 @@ export const keybindings: Record<string, Keybinding> = {
     repr: isMac ? "⌘Z" : "^Z",
     description: "Undo a modification",
   },
-
   redo: {
     keys: `${isMac ? "Meta" : "Control"}+Shift+z`,
     repr: isMac ? "⌘⇧Z" : "^⇧Z",
     description: "Redo a modification",
   },
-};
+} as const;
