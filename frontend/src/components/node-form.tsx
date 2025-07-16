@@ -53,7 +53,6 @@ export const NodeForm = ({
   cancelComponent,
 }: NodeFormProps) => {
   const fetchGitRevisions = async (value: string): Promise<GitMetadata[]> => {
-    console.log("fetching revs", value);
     const { data, error } = await client.GET("/api/v1/git/revs/match", {
       params: { query: { revPrefix: value } },
     });
@@ -69,6 +68,35 @@ export const NodeForm = ({
       ];
     }
     throw new Error(`Failed to fetch Git revisions: ${error.message}`);
+  };
+
+  const fetGitTags = async (value: string): Promise<GitMetadata[]> => {
+    const { data, error } = await client.GET("/api/v1/git/tags", {
+      params: { query: { prefix: value } },
+    });
+
+    if (data) {
+      return [
+        ...data.tags.map((data) => {
+          return {
+            rev: data.tag,
+            summary: data.commit.summary,
+            isTag: true,
+          };
+        }),
+      ];
+    }
+    throw new Error(`Failed to fetch Git tags: ${error.message}`);
+  };
+
+  const fetGitTagsAndRevisions = async (
+    value: string,
+  ): Promise<GitMetadata[]> => {
+    const [revisions, tags] = await Promise.all([
+      fetchGitRevisions(value),
+      fetGitTags(value),
+    ]);
+    return [...revisions, ...tags];
   };
 
   const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] = useState(false);
@@ -141,7 +169,7 @@ export const NodeForm = ({
                   <FormLabel className="w-24">Git Revision</FormLabel>
                   <FormControl>
                     <AsyncCombobox<GitMetadata>
-                      fetchItems={fetchGitRevisions}
+                      fetchItems={fetGitTagsAndRevisions}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Select revision"
