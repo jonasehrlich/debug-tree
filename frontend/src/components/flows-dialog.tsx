@@ -92,8 +92,13 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
   useEffect(() => {
     if (isOpen) {
       setIsFlowsLoading(true);
-      void loadFlowsMetadata();
-      setIsFlowsLoading(false);
+      loadFlowsMetadata()
+        .then(() => {
+          setIsFlowsLoading(false);
+        })
+        .catch(() => {
+          setIsFlowsLoading(false);
+        });
     }
   }, [loadFlowsMetadata, isOpen]);
 
