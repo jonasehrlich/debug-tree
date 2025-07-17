@@ -92,10 +92,20 @@ export const CreateNodeDialog = () => {
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && nodes.length == 0) {
-          return;
+        if (!open) {
+          if (nodes.length === 0) {
+            // If there are no nodes yet, one needs to be created first and the dialog cannot be closed yet
+            return;
+          }
+          // When closing the dialog, set pending node data to null.
+          // pendingNodeData is stored persistently (to-reopen the create node dialog if no nodes
+          // are created). If the data would not be reset here, a potential reload would reopen the
+          // dialog, as pendingNodeData still has a value. This avoids that a the dialog is automatically
+          // opened after a reload
+          setPendingNode(null);
+          // At this point it is sufficient to set the pending node data to null, the useEffect in this
+          // component will close it for us
         }
-        setIsOpen(open);
       }}
     >
       <DialogContent
