@@ -23,7 +23,7 @@ import {
   Rocket,
   Trash,
 } from "lucide-react";
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { GitRevision } from "./git-revision";
 import { IconSelect } from "./icon-select";
@@ -85,6 +85,10 @@ const commonNodeClasses = "w-xs" as const;
 
 export const ActionNode = memo(
   ({ id, data, selected }: NodeProps<ActionNodeType>) => {
+    const [handleIds] = useState(() => {
+      return { target: `target-${id}`, source: `source-${id}` };
+    });
+
     return (
       <BaseNode selected={selected} className={commonNodeClasses}>
         <NodeContent className="divide-y">
@@ -103,22 +107,35 @@ export const ActionNode = memo(
           </NodeHeader>
           <NodeSection children={data.description}></NodeSection>
         </NodeContent>
+        {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle
-          id="target-1"
+          id={handleIds.target}
           type="target"
           position={Position.Left}
-          // isConnectable={false}
         />
-        <BaseHandle id="source-1" type="source" position={Position.Right} />
+        <BaseHandle
+          id={handleIds.source}
+          type="source"
+          position={Position.Right}
+        />
       </BaseNode>
     );
   },
 );
 
+ActionNode.displayName = "ActionNode";
+
 export const StatusNode = memo(
   ({ id, data, selected }: NodeProps<StatusNodeType>) => {
     const { addGitRevision } = useStore(useShallow(selector));
     const { updateNodeData } = useReactFlow();
+
+    const handleIds = useMemo(() => {
+      return {
+        target: `target-${id}`,
+        source: `source-${id}`,
+      };
+    }, [id]);
     return (
       <BaseNode
         selected={selected}
@@ -167,14 +184,19 @@ export const StatusNode = memo(
         </NodeContent>
         {!data.isRootNode && (
           <BaseHandle
-            id="target-1"
+            id={handleIds.target}
             type="target"
             position={Position.Left}
-            // isConnectable={false}
           />
         )}
-        <BaseHandle id="source-1" type="source" position={Position.Right} />
+        <BaseHandle
+          id={handleIds.source}
+          type="source"
+          position={Position.Right}
+        />
       </BaseNode>
     );
   },
 );
+
+StatusNode.displayName = "StatusNode";

@@ -3,6 +3,7 @@ import {
   MiniMap,
   Panel,
   ReactFlow,
+  useReactFlow,
   type ColorMode,
   type FitViewOptions,
 } from "@xyflow/react";
@@ -81,6 +82,7 @@ export const App = () => {
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
   const { theme } = useTheme();
+  const { getNodeConnections, getNode } = useReactFlow();
 
   const {
     isMiniMapVisible,
@@ -208,6 +210,17 @@ export const App = () => {
               data: node.data,
             });
           }
+        }}
+        isValidConnection={(edgeOrConn) => {
+          const hasNoTargetConnections =
+            getNodeConnections({
+              type: "target",
+              nodeId: edgeOrConn.target,
+            }).length === 0;
+          const nodeTypesDiffer =
+            getNode(edgeOrConn.source)?.type !==
+            getNode(edgeOrConn.target)?.type;
+          return hasNoTargetConnections && nodeTypesDiffer;
         }}
         colorMode={theme ? (theme as ColorMode) : "system"}
         fitView
