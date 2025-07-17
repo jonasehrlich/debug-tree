@@ -1,7 +1,9 @@
 import "@/lib/logging.ts";
+import { ReactFlowProvider } from "@xyflow/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+import { HotkeysProvider } from "react-hotkeys-hook";
+import { App } from "./App.tsx";
 import { ThemeProvider } from "./components/theme-provider";
 import "./index.css";
 
@@ -9,7 +11,11 @@ import "./index.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider attribute="class" storageKey="app-theme" enableSystem>
-      <App />
+      <HotkeysProvider>
+        <ReactFlowProvider>
+          <App />
+        </ReactFlowProvider>
+      </HotkeysProvider>
     </ThemeProvider>
   </StrictMode>,
 );
