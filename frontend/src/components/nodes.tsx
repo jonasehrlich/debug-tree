@@ -15,7 +15,13 @@ import {
   type StatusNode as StatusNodeType,
 } from "@/types/nodes";
 import type { AppState, EditAppNodeData } from "@/types/state";
-import { Position, useReactFlow, type NodeProps } from "@xyflow/react";
+import {
+  Position,
+  useReactFlow,
+  useStore as useReactFlowStore,
+  type NodeProps,
+  type ReactFlowState,
+} from "@xyflow/react";
 import {
   ChartLine,
   EllipsisVertical,
@@ -32,6 +38,7 @@ import {
   statusNodeStateIconConfig,
 } from "./state-colors-icons";
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
+import { Skeleton } from "./ui/skeleton";
 
 const AppNodeHeaderMenuAction = ({
   id,
@@ -81,31 +88,83 @@ const selector = (s: AppState) => ({
   addGitRevision: s.addGitRevision,
 });
 
+const zoomSelector = (s: ReactFlowState) => s.transform[2] >= 0.6;
+
+interface PlaceholderProps {
+  numLines?: number;
+}
+
+const HeaderPlaceholder = ({ numLines = 1 }: PlaceholderProps) => (
+  <header
+    className={cn(
+      "flex items-center gap-2 px-3 py-2 pb-3",
+      // nodeHeaderAdditionalClasses,
+    )}
+  >
+    <Skeleton className="h-6 w-6 rounded-full animate-none" />
+    <div className="space-y-2">
+      {Array.from({ length: numLines }, (_, i) => (
+        <Skeleton key={i} className="h-4 w-[200px] animate-none" />
+      ))}
+    </div>
+  </header>
+);
+
+const PlaceholderNodeContent = ({
+  numDescriptionLines = 0,
+}: {
+  numDescriptionLines?: number;
+}) => (
+  <div className="items-center  px-4 pt-2 space-y-2">
+    {Array.from({ length: numDescriptionLines }, (_, i) => (
+      <Skeleton key={i} className="h-4 w-[265px] animate-none" />
+    ))}
+  </div>
+);
+
+const nodeHeaderAdditionalClasses = "-mx-2 -mt-2 px-2";
+
 export const ActionNode = memo(
   ({ id, data, selected }: NodeProps<ActionNodeType>) => {
     const [handleIds] = useState(() => {
       return { target: `target-${id}`, source: `source-${id}` };
     });
 
+    const showContent = useReactFlowStore(zoomSelector);
+
     return (
-      <BaseNode selected={selected} className="px-2 pt-2 pb-0 max-w-md">
-        <NodeHeader
-          className={cn("-mx-2 -mt-2 px-2", data.description && "border-b")}
-        >
-          <NodeHeaderIcon>
-            <Rocket size="16" />
-          </NodeHeaderIcon>
-          <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
-          <NodeHeaderActions>
-            <AppNodeHeaderMenuAction id={id} type={"actionNode"} data={data} />
-          </NodeHeaderActions>
-        </NodeHeader>
+      <BaseNode selected={selected} className="px-2 pt-2 pb-0 w-xs">
+        {showContent ? (
+          <>
+            <NodeHeader
+              className={cn(
+                nodeHeaderAdditionalClasses,
+                data.description && "border-b",
+              )}
+            >
+              <NodeHeaderIcon>
+                <Rocket size="16" />
+              </NodeHeaderIcon>
+
+              <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
+              <NodeHeaderActions>
+                <AppNodeHeaderMenuAction
+                  id={id}
+                  type={"actionNode"}
+                  data={data}
+                />
+              </NodeHeaderActions>
+            </NodeHeader>
+          </>
+        ) : (
+          <HeaderPlaceholder numLines={2} />
+        )}
+        {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle
           id={handleIds.target}
           type="target"
           position={Position.Left}
         />
-        {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle
           id={handleIds.source}
           type="source"
@@ -133,14 +192,14 @@ export const StatusNode = memo(
       <BaseNode
         selected={selected}
         className={cn(
-          "px-2 pt-2 pb-0 max-w-md",
+          "px-2 pt-2 pb-0 w-xs",
           statusNodeStateClasses[data.state].bg,
           statusNodeStateClasses[data.state].border,
         )}
       >
         <NodeHeader
           className={cn(
-            "-mx-2 -mt-2 px-2",
+            nodeHeaderAdditionalClasses,
             data.description || data.git
               ? cn("border-b", statusNodeStateClasses[data.state].border)
               : "",
