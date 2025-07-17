@@ -48,6 +48,7 @@ interface AsyncComboboxProps<ItemType> {
   fontFamily?: "font-sans" | "font-serif" | "font-mono" | "";
   /** Classes to apply for the button triggering the dropdown */
   buttonClasses?: string;
+  /** Props to pass to the Command component */
   commandProps?: React.ComponentProps<typeof CommandPrimitive>;
 }
 
@@ -140,7 +141,10 @@ export const AsyncCombobox = <ItemType,>({
         </Button>
       )}
       <PopoverContent className="w-[500px] p-0 " align="start">
-        <Command className={fontFamily} {...commandProps}>
+        <Command
+          {...commandProps}
+          className={cn(commandProps.className, fontFamily)}
+        >
           <CommandInput
             value={input}
             onValueChange={setInput}
