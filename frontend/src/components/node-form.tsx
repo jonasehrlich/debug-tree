@@ -70,7 +70,7 @@ export const NodeForm = ({
     throw new Error(`Failed to fetch Git revisions: ${error.message}`);
   };
 
-  const fetGitTags = async (value: string): Promise<GitMetadata[]> => {
+  const fetchGitTags = async (value: string): Promise<GitMetadata[]> => {
     const { data, error } = await client.GET("/api/v1/git/tags", {
       params: { query: { prefix: value } },
     });
@@ -89,12 +89,12 @@ export const NodeForm = ({
     throw new Error(`Failed to fetch Git tags: ${error.message}`);
   };
 
-  const fetGitTagsAndRevisions = async (
+  const fetchGitTagsAndRevisions = async (
     value: string,
   ): Promise<GitMetadata[]> => {
     const [revisions, tags] = await Promise.all([
       fetchGitRevisions(value),
-      fetGitTags(value),
+      fetchGitTags(value),
     ]);
     return [...revisions, ...tags];
   };
@@ -169,7 +169,7 @@ export const NodeForm = ({
                   <FormLabel className="w-24">Git Revision</FormLabel>
                   <FormControl>
                     <AsyncCombobox<GitMetadata>
-                      fetchItems={fetGitTagsAndRevisions}
+                      fetchItems={fetchGitTagsAndRevisions}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Select revision"
