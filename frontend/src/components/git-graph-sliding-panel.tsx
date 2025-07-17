@@ -3,7 +3,6 @@ import { useStore } from "@/store";
 import type { components } from "@/types/api";
 import type { AppState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
 import { GitCompareArrows } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -136,40 +135,31 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
                               </div>
                             </div>
                           </button>
-                          <AnimatePresence initial={false}>
-                            {openIndex === index && (
-                              <motion.div
-                                key="content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{
-                                  duration: 0.1,
-                                  ease: "easeInOut",
-                                }}
-                                className="overflow-hidden p-4 text-sm text-muted-foreground"
-                              >
-                                {commit.body !== "" && <p>{commit.body}</p>}
-                                <p>
-                                  <strong>Date:</strong>{" "}
-                                  {new Date(commit.time).toLocaleString()}
-                                </p>
-                                <p>
-                                  <strong>Author:</strong> {commit.author.name}{" "}
-                                  {commit.author.email && (
-                                    <span> {commit.author.email}</span>
-                                  )}
-                                </p>
-                                <p>
-                                  <strong>Committer:</strong>{" "}
-                                  {commit.committer.name}{" "}
-                                  {commit.author.email && (
-                                    <span> {commit.committer.email}</span>
-                                  )}
-                                </p>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                          {openIndex === index && (
+                            <div
+                              key="content"
+                              className="overflow-hidden p-4 text-sm text-muted-foreground"
+                            >
+                              {commit.body !== "" && <p>{commit.body}</p>}
+                              <p>
+                                <strong>Date:</strong>{" "}
+                                {new Date(commit.time).toLocaleString()}
+                              </p>
+                              <p>
+                                <strong>Author:</strong> {commit.author.name}{" "}
+                                {commit.author.email && (
+                                  <span> {commit.author.email}</span>
+                                )}
+                              </p>
+                              <p>
+                                <strong>Committer:</strong>{" "}
+                                {commit.committer.name}{" "}
+                                {commit.author.email && (
+                                  <span> {commit.committer.email}</span>
+                                )}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
