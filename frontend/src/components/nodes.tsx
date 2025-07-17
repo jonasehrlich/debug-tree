@@ -1,5 +1,5 @@
 import { BaseHandle } from "@/components/base-handle";
-import { BaseNode } from "@/components/base-node";
+import { BaseNode, NodeContent, NodeSection } from "@/components/base-node";
 import {
   NodeHeader,
   NodeHeaderActions,
@@ -81,28 +81,34 @@ const selector = (s: AppState) => ({
   addGitRevision: s.addGitRevision,
 });
 
+const commonNodeClasses = "w-xs" as const;
+
 export const ActionNode = memo(
   ({ id, data, selected }: NodeProps<ActionNodeType>) => {
     return (
-      <BaseNode selected={selected} className="px-2 pt-2 pb-0 max-w-md">
-        <NodeHeader
-          className={cn("-mx-2 -mt-2 px-2", data.description && "border-b")}
-        >
-          <NodeHeaderIcon>
-            <Rocket size="16" />
-          </NodeHeaderIcon>
-          <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
-          <NodeHeaderActions>
-            <AppNodeHeaderMenuAction id={id} type={"actionNode"} data={data} />
-          </NodeHeaderActions>
-        </NodeHeader>
+      <BaseNode selected={selected} className={commonNodeClasses}>
+        <NodeContent className="divide-y">
+          <NodeHeader>
+            <NodeHeaderIcon>
+              <Rocket size="16" />
+            </NodeHeaderIcon>
+            <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
+            <NodeHeaderActions>
+              <AppNodeHeaderMenuAction
+                id={id}
+                type={"actionNode"}
+                data={data}
+              />
+            </NodeHeaderActions>
+          </NodeHeader>
+          <NodeSection children={data.description}></NodeSection>
+        </NodeContent>
         <BaseHandle
           id="target-1"
           type="target"
           position={Position.Left}
           // isConnectable={false}
         />
-        {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
       </BaseNode>
     );
@@ -117,40 +123,48 @@ export const StatusNode = memo(
       <BaseNode
         selected={selected}
         className={cn(
-          "px-2 pt-2 pb-0 max-w-md",
+          commonNodeClasses,
           statusNodeStateClasses[data.state].bg,
           statusNodeStateClasses[data.state].border,
         )}
       >
-        <NodeHeader
-          className={cn(
-            "-mx-2 -mt-2 px-2",
-            data.description || data.git
-              ? cn("border-b", statusNodeStateClasses[data.state].border)
-              : "",
-          )}
+        <NodeContent
+          className={cn("divide-y", statusNodeStateClasses[data.state].divide)}
         >
-          <NodeHeaderIcon>
-            <ChartLine size="16" />
-          </NodeHeaderIcon>
-          <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
-          <NodeHeaderActions>
-            <IconSelect<StatusNodeState>
-              selectedIcon={data.state}
-              onSelectChange={(newState) => {
-                updateNodeData(id, { state: newState });
-              }}
-              optionsAndIcons={statusNodeStateIconConfig}
-              ariaLabel="Select node state"
-            />
-            <AppNodeHeaderMenuAction
-              id={id}
-              type={"statusNode"}
-              data={data}
-              deletable={!data.isRootNode}
-            />
-          </NodeHeaderActions>
-        </NodeHeader>
+          <NodeHeader>
+            <NodeHeaderIcon>
+              <ChartLine size="16" />
+            </NodeHeaderIcon>
+            <NodeHeaderTitle>{data.title}</NodeHeaderTitle>
+            <NodeHeaderActions>
+              <IconSelect<StatusNodeState>
+                selectedIcon={data.state}
+                onSelectChange={(newState) => {
+                  updateNodeData(id, { state: newState });
+                }}
+                optionsAndIcons={statusNodeStateIconConfig}
+                ariaLabel="Select node state"
+              />
+              <AppNodeHeaderMenuAction
+                id={id}
+                type={"statusNode"}
+                data={data}
+                deletable={!data.isRootNode}
+              />
+            </NodeHeaderActions>
+          </NodeHeader>
+          <NodeSection children={data.description}></NodeSection>
+          <NodeSection
+            children={
+              data.git ? (
+                <GitRevision
+                  revision={data.git}
+                  onClickPinRevision={addGitRevision}
+                />
+              ) : null
+            }
+          />
+        </NodeContent>
         {!data.isRootNode && (
           <BaseHandle
             id="target-1"
@@ -158,22 +172,6 @@ export const StatusNode = memo(
             position={Position.Left}
             // isConnectable={false}
           />
-        )}
-        {data.description && <div className="py-2">{data.description}</div>}
-        {data.git && (
-          <NodeHeader
-            className={cn(
-              "-mx-2 px-2",
-              data.description
-                ? cn("border-t", statusNodeStateClasses[data.state].border)
-                : "",
-            )}
-          >
-            <GitRevision
-              revision={data.git}
-              onClickPinRevision={addGitRevision}
-            />
-          </NodeHeader>
         )}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
       </BaseNode>
