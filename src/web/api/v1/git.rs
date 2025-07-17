@@ -8,7 +8,7 @@ pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
-        .route("/revs/match", routing::get(get_matching_revisions))
+        .route("/tags", routing::get(list_tags))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -48,8 +48,8 @@ struct Commit {
     author: Signature,
 }
 
-impl<'repo> From<git2::Commit<'repo>> for Commit {
-    fn from(commit: git2::Commit<'repo>) -> Self {
+impl<'repo> From<&git2::Commit<'repo>> for Commit {
+    fn from(commit: &git2::Commit<'repo>) -> Self {
         Commit {
             id: commit.id().to_string(),
             summary: commit.summary().unwrap_or("").to_string(),
@@ -61,8 +61,14 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
     }
 }
 
+impl<'repo> From<git2::Commit<'repo>> for Commit {
+    fn from(commit: git2::Commit<'repo>) -> Self {
+        Commit::from(&commit)
+    }
+}
+
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits, get_matching_revisions), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits,  list_tags), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -202,7 +208,7 @@ struct ListCommitsResponse {
 }
 
 impl ListCommitsResponse {
-    pub fn from_commits_and_diffs<I, D>(
+    pub fn try_from_commits_and_diffs<I, D>(
         commits_iter: I,
         diffs_iter: D,
     ) -> Result<Self, api::AppError>
@@ -230,6 +236,8 @@ struct CommitRangeQuery {
     /// The head revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the current HEAD is used.
     head_rev: Option<String>,
+    /// string filter for the commits. Filters commits by their ID or summary.
+    filter: Option<String>,
 }
 
 impl CommitRangeQuery {
@@ -295,19 +303,19 @@ async fn list_commits(
 
     let revwalk = query.revwalk(repo)?;
 
-    let commits = revwalk.map(|oid_result| {
-        oid_result
-            .map_err(|e| {
-                api::AppError::InternalServerError(format!("Error creating commit tree': {e}",))
-            })
-            .and_then(|oid| {
-                repo.find_commit(oid).map(Commit::from).map_err(|e| {
-                    api::AppError::InternalServerError(format!(
-                        "Failed to find commit with ID '{oid}': {e}"
-                    ))
+    let filter = query.filter.unwrap_or("".to_owned());
+    let commits = revwalk
+        .map(|oid_result| {
+            oid_result
+                .map_err(|e| {
+                    api::AppError::InternalServerError(format!("Error creating commit tree': {e}",))
                 })
-            })
-    });
+                .and_then(|oid| get_commit_for_oid(repo, oid))
+        })
+        .filter_map(|commit_result| match commit_result {
+            Ok(commit) => filter_commit(&filter, &commit).map(|c| Ok(c.into())),
+            Err(e) => Some(Err(e)),
+        });
 
     let rev = query.head_rev.unwrap_or_else(|| "HEAD".to_string());
     let tree = get_tree_for_revision(repo, &rev)?;
@@ -342,16 +350,16 @@ async fn list_commits(
             }
         });
 
-    Ok(Json(ListCommitsResponse::from_commits_and_diffs(
+    Ok(Json(ListCommitsResponse::try_from_commits_and_diffs(
         commits, diffs_iter,
     )?))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
-struct MatchRevisionsQuery {
-    /// Start of the revision to match using glob
-    rev_prefix: String,
+struct ListTagsQuery {
+    /// Prefix of the tag names to list
+    prefix: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -375,29 +383,17 @@ impl TaggedCommit {
     }
 }
 
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct MatchRevisionsResponse {
-    /// Matching commit names
-    commits: Vec<Commit>,
-    /// Matching tag names
+#[derive(ToSchema, Serialize)]
+struct ListTagsResponse {
     tags: Vec<TaggedCommit>,
 }
-
-impl MatchRevisionsResponse {
-    pub fn try_from_commits_and_tags<Commits, TaggedCommits>(
-        commits: Commits,
-        tagged_commits: TaggedCommits,
-    ) -> Result<Self, api::AppError>
+impl ListTagsResponse {
+    fn try_from_tagged_commits<T>(iter: T) -> Result<Self, api::AppError>
     where
-        Commits: IntoIterator<Item = Result<Commit, api::AppError>>,
-        TaggedCommits: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
+        T: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
     {
-        Ok(Self {
-            commits: commits
-                .into_iter()
-                .collect::<Result<Vec<_>, api::AppError>>()?,
-            tags: tagged_commits
+        Ok(ListTagsResponse {
+            tags: iter
                 .into_iter()
                 .collect::<Result<Vec<_>, api::AppError>>()?,
         })
@@ -406,64 +402,33 @@ impl MatchRevisionsResponse {
 
 #[utoipa::path(
     get,
-    path = "/revs/match",
-    summary = "List matching revisions",
-    description = "List all tags and commits that match the given prefix.\n\n\
-    Tags are filtered by their name and commits are filtered by their prefix. \
-    The tags are sorted alphabetically, while commits are sorted by their commit date",
-    params(MatchRevisionsQuery),
+    path = "/tags",
+    summary = "List tags",
+    description = "List the tags in the repository",
+    params(ListTagsQuery),
     responses(
-        (status = http::StatusCode::OK, description = "List of commits and tags matching the name", body = MatchRevisionsResponse),
+        (status = http::StatusCode::OK, description = "List of tags", body = ListTagsResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn get_matching_revisions(
+async fn list_tags(
     State(state): State<web::AppState>,
-    Query(query): Query<MatchRevisionsQuery>,
-) -> Result<Json<MatchRevisionsResponse>, api::AppError> {
+    Query(query): Query<ListTagsQuery>,
+) -> Result<Json<ListTagsResponse>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let pattern = to_safe_glob(&query.rev_prefix);
-    // Collect matching tags
     let tag_names = repo
-        .tag_names(Some(&pattern))
-        .map_err(|e| api::AppError::InternalServerError(format!("Error getting tag names: {e}")))?;
+        .tag_names(query.prefix.as_deref().map(to_safe_glob).as_deref())
+        .map_err(|e| api::AppError::InternalServerError(format!("Could not get tags: {e}")))?;
+
     let tagged_commits = tag_names
-        .into_iter()
+        .iter()
         .flatten()
         .map(|name| TaggedCommit::try_from_repo_and_tag_name(repo, name));
-
-    // Collect matching commits via revwalk
-    let mut revwalk = repo.revwalk().map_err(|e| {
-        api::AppError::InternalServerError(format!("Failed to create revwalk: {e}"))
-    })?;
-    revwalk.push_head().map_err(|e| {
-        api::AppError::InternalServerError(format!("Error pushing HEAD to revwalk: {e}"))
-    })?;
-    revwalk.set_sorting(git2::Sort::TIME).map_err(|e| {
-        api::AppError::InternalServerError(format!("Error setting revwalk sort: {e}"))
-    })?;
-
-    let commits = revwalk
-        .filter_map(Result::ok)
-        .filter(|oid| {
-            oid.to_string()
-                .starts_with(&query.rev_prefix.to_lowercase())
-        })
-        .map(|oid| {
-            Ok(Commit::from(repo.find_commit(oid).map_err(|e| {
-                api::AppError::InternalServerError(format!(
-                    "Could not find commit for OID {:.7}: {}",
-                    oid.to_string(),
-                    e
-                ))
-            })?))
-        });
-    Ok(Json(MatchRevisionsResponse::try_from_commits_and_tags(
-        commits,
+    Ok(Json(ListTagsResponse::try_from_tagged_commits(
         tagged_commits,
     )?))
 }
@@ -473,15 +438,41 @@ fn get_commit_for_revision<'repo>(
     rev: &str,
 ) -> Result<git2::Commit<'repo>, api::AppError> {
     let oid = get_object_for_revision(repo, rev)?.id();
+    get_commit_for_oid(repo, oid)
+}
+
+fn get_commit_for_oid<'repo>(
+    repo: &'repo git2::Repository,
+    oid: git2::Oid,
+) -> Result<git2::Commit<'repo>, api::AppError> {
     repo.find_commit(oid).map_err(|e| match e.code() {
         git2::ErrorCode::Invalid => {
-            api::AppError::BadRequest(format!("Invalid base commit ID '{rev}': {e}"))
+            api::AppError::BadRequest(format!("Invalid commit ID '{oid}': {e}"))
         }
         git2::ErrorCode::NotFound => {
-            api::AppError::NotFound(format!("Base commit '{rev}' not found: {e}"))
+            api::AppError::NotFound(format!("Commit '{oid}' not found: {e}"))
         }
-        _ => api::AppError::InternalServerError(format!("Failed to find base commit '{rev}': {e}")),
+        _ => api::AppError::InternalServerError(format!("Failed to find commit '{oid}': {e}")),
     })
+}
+
+fn filter_commit<'repo, 'commit>(
+    filter: &str,
+    commit: &'commit git2::Commit<'repo>,
+) -> Option<&'commit git2::Commit<'repo>> {
+    let id_matches = commit
+        .id()
+        .to_string()
+        .to_lowercase()
+        .contains(&filter.to_lowercase());
+    let summary_matches = commit
+        .summary()
+        .is_some_and(|s| s.to_lowercase().contains(&filter.to_lowercase()));
+    if id_matches || summary_matches {
+        Some(commit)
+    } else {
+        None
+    }
 }
 
 fn get_object_for_revision<'repo>(

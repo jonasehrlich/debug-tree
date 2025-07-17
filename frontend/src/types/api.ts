@@ -83,7 +83,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git/revs/match": {
+    "/api/v1/git/tags": {
         parameters: {
             query?: never;
             header?: never;
@@ -91,12 +91,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List matching revisions
-         * @description List all tags and commits that match the given prefix.
-         *
-         *     Tags are filtered by their name and commits are filtered by their prefix. The tags are sorted alphabetically, while commits are sorted by their commit date
+         * List tags
+         * @description List the tags in the repository
          */
-        get: operations["get_matching_revisions"];
+        get: operations["list_tags"];
         put?: never;
         post?: never;
         delete?: never;
@@ -197,10 +195,7 @@ export interface components {
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];
         };
-        MatchRevisionsResponse: {
-            /** @description Matching commit names */
-            commits: components["schemas"]["Commit"][];
-            /** @description Matching tag names */
+        ListTagsResponse: {
             tags: components["schemas"]["TaggedCommit"][];
         };
         ReactFlowState: {
@@ -460,6 +455,8 @@ export interface operations {
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
                 headRev?: string | null;
+                /** @description string filter for the commits. Filters commits by their ID or summary. */
+                filter?: string | null;
             };
             header?: never;
             path?: never;
@@ -487,11 +484,11 @@ export interface operations {
             };
         };
     };
-    get_matching_revisions: {
+    list_tags: {
         parameters: {
-            query: {
-                /** @description Start of the revision to match using glob */
-                revPrefix: string;
+            query?: {
+                /** @description Prefix of the tag names to list */
+                prefix?: string | null;
             };
             header?: never;
             path?: never;
@@ -499,13 +496,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description List of commits and tags matching the name */
+            /** @description List of tags */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MatchRevisionsResponse"];
+                    "application/json": components["schemas"]["ListTagsResponse"];
                 };
             };
             /** @description Internal server error */

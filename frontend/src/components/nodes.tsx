@@ -10,7 +10,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
 import {
-  formatGitRevision,
   type ActionNode as ActionNodeType,
   type StatusNodeState,
   type StatusNode as StatusNodeType,
@@ -171,7 +170,7 @@ export const StatusNode = memo(
             )}
           >
             <GitRevision
-              revision={formatGitRevision(data.git)}
+              revision={data.git}
               onClickPinRevision={addGitRevision}
             />
           </NodeHeader>

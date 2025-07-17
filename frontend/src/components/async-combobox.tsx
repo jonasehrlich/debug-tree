@@ -6,6 +6,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { Command as CommandPrimitive } from "cmdk";
 import debounce from "lodash.debounce";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
@@ -18,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "./ui/button";
 
-interface AsyncCombobox<ItemType> {
+interface AsyncComboboxProps<ItemType> {
   /** Current value of the dropdown */
   value: ItemType | null;
   /**
@@ -47,6 +48,8 @@ interface AsyncCombobox<ItemType> {
   fontFamily?: "font-sans" | "font-serif" | "font-mono" | "";
   /** Classes to apply for the button triggering the dropdown */
   buttonClasses?: string;
+  /** Props to pass to the Command component */
+  commandProps?: React.ComponentProps<typeof CommandPrimitive>;
 }
 
 export const AsyncCombobox = <ItemType,>({
@@ -61,7 +64,8 @@ export const AsyncCombobox = <ItemType,>({
   disabled,
   fontFamily = "",
   buttonClasses = "",
-}: AsyncCombobox<ItemType>) => {
+  commandProps = {},
+}: AsyncComboboxProps<ItemType>) => {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [items, setItems] = useState<ItemType[]>([]);
@@ -137,7 +141,10 @@ export const AsyncCombobox = <ItemType,>({
         </Button>
       )}
       <PopoverContent className="w-[500px] p-0 " align="start">
-        <Command className={fontFamily}>
+        <Command
+          {...commandProps}
+          className={cn(commandProps.className, fontFamily)}
+        >
           <CommandInput
             value={input}
             onValueChange={setInput}

@@ -53,15 +53,11 @@ export const NodeForm = ({
   cancelComponent,
 }: NodeFormProps) => {
   const fetchGitRevisions = async (value: string): Promise<GitMetadata[]> => {
-    console.log("fetching revs", value);
-    const { data, error } = await client.GET("/api/v1/git/revs/match", {
-      params: { query: { revPrefix: value } },
+    const { data, error } = await client.GET("/api/v1/git/commits", {
+      params: { query: { filter: value } },
     });
     if (data) {
       return [
-        ...data.tags.map((tag) => {
-          return { rev: tag.tag, isTag: true, summary: tag.commit.summary };
-        }),
         ...data.commits.map((commit) => {
           return {
             rev: commit.id,
@@ -72,6 +68,35 @@ export const NodeForm = ({
       ];
     }
     throw new Error(`Failed to fetch Git revisions: ${error.message}`);
+  };
+
+  const fetchGitTags = async (value: string): Promise<GitMetadata[]> => {
+    const { data, error } = await client.GET("/api/v1/git/tags", {
+      params: { query: { prefix: value } },
+    });
+
+    if (data) {
+      return [
+        ...data.tags.map((data) => {
+          return {
+            rev: data.tag,
+            summary: data.commit.summary,
+            isTag: true,
+          };
+        }),
+      ];
+    }
+    throw new Error(`Failed to fetch Git tags: ${error.message}`);
+  };
+
+  const fetchGitTagsAndRevisions = async (
+    value: string,
+  ): Promise<GitMetadata[]> => {
+    const [revisions, tags] = await Promise.all([
+      fetchGitRevisions(value),
+      fetchGitTags(value),
+    ]);
+    return [...revisions, ...tags];
   };
 
   const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] = useState(false);
@@ -144,7 +169,7 @@ export const NodeForm = ({
                   <FormLabel className="w-24">Git Revision</FormLabel>
                   <FormControl>
                     <AsyncCombobox<GitMetadata>
-                      fetchItems={fetchGitRevisions}
+                      fetchItems={fetchGitTagsAndRevisions}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Select revision"
@@ -156,6 +181,7 @@ export const NodeForm = ({
                       }}
                       fontFamily="font-mono"
                       buttonClasses="w-[200px]"
+                      commandProps={{ shouldFilter: false }}
                     />
                   </FormControl>
                   <FormMessage />
