@@ -14,12 +14,13 @@ import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
 
 /**
- * Whether the state before a set of {@link NodeChange}s should be added to the undo stack
+ * Whether the state before a set of {@link NodeChange}s should be added to the
+ * {@link AppState.undoStack}
  * @param changes - Array of changes passed to {@link AppState.onNodesChange}
  * @param nodes - Nodes existing before the changes are applied
  * @returns Whether the changes should be added to the undo stack
  */
-const shouldObserveNodeChangesForUndo = (
+const areNodeChangesNotableForUndoStack = (
   changes: NodeChange<AppNode>[],
   nodes: AppNode[],
 ) => {
@@ -37,7 +38,33 @@ const shouldObserveNodeChangesForUndo = (
   });
 };
 
-const shouldSaveEdgeChanges = (
+/**
+ * Whether the {@link NodeChange}s should set {@link AppState.hasUnsavedChanges}
+ * @param changes - Array of changes passed to {@link AppState.onEdgesChange}
+ * @returns Whether the {@link NodeChange}s should set {@link AppState.hasUnsavedChanges}
+ */
+const areNodeChangesNotableForHasUnsavedChanges = (
+  changes: NodeChange<AppNode>[],
+) => {
+  return changes.some((change) => {
+    return (
+      change.type === "remove" ||
+      change.type === "add" ||
+      change.type === "replace" ||
+      change.type === "position"
+    );
+  });
+};
+
+/**
+ * Whether the state before a state before a set of {@link EdgeChange}ss should be added
+ * to the {@link AppState.undoStack} and should set {@link AppState.hasUnsavedChanges}
+ * @param changes - Array of changes passed to {@link AppState.onEdgesChange}
+ * @param nodes - Nodes existing before the changes are applied
+ * @returns Whether the state before a state before a set of {@link EdgeChange}ss should be added
+ * to the {@link AppState.undoStack} and should set {@link AppState.hasUnsavedChanges}
+ */
+const areEdgeChangesNotable = (
   changes: EdgeChange<Edge>[],
   nodes: AppNode[],
 ) => {
@@ -218,10 +245,11 @@ export const useStore = create<AppState>()(
         });
       },
       onNodesChange: (changes) => {
-        const { nodes, undoInProgress, pushToUndoStack } = get();
+        const { nodes, undoInProgress, pushToUndoStack, hasUnsavedChanges } =
+          get();
         if (
           !undoInProgress &&
-          shouldObserveNodeChangesForUndo(changes, nodes)
+          areNodeChangesNotableForUndoStack(changes, nodes)
         ) {
           pushToUndoStack();
         }
@@ -229,12 +257,15 @@ export const useStore = create<AppState>()(
 
         set({
           nodes: newNodes,
-          hasUnsavedChanges: true,
+          hasUnsavedChanges:
+            hasUnsavedChanges ||
+            areNodeChangesNotableForHasUnsavedChanges(changes),
         });
       },
       onEdgesChange: (changes) => {
-        const { edges, nodes, undoStack } = get();
-        if (shouldSaveEdgeChanges(changes, nodes)) {
+        const { edges, nodes, undoStack, hasUnsavedChanges } = get();
+        const notableChanges = areEdgeChangesNotable(changes, nodes);
+        if (notableChanges) {
           set({
             undoStack: [...undoStack, { nodes, edges }],
             redoStack: [],
@@ -243,7 +274,7 @@ export const useStore = create<AppState>()(
 
         set({
           edges: applyEdgeChanges(changes, edges),
-          hasUnsavedChanges: true,
+          hasUnsavedChanges: hasUnsavedChanges || notableChanges,
         });
       },
       onConnect: (connection) => {
