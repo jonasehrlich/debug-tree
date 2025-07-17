@@ -36,7 +36,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.0",
-    "lodash": "^4.17.21",
+    "lodash.debounce": "^4.0.8",
     "loglevel": "^1.9.2",
     "lucide-react": "^0.523.0",
     "next-themes": "^0.4.6",
@@ -55,7 +55,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
-    "@types/lodash": "^4.17.20",
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^24.0.4",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
