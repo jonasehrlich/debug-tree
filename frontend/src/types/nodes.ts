@@ -52,6 +52,8 @@ interface PendingNodeData<NodeType extends string> {
   type: NodeType;
   // Node the dropped edge is connected to
   fromNodeId?: string;
+  // default revision to display during creation
+  defaultRev?: GitMetadata;
 }
 
 export type PendingAppNodeData =

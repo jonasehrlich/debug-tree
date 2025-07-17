@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
 import debounce from "lodash.debounce";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Popover,
@@ -38,7 +38,7 @@ interface AsyncComboboxProps<ItemType> {
   /** Render function for dropdown items */
   renderDropdownItem: (item: ItemType) => React.ReactElement;
   /** Render the current value in the input button */
-  renderValue: (item: ItemType) => ReactNode;
+  renderValue: (item: ItemType) => string;
   /**
    * Get the value to use for a ItemType. This is used to check if a dropdown item is the current
    * value and as the key for dropdown elements
@@ -67,7 +67,7 @@ export const AsyncCombobox = <ItemType,>({
   commandProps = {},
 }: AsyncComboboxProps<ItemType>) => {
   const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(value ? renderValue(value) : "");
   const [items, setItems] = useState<ItemType[]>([]);
   const [loading, setLoading] = useState(false);
 

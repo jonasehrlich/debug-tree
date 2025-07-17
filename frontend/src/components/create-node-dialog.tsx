@@ -36,7 +36,12 @@ export const CreateNodeDialog = () => {
     if (pendingNode) {
       if (pendingNode.type === "statusNode") {
         form.reset({
-          data: { title: "", description: "", state: "unknown", git: null },
+          data: {
+            title: "",
+            description: "",
+            state: "unknown",
+            git: pendingNode.defaultRev,
+          },
           type: pendingNode.type,
         });
       } else {

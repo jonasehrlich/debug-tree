@@ -5,6 +5,7 @@ import {
   formatGitRevision,
   type GitMetadata,
 } from "@/types/nodes";
+import log from "loglevel";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -31,6 +32,8 @@ const GitRevCommandItem = (m: GitMetadata) => {
     </div>
   );
 };
+
+const logger = log.getLogger("node-form");
 
 interface NodeFormProps {
   /** Node type  */
@@ -105,7 +108,7 @@ export const NodeForm = ({
       <form
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onSubmit={form.handleSubmit(submitForm, (errors) => {
-          console.log(errors);
+          logger.info("Form submission error", errors);
         })}
         className="space-y-8"
       >
@@ -193,11 +196,7 @@ export const NodeForm = ({
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           {cancelComponent}
           <Button
-            disabled={
-              !form.formState.isValid ||
-              form.formState.isSubmitting ||
-              gitRevSuggestionsIsOpen
-            }
+            disabled={form.formState.isSubmitting || gitRevSuggestionsIsOpen}
             type="submit"
           >
             {submitButtonText}
