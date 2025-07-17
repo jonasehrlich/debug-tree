@@ -104,7 +104,6 @@ export default function App() {
   useHotkeys(
     keybindings.open.keys,
     () => {
-      void saveCurrentFlow();
       setIsFlowsDialogOpen(true);
     },
     {

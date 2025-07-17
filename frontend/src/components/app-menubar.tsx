@@ -27,6 +27,7 @@ import {
 } from "@xyflow/react";
 import { Workflow } from "lucide-react";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
 interface AppMenubarProps {
@@ -151,8 +152,11 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           </MenubarItem>
           <MenubarSeparator />
           <MenubarItem
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            onSelect={closeCurrentFlow}
+            onSelect={() => {
+              saveCurrentFlow().then(closeCurrentFlow, () => {
+                toast.error("Flow was not closed due to save error");
+              });
+            }}
           >
             Close
           </MenubarItem>

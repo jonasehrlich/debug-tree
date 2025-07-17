@@ -103,7 +103,7 @@ export interface AppState {
   /** Save the {@link nodes} and {@link edges} of the {@link currentFlow} to the server */
   saveCurrentFlow: () => Promise<void>;
   /** Save the {@link currentFlow} to the server and close it the current flow */
-  closeCurrentFlow: () => Promise<void>;
+  closeCurrentFlow: () => void;
   /** ReactFlow onNodesChange callback */
   onNodesChange: OnNodesChange<AppNode>;
   /** ReactFlow onEdgesChange callback */

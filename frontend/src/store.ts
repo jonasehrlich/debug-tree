@@ -66,6 +66,7 @@ export const useStore = create<AppState>()(
         set({ undoInProgress: true });
         set({
           ...prev,
+          hasUnsavedChanges: true,
           undoStack: undoStack.slice(0, -1),
           redoStack: [...redoStack, { nodes, edges }],
         });
@@ -86,6 +87,7 @@ export const useStore = create<AppState>()(
         const next = redoStack[redoStack.length - 1];
         set({
           ...next,
+          hasUnsavedChanges: true,
           redoStack: redoStack.slice(0, -1),
           undoStack: [...undoStack, { nodes, edges }],
         });
@@ -131,12 +133,16 @@ export const useStore = create<AppState>()(
         return false;
       },
       deleteFlow: async (id: string) => {
+        const { loadFlowsMetadata, currentFlow, closeCurrentFlow } = get();
         const { data, error } = await client.DELETE("/api/v1/flows/{id}", {
           params: { path: { id } },
         });
 
         if (data) {
-          await get().loadFlowsMetadata();
+          if (id === currentFlow?.id) {
+            closeCurrentFlow();
+          }
+          await loadFlowsMetadata();
         }
         if (error) {
           toast.error(`Error deleting flow ${id}`, {
@@ -174,41 +180,39 @@ export const useStore = create<AppState>()(
         }
       },
       saveCurrentFlow: async () => {
-        const store = get();
-        if (!store.currentFlow) {
-          return;
-        }
-        if (!store.hasUnsavedChanges) {
+        const { currentFlow, hasUnsavedChanges, nodes, edges } = get();
+        if (!currentFlow || !hasUnsavedChanges) {
           return;
         }
 
         const { error } = await client.POST("/api/v1/flows/{id}", {
           params: {
-            path: { id: store.currentFlow.id },
+            path: { id: currentFlow.id },
           },
           body: {
             flow: {
-              name: store.currentFlow.name,
-              reactflow: { nodes: store.nodes, edges: store.edges },
+              name: currentFlow.name,
+              reactflow: { nodes: nodes, edges: edges },
             },
           },
         });
         if (error) {
-          toast.error(`Saving flow ${store.currentFlow.name} failed`, {
+          const msg = `Saving flow ${currentFlow.name} failed`;
+          toast.error(msg, {
             description: error.message,
           });
+          throw Error(msg);
         } else {
           toast.success("Saved", { duration: 800 });
           set({ hasUnsavedChanges: false });
         }
       },
-      closeCurrentFlow: async () => {
-        const { saveCurrentFlow } = get();
-        await saveCurrentFlow();
+      closeCurrentFlow: () => {
         set({
           nodes: [],
           edges: [],
           currentFlow: null,
+          hasUnsavedChanges: false,
           undoStack: [],
           redoStack: [],
         });
