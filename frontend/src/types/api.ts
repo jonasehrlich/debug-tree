@@ -83,28 +83,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git/revs/match": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List matching revisions
-         * @description List all tags and commits that match the given prefix.
-         *
-         *     Tags are filtered by their name and commits are filtered by their prefix. The tags are sorted alphabetically, while commits are sorted by their commit date
-         */
-        get: operations["get_matching_revisions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/git/tags": {
         parameters: {
             query?: never;
@@ -219,10 +197,6 @@ export interface components {
         };
         ListTagsResponse: {
             tags: components["schemas"]["TaggedCommit"][];
-        };
-        MatchRevisionsResponse: {
-            /** @description Matching commit names */
-            commits: components["schemas"]["Commit"][];
         };
         ReactFlowState: {
             /** @description Edges of the reactflow state, the types of the nodes are managed on the frontend */
@@ -481,6 +455,8 @@ export interface operations {
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
                 headRev?: string | null;
+                /** @description string filter for the commits. Filters commits by their ID or summary. */
+                filter?: string | null;
             };
             header?: never;
             path?: never;
@@ -495,38 +471,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListCommitsResponse"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
-                };
-            };
-        };
-    };
-    get_matching_revisions: {
-        parameters: {
-            query: {
-                /** @description Start of the revision to match using glob */
-                revPrefix: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of commits and tags matching the name */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MatchRevisionsResponse"];
                 };
             };
             /** @description Internal server error */

@@ -53,8 +53,8 @@ export const NodeForm = ({
   cancelComponent,
 }: NodeFormProps) => {
   const fetchGitRevisions = async (value: string): Promise<GitMetadata[]> => {
-    const { data, error } = await client.GET("/api/v1/git/revs/match", {
-      params: { query: { revPrefix: value } },
+    const { data, error } = await client.GET("/api/v1/git/commits", {
+      params: { query: { filter: value } },
     });
     if (data) {
       return [

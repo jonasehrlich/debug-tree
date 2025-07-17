@@ -8,7 +8,6 @@ pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
-        .route("/revs/match", routing::get(get_matching_revisions))
         .route("/tags", routing::get(list_tags))
 }
 
@@ -49,8 +48,8 @@ struct Commit {
     author: Signature,
 }
 
-impl<'repo> From<git2::Commit<'repo>> for Commit {
-    fn from(commit: git2::Commit<'repo>) -> Self {
+impl<'repo> From<&git2::Commit<'repo>> for Commit {
+    fn from(commit: &git2::Commit<'repo>) -> Self {
         Commit {
             id: commit.id().to_string(),
             summary: commit.summary().unwrap_or("").to_string(),
@@ -62,8 +61,14 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
     }
 }
 
+impl<'repo> From<git2::Commit<'repo>> for Commit {
+    fn from(commit: git2::Commit<'repo>) -> Self {
+        Commit::from(&commit)
+    }
+}
+
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits, get_matching_revisions, list_tags), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits,  list_tags), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -231,6 +236,8 @@ struct CommitRangeQuery {
     /// The head revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the current HEAD is used.
     head_rev: Option<String>,
+    /// string filter for the commits. Filters commits by their ID or summary.
+    filter: Option<String>,
 }
 
 impl CommitRangeQuery {
@@ -296,19 +303,19 @@ async fn list_commits(
 
     let revwalk = query.revwalk(repo)?;
 
-    let commits = revwalk.map(|oid_result| {
-        oid_result
-            .map_err(|e| {
-                api::AppError::InternalServerError(format!("Error creating commit tree': {e}",))
-            })
-            .and_then(|oid| {
-                repo.find_commit(oid).map(Commit::from).map_err(|e| {
-                    api::AppError::InternalServerError(format!(
-                        "Failed to find commit with ID '{oid}': {e}"
-                    ))
+    let filter = query.filter.unwrap_or("".to_owned());
+    let commits = revwalk
+        .map(|oid_result| {
+            oid_result
+                .map_err(|e| {
+                    api::AppError::InternalServerError(format!("Error creating commit tree': {e}",))
                 })
-            })
-    });
+                .and_then(|oid| get_commit_for_oid(repo, oid))
+        })
+        .filter_map(|commit_result| match commit_result {
+            Ok(commit) => filter_commit(&filter, &commit).map(|c| Ok(c.into())),
+            Err(e) => Some(Err(e)),
+        });
 
     let rev = query.head_rev.unwrap_or_else(|| "HEAD".to_string());
     let tree = get_tree_for_revision(repo, &rev)?;
@@ -346,72 +353,6 @@ async fn list_commits(
     Ok(Json(ListCommitsResponse::try_from_commits_and_diffs(
         commits, diffs_iter,
     )?))
-}
-
-#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
-#[serde(rename_all = "camelCase")]
-struct MatchRevisionsQuery {
-    /// Start of the revision to match using glob
-    rev_prefix: String,
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct MatchRevisionsResponse {
-    /// Matching commit names
-    commits: Vec<Commit>,
-}
-
-#[utoipa::path(
-    get,
-    path = "/revs/match",
-    summary = "List matching revisions",
-    description = "List all tags and commits that match the given prefix.\n\n\
-    Tags are filtered by their name and commits are filtered by their prefix. \
-    The tags are sorted alphabetically, while commits are sorted by their commit date",
-    params(MatchRevisionsQuery),
-    responses(
-        (status = http::StatusCode::OK, description = "List of commits and tags matching the name", body = MatchRevisionsResponse),
-        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
-    )
-)]
-async fn get_matching_revisions(
-    State(state): State<web::AppState>,
-    Query(query): Query<MatchRevisionsQuery>,
-) -> Result<Json<MatchRevisionsResponse>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-    // Collect matching commits via revwalk
-    let mut revwalk = repo.revwalk().map_err(|e| {
-        api::AppError::InternalServerError(format!("Failed to create revwalk: {e}"))
-    })?;
-    revwalk.push_head().map_err(|e| {
-        api::AppError::InternalServerError(format!("Error pushing HEAD to revwalk: {e}"))
-    })?;
-    revwalk.set_sorting(git2::Sort::TIME).map_err(|e| {
-        api::AppError::InternalServerError(format!("Error setting revwalk sort: {e}"))
-    })?;
-
-    let commits = revwalk
-        .filter_map(Result::ok)
-        .filter_map(|oid| get_commit_for_oid(repo, oid).ok())
-        .filter(|commit| {
-            let id_matches = commit
-                .id()
-                .to_string()
-                .to_lowercase()
-                .starts_with(&query.rev_prefix.to_lowercase());
-            let summary_matches = commit
-                .summary()
-                .is_some_and(|s| s.to_lowercase().contains(&query.rev_prefix.to_lowercase()));
-            id_matches || summary_matches
-        })
-        .map(Commit::from)
-        .collect();
-
-    Ok(Json(MatchRevisionsResponse { commits }))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -513,6 +454,25 @@ fn get_commit_for_oid<'repo>(
         }
         _ => api::AppError::InternalServerError(format!("Failed to find commit '{oid}': {e}")),
     })
+}
+
+fn filter_commit<'repo, 'commit>(
+    filter: &str,
+    commit: &'commit git2::Commit<'repo>,
+) -> Option<&'commit git2::Commit<'repo>> {
+    let id_matches = commit
+        .id()
+        .to_string()
+        .to_lowercase()
+        .contains(&filter.to_lowercase());
+    let summary_matches = commit
+        .summary()
+        .is_some_and(|s| s.to_lowercase().contains(&filter.to_lowercase()));
+    if id_matches || summary_matches {
+        Some(commit)
+    } else {
+        None
+    }
 }
 
 fn get_object_for_revision<'repo>(
