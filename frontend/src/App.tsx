@@ -3,6 +3,7 @@ import {
   MiniMap,
   Panel,
   ReactFlow,
+  useReactFlow,
   type ColorMode,
   type FitViewOptions,
 } from "@xyflow/react";
@@ -10,7 +11,7 @@ import "@xyflow/react/dist/style.css";
 import debounce from "lodash.debounce";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { HotkeysProvider, useHotkeys } from "react-hotkeys-hook";
+import { useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
 import { CreateNodeDialog } from "./components/create-node-dialog";
@@ -62,7 +63,7 @@ const fitViewOptions: FitViewOptions = {
   // padding: 0.2,
 };
 
-export default function App() {
+export const App = () => {
   const {
     nodes,
     edges,
@@ -81,6 +82,7 @@ export default function App() {
 
   const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
   const { theme } = useTheme();
+  const { getNodeConnections, getNode } = useReactFlow();
 
   const {
     isMiniMapVisible,
@@ -175,62 +177,71 @@ export default function App() {
 
   const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = useState(false);
   return (
-    <HotkeysProvider>
-      <div style={{ width: "100vw", height: "100vh" }}>
-        <GitGraphSlidingPanel
-          isOpen={isGitGraphPanelOpen}
-          onClose={() => {
-            clearGitRevisions();
-            setIsGitGraphPanelOpen(false);
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <GitGraphSlidingPanel
+        isOpen={isGitGraphPanelOpen}
+        onClose={() => {
+          clearGitRevisions();
+          setIsGitGraphPanelOpen(false);
+        }}
+      ></GitGraphSlidingPanel>
+      <ReactFlow
+        ref={reactFlowRef}
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onConnectEnd={onConnectEnd}
+        onNodeDragStart={doPushToUndoStack}
+        onNodeDoubleClick={(_e, node: AppNode) => {
+          // typescript is stupid
+          if (node.type === "statusNode") {
+            setCurrentEditNodeData({
+              id: node.id,
+              type: node.type,
+              data: node.data,
+            });
+          } else {
+            setCurrentEditNodeData({
+              id: node.id,
+              type: node.type,
+              data: node.data,
+            });
+          }
+        }}
+        isValidConnection={(edgeOrConn) => {
+          const hasNoTargetConnections =
+            getNodeConnections({
+              type: "target",
+              nodeId: edgeOrConn.target,
+            }).length === 0;
+          const nodeTypesDiffer =
+            getNode(edgeOrConn.source)?.type !==
+            getNode(edgeOrConn.target)?.type;
+          return hasNoTargetConnections && nodeTypesDiffer;
+        }}
+        colorMode={theme ? (theme as ColorMode) : "system"}
+        fitView
+        fitViewOptions={fitViewOptions}
+      >
+        <Panel position="top-left" ref={reactFlowRef}>
+          <AppMenubar reactflowRef={reactFlowRef} />
+        </Panel>
+        {isMiniMapVisible && <MiniMap position="top-right" />}
+        <Background />
+        <HelpDialog />
+        <KeybindingsDialog />
+        <EditNodeDialog />
+        <CreateNodeDialog />
+        <GitRevisionsPanel
+          openGitGraph={() => {
+            setIsGitGraphPanelOpen(true);
           }}
-        ></GitGraphSlidingPanel>
-        <ReactFlow
-          ref={reactFlowRef}
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onConnectEnd={onConnectEnd}
-          onNodeDragStart={doPushToUndoStack}
-          onNodeDoubleClick={(_e, node: AppNode) => {
-            // typescript is stupid
-            if (node.type === "statusNode") {
-              setCurrentEditNodeData({
-                id: node.id,
-                type: node.type,
-                data: node.data,
-              });
-            } else {
-              setCurrentEditNodeData({
-                id: node.id,
-                type: node.type,
-                data: node.data,
-              });
-            }
-          }}
-          colorMode={theme ? (theme as ColorMode) : "system"}
-          fitView
-          fitViewOptions={fitViewOptions}
-        >
-          <Panel position="top-left" ref={reactFlowRef}>
-            <AppMenubar reactflowRef={reactFlowRef} />
-          </Panel>
-          {isMiniMapVisible && <MiniMap position="top-right" />}
-          <Background />
-          <HelpDialog />
-          <KeybindingsDialog />
-          <EditNodeDialog />
-          <CreateNodeDialog />
-          <GitRevisionsPanel
-            openGitGraph={() => {
-              setIsGitGraphPanelOpen(true);
-            }}
-          />
-        </ReactFlow>
-        <Toaster position="bottom-right" richColors />
-      </div>
-    </HotkeysProvider>
+        />
+      </ReactFlow>
+      <Toaster position="bottom-right" richColors />
+    </div>
   );
-}
+};
