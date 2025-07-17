@@ -3,7 +3,6 @@ import { useStore } from "@/store";
 import type { components } from "@/types/api";
 import type { AppState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
 import { GitCompareArrows } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -107,7 +106,7 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
                 <GitCompareArrows />
                 {gitDiffIsVisible ? "Hide Diff" : "Show Diff"}
               </Button>
-              <div className="h-screen flex-1 overflow-y-auto font-mono">
+              <div className="h-screen overflow-y-auto font-mono w-full">
                 {data?.commits.length == 0
                   ? `No commits available for range ${gitRevisions[0]}..${gitRevisions[1]}`
                   : data?.commits.map((commit, index) => {
@@ -117,55 +116,50 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
                             onClick={() => {
                               toggle(index);
                             }}
-                            className="w-full text-left px-2 py-4 hover:bg-secondary/80 cursor-pointer"
+                            className="text-left w-full px-2 py-4 hover:bg-secondary/80 cursor-pointer"
                           >
-                            <div>
-                              <span className="font-bold pr-2">
-                                {commit.id.slice(0, 7)}
-                              </span>
-                              {commit.summary}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {commit.author.name} •{" "}
-                              {formatDistanceToNow(commit.time, {
-                                addSuffix: true,
-                              })}
+                            <div className="flex flex-col gap-1 w-full">
+                              <div className="flex gap-2 items-center w-full overflow-hidden">
+                                <span className="font-bold shrink-0">
+                                  {commit.id.slice(0, 7)}
+                                </span>
+                                <div className="truncate w-full">
+                                  {commit.summary}
+                                </div>
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {commit.author.name} •{" "}
+                                {formatDistanceToNow(commit.time, {
+                                  addSuffix: true,
+                                })}
+                              </div>
                             </div>
                           </button>
-                          <AnimatePresence initial={false}>
-                            {openIndex === index && (
-                              <motion.div
-                                key="content"
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{
-                                  duration: 0.1,
-                                  ease: "easeInOut",
-                                }}
-                                className="overflow-hidden p-4 text-sm text-muted-foreground"
-                              >
-                                {commit.body !== "" && <p>{commit.body}</p>}
-                                <p>
-                                  <strong>Date:</strong>{" "}
-                                  {new Date(commit.time).toLocaleString()}
-                                </p>
-                                <p>
-                                  <strong>Author:</strong> {commit.author.name}{" "}
-                                  {commit.author.email && (
-                                    <span> {commit.author.email}</span>
-                                  )}
-                                </p>
-                                <p>
-                                  <strong>Committer:</strong>{" "}
-                                  {commit.committer.name}{" "}
-                                  {commit.author.email && (
-                                    <span> {commit.committer.email}</span>
-                                  )}
-                                </p>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                          {openIndex === index && (
+                            <div
+                              key="content"
+                              className="overflow-hidden p-4 text-sm text-muted-foreground"
+                            >
+                              {commit.body !== "" && <p>{commit.body}</p>}
+                              <p>
+                                <strong>Date:</strong>{" "}
+                                {new Date(commit.time).toLocaleString()}
+                              </p>
+                              <p>
+                                <strong>Author:</strong> {commit.author.name}{" "}
+                                {commit.author.email && (
+                                  <span> {commit.author.email}</span>
+                                )}
+                              </p>
+                              <p>
+                                <strong>Committer:</strong>{" "}
+                                {commit.committer.name}{" "}
+                                {commit.author.email && (
+                                  <span> {commit.committer.email}</span>
+                                )}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

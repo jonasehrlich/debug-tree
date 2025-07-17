@@ -101,7 +101,7 @@ export const ActionNode = memo(
           id="target-1"
           type="target"
           position={Position.Left}
-          isConnectable={false}
+          // isConnectable={false}
         />
         {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle id="source-1" type="source" position={Position.Right} />
@@ -157,7 +157,7 @@ export const StatusNode = memo(
             id="target-1"
             type="target"
             position={Position.Left}
-            isConnectable={false}
+            // isConnectable={false}
           />
         )}
         {data.description && <div className="py-2">{data.description}</div>}
