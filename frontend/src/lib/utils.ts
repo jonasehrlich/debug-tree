@@ -1,6 +1,9 @@
 import type { AppNodeType } from "@/types/nodes";
 import { clsx, type ClassValue } from "clsx";
+import log from "loglevel";
 import { twMerge } from "tailwind-merge";
+
+const logger = log.getLogger("utils");
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,3 +29,13 @@ export const getNodeId = (nodeType: AppNodeType) => {
 export const isApple = (() => {
   return /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);
 })();
+
+export const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    logger.debug("Copied to clipboard:", text);
+  } catch (e: unknown) {
+    logger.error("Error copying", text, "to clipboard:", e);
+    throw e;
+  }
+};
