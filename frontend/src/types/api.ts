@@ -116,7 +116,11 @@ export interface paths {
          */
         get: operations["list_tags"];
         put?: never;
-        post?: never;
+        /**
+         * Create new tag
+         * @description Creates a new lightweight git tag with the specified name on the provided revision.
+         */
+        post: operations["create_tag"];
         delete?: never;
         options?: never;
         head?: never;
@@ -561,6 +565,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListTagsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    create_tag: {
+        parameters: {
+            query: {
+                /** @description name of the tag to create */
+                name: string;
+                /** @description revision to tag, this can be a short hash, full hash, a tag, */
+                revision: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tag created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaggedCommit"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
                 };
             };
             /** @description Internal server error */

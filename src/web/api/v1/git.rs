@@ -9,7 +9,7 @@ pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
-        .route("/tags", routing::get(list_tags))
+        .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches))
 }
 
@@ -70,7 +70,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits,  list_tags, list_branches), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits,  list_tags, create_tag, list_branches), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -432,6 +432,52 @@ async fn list_tags(
         .map(|name| TaggedCommit::try_from_repo_and_tag_name(repo, name));
     Ok(Json(ListTagsResponse::try_from_tagged_commits(
         tagged_commits,
+    )?))
+}
+
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct CreateTagQuery {
+    /// name of the tag to create
+    name: String,
+    /// revision to tag, this can be a short hash, full hash, a tag,
+    revision: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/tags",
+    summary = "Create new tag",
+    description = "Creates a new lightweight git tag with the specified name on the provided revision.",
+    params(CreateTagQuery),
+    responses(
+        (status = http::StatusCode::CREATED, description = "Tag created successfully", body = TaggedCommit),
+        (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn create_tag(
+    State(state): State<web::AppState>,
+    Query(query): Query<CreateTagQuery>,
+) -> Result<Json<TaggedCommit>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let oid = git2::Oid::from_str(query.revision.as_str())
+        .map_err(|e| api::AppError::BadRequest(format!("Invalid revision: {e}")))?;
+
+    let rev_obj = repo
+        .find_object(oid, None)
+        .map_err(|e| api::AppError::BadRequest(format!("Failed to find revision: {e}")))?;
+    let force = false;
+    repo.tag_lightweight(&query.name, &rev_obj, force)
+        .map_err(|e| api::AppError::InternalServerError(format!("Failed to create tag: {e}")))?;
+
+    Ok(Json(TaggedCommit::try_from_repo_and_tag_name(
+        repo,
+        &query.name,
     )?))
 }
 
