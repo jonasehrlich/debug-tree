@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
+import Markdown, { type Options as MarkdownOptions } from "react-markdown";
 
 export const BaseNode = forwardRef<
   HTMLDivElement,
@@ -57,3 +58,28 @@ export const NodeSection = ({
 };
 
 NodeSection.displayName = "NodeSection";
+
+interface NodeMarkdownSectionProps {
+  children?: string;
+  markdownOptions?: Omit<MarkdownOptions, "children">;
+}
+/**
+ * A node segment which renders with meaningful padding which renders its content as markdown.
+ * If no content is available it does not exist.
+ */
+export const NodeMarkdownSection = ({
+  children,
+  className,
+  markdownOptions,
+  ...props
+}: NodeMarkdownSectionProps &
+  Omit<HTMLAttributes<HTMLDivElement>, "children">) => {
+  if (!children) return null;
+  return (
+    <NodeSection className={cn(className, "prose prose-markdown")} {...props}>
+      <Markdown {...markdownOptions} children={children}></Markdown>
+    </NodeSection>
+  );
+};
+
+NodeMarkdownSection.displayName = "NodeMarkdownSection";

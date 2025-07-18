@@ -10,6 +10,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { AsyncCombobox } from "./async-combobox";
 import { IconSelectContent } from "./icon-select-content";
+import { MarkdownPreviewTextarea } from "./markdown-preview-textarea";
 import { statusNodeStateIconConfig } from "./state-colors-icons";
 import { Button } from "./ui/button";
 import {
@@ -22,7 +23,6 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Select, SelectTrigger, SelectValue } from "./ui/select";
-import { Textarea } from "./ui/textarea";
 
 const GitRevCommandItem = (m: GitMetadata) => {
   return (
@@ -129,7 +129,16 @@ export const NodeForm = ({
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea {...field} autoComplete="off" />
+                <MarkdownPreviewTextarea
+                  commonClassNames="min-h-[10lh] max-h-[35lh]"
+                  textareaProps={{
+                    ...field,
+                    className: "font-mono",
+                    autoComplete: "off",
+                    rows: 10,
+                  }}
+                  markdownProps={{ children: field.value }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

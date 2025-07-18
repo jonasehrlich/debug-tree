@@ -1,5 +1,10 @@
 import { BaseHandle } from "@/components/base-handle";
-import { BaseNode, NodeContent, NodeSection } from "@/components/base-node";
+import {
+  BaseNode,
+  NodeContent,
+  NodeMarkdownSection,
+  NodeSection,
+} from "@/components/base-node";
 import {
   NodeHeader,
   NodeHeaderActions,
@@ -105,7 +110,7 @@ export const ActionNode = memo(
               />
             </NodeHeaderActions>
           </NodeHeader>
-          <NodeSection children={data.description}></NodeSection>
+          <NodeMarkdownSection children={data.description} />
         </NodeContent>
         {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle
@@ -170,7 +175,7 @@ export const StatusNode = memo(
               />
             </NodeHeaderActions>
           </NodeHeader>
-          <NodeSection children={data.description}></NodeSection>
+          <NodeMarkdownSection children={data.description} />
           <NodeSection
             children={
               data.git ? (
