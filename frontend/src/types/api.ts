@@ -429,7 +429,7 @@ export interface operations {
     list_branches: {
         parameters: {
             query?: {
-                /** @description Glob filter for */
+                /** @description string filter against with the branch name is matched */
                 filter?: string | null;
             };
             header?: never;
@@ -545,8 +545,8 @@ export interface operations {
     list_tags: {
         parameters: {
             query?: {
-                /** @description Prefix of the tag names to list */
-                prefix?: string | null;
+                /** @description String filter against which the tag name is matched. */
+                filter?: string | null;
             };
             header?: never;
             path?: never;

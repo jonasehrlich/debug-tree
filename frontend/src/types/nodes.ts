@@ -1,5 +1,5 @@
 import {
-  gitMetaDataSchema,
+  getGitMetaDataSchema,
   isCommitMetadata,
   type GitMetadata,
 } from "@/client";
@@ -84,7 +84,7 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     data: z.object({
       ...commonNodeDataFields,
       state: z.enum(["unknown", "progress", "fail", "success"]),
-      git: gitMetaDataSchema().nullable(),
+      git: getGitMetaDataSchema().nullable(),
     }),
   }),
 ]);

@@ -111,7 +111,7 @@ export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
 
 export async function fetchTags(filter?: string): Promise<GitMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/tags", {
-    params: { query: { prefix: filter } },
+    params: { query: { filter } },
   });
 
   if (error) {
@@ -129,7 +129,7 @@ export async function fetchTags(filter?: string): Promise<GitMetadata[]> {
 
 export async function fetchBranches(filter?: string): Promise<GitMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/branches", {
-    params: { query: { filter: filter } },
+    params: { query: { filter } },
   });
 
   if (error) {

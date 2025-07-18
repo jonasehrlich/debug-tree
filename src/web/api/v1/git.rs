@@ -360,8 +360,8 @@ async fn list_commits(
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct ListTagsQuery {
-    /// Prefix of the tag names to list
-    prefix: Option<String>,
+    /// String filter against which the tag name is matched.
+    filter: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -423,7 +423,7 @@ async fn list_tags(
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
     let tag_names = repo
-        .tag_names(query.prefix.as_deref().map(to_safe_glob).as_deref())
+        .tag_names(query.filter.as_deref().map(to_safe_glob).as_deref())
         .map_err(|e| api::AppError::InternalServerError(format!("Could not get tags: {e}")))?;
 
     let tagged_commits = tag_names
@@ -447,7 +447,7 @@ struct Branch {
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct ListBranchesQuery {
-    /// Glob filter for
+    /// string filter against with the branch name is matched
     filter: Option<String>,
 }
 
@@ -562,5 +562,5 @@ fn to_safe_glob(prefix: &str) -> String {
         .replace('*', "\\*")
         .replace('[', "\\[")
         .replace('?', "\\?");
-    format!("{escaped}*")
+    format!("*{escaped}*")
 }
