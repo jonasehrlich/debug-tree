@@ -69,7 +69,7 @@ export function isBranchMetadata(
   return metadata.type === "branch";
 }
 
-export function gitMetaDataSchema() {
+export function getGitMetaDataSchema() {
   return z.object({
     rev: z.string(),
     summary: z.string(),
