@@ -469,7 +469,9 @@ export interface operations {
     create_branch: {
         parameters: {
             query: {
+                /** @description Name of the branch to create */
                 name: string;
+                /** @description Revision to create the branch on, this can be a short hash, full hash or a tag */
                 revision: string;
             };
             header?: never;
@@ -626,9 +628,9 @@ export interface operations {
     create_tag: {
         parameters: {
             query: {
-                /** @description name of the tag to create */
+                /** @description Name of the tag to create */
                 name: string;
-                /** @description revision to tag, this can be a short hash, full hash, a tag, */
+                /** @description Revision to tag, this can be a short hash, full hash or a tag */
                 revision: string;
             };
             header?: never;

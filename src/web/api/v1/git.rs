@@ -438,9 +438,9 @@ async fn list_tags(
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct CreateTagQuery {
-    /// name of the tag to create
+    /// Name of the tag to create
     name: String,
-    /// revision to tag, this can be a short hash, full hash, a tag,
+    /// Revision to tag, this can be a short hash, full hash or a tag
     revision: String,
 }
 
@@ -465,12 +465,7 @@ async fn create_tag(
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let oid = git2::Oid::from_str(query.revision.as_str())
-        .map_err(|e| api::AppError::BadRequest(format!("Invalid revision: {e}")))?;
-
-    let rev_obj = repo
-        .find_object(oid, None)
-        .map_err(|e| api::AppError::BadRequest(format!("Failed to find revision: {e}")))?;
+    let rev_obj = get_object_for_revision(repo, query.revision.as_str())?;
     let force = false;
     repo.tag_lightweight(&query.name, &rev_obj, force)
         .map_err(|e| api::AppError::InternalServerError(format!("Failed to create tag: {e}")))?;
@@ -546,7 +541,9 @@ async fn list_branches(
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct CreateBranchQuery {
+    /// Name of the branch to create
     name: String,
+    /// Revision to create the branch on, this can be a short hash, full hash or a tag
     revision: String,
 }
 
