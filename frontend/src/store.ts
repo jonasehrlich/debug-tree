@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { client } from "./client";
-import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
+import { isActionNode, isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
 
 /**
@@ -291,7 +291,7 @@ export const useStore = create<AppState>()(
         const { clientX, clientY } =
           "changedTouches" in event ? event.changedTouches[0] : event;
         const fromNode = connectionState.fromNode;
-        if (fromNode === null) {
+        if (fromNode === null || (!isStatusNode(fromNode) && !isActionNode(fromNode))) {
           return;
         }
         const nodeType: AppNodeType = isStatusNode(fromNode)
@@ -302,7 +302,7 @@ export const useStore = create<AppState>()(
           eventScreenPosition: { x: clientX, y: clientY },
           type: nodeType,
           fromNodeId: fromNode.id,
-          defaultRev: undefined,
+          defaultRev: fromNode.data.git,
         });
       },
       setEdgeType: (newType) => {

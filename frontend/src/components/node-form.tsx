@@ -1,4 +1,4 @@
-import { fetchCommits, fetchTags, type GitMetadata } from "@/client";
+import { fetchBranches, fetchCommits, fetchTags, type GitMetadata } from "@/client";
 import type { AppNodeType } from "@/types/nodes";
 import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
 import log from "loglevel";
@@ -20,6 +20,8 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Select, SelectTrigger, SelectValue } from "./ui/select";
+import { ConfirmingButton } from "./confirming-button";
+import { GitBranch, Tag } from "lucide-react";
 
 const GitRevCommandItem = (m: GitMetadata) => {
   return (
@@ -59,6 +61,14 @@ export const NodeForm = ({
       fetchTags(value),
     ]);
     return [...revisions, ...tags];
+  };
+
+  const fetchGitTagsAndBranches = async (value: string): Promise<GitMetadata[]> => {
+    const [branches, tags] = await Promise.all([
+      fetchBranches(value),
+      fetchTags(value),
+    ]);
+    return [...branches, ...tags];
   };
 
   const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] = useState(false);
@@ -156,6 +166,56 @@ export const NodeForm = ({
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+        {nodeType === "actionNode" && (
+          <div className="space-y-8">
+            <FormField
+              control={form.control}
+              name="data.git"
+              render={({ field }) => (
+                <FormItem className="flex gap-4">
+                  <FormLabel className="w-24">Git Branch/Tag</FormLabel>
+                  <FormControl>
+                    <AsyncCombobox<GitMetadata>
+                      fetchItems={fetchGitTagsAndBranches}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select branch/tag"
+                      onDropdownOpenChange={setGitRevSuggestionIsOpen}
+                      renderDropdownItem={GitRevCommandItem}
+                      renderValue={formatGitRevision}
+                      getItemValue={(item) => {
+                        return item.rev;
+                      }}
+                      fontFamily="font-mono"
+                      buttonClasses="w-[200px]"
+                      commandProps={{ shouldFilter: false }}
+                    />
+                  </FormControl>
+                  <ConfirmingButton
+                    tooltipContent="Create Branch"
+                    icon={<GitBranch />}
+                    onClick={async () => {
+                      // addGitRevision(formattedRev);
+                      return true;
+                    }}
+                    className="size-6"
+                  />
+                  <ConfirmingButton
+                    tooltipContent="Create Tag"
+                    icon={<Tag size={16} />}
+                    onClick={async () => {
+                      // addGitRevision(formattedRev);
+                      return true;
+                    }}
+                    className="size-6"
+                  />
+                  <FormMessage />
+
                 </FormItem>
               )}
             />

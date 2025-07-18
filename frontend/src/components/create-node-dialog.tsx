@@ -46,7 +46,7 @@ export const CreateNodeDialog = () => {
         });
       } else {
         form.reset({
-          data: { title: "", description: "" },
+          data: { title: "", description: "", git: null },
           type: pendingNode.type,
         });
       }

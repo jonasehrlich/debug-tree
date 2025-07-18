@@ -23,6 +23,7 @@ export const formatGitRevision = (git: GitMetadata) => {
 export type ActionNodeData = {
   title: string;
   description: string;
+  git: GitMetadata | null;
 };
 
 export type ActionNode = Node<ActionNodeData, "actionNode">;
@@ -52,7 +53,7 @@ interface PendingNodeData<NodeType extends string> {
   // Node the dropped edge is connected to
   fromNodeId?: string;
   // default revision to display during creation
-  defaultRev?: GitMetadata;
+  defaultRev: GitMetadata | null;
 }
 
 export type PendingAppNodeData =
@@ -70,6 +71,7 @@ export function isActionNode(node: Node): node is ActionNode {
 const commonNodeDataFields = {
   title: z.string().min(2),
   description: z.string(),
+  git: getGitMetaDataSchema().nullable(),
 };
 
 export const AppNodeSchema = z.discriminatedUnion("type", [
@@ -84,7 +86,6 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     data: z.object({
       ...commonNodeDataFields,
       state: z.enum(["unknown", "progress", "fail", "success"]),
-      git: getGitMetaDataSchema().nullable(),
     }),
   }),
 ]);
