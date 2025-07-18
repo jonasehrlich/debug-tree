@@ -9,7 +9,7 @@ export const BaseNode = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative rounded-md border bg-card p-5 text-card-foreground",
+      "relative rounded-md border bg-card text-card-foreground",
       className,
       selected ? "border-muted-foreground shadow-lg" : "",
       "hover:ring-1",
@@ -20,3 +20,40 @@ export const BaseNode = forwardRef<
 ));
 
 BaseNode.displayName = "BaseNode";
+
+interface NodeSectionProps {
+  children: React.ReactNode;
+}
+
+/**
+ * Wrapper around {@link NodeSection} components, used to apply
+ * common classes (e.g. divide-y)
+ */
+export const NodeContent = ({
+  children,
+  ...props
+}: NodeSectionProps &
+  HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
+  if (!children) return null;
+  return <div {...props}>{children}</div>;
+};
+NodeContent.displayName = "NodeContent";
+
+/**
+ * General node segment with meaningful padding
+ */
+export const NodeSection = ({
+  children,
+  className,
+  ...props
+}: NodeSectionProps &
+  HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
+  if (!children) return null;
+  return (
+    <div className={cn("px-3 py-2", className)} {...props}>
+      {children}
+    </div>
+  );
+};
+
+NodeSection.displayName = "NodeSection";

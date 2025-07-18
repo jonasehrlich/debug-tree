@@ -53,22 +53,28 @@ export const statusNodeStateClasses: Record<
     bg: string;
     /** Border classes */
     border: string;
+    /** Divide classes */
+    divide: string;
   }
 > = {
   unknown: {
     bg: "bg-zinc-100 dark:bg-zinc-700",
     border: "border-zinc-300 dark:border-zinc-500",
+    divide: "divide-zinc-300 dark:divide-zinc-500",
   },
   progress: {
     bg: "bg-amber-100 dark:bg-amber-950",
     border: "border-amber-300 dark:border-amber-800",
+    divide: "divide-amber-300 dark:divide-amber-800",
   },
   fail: {
     bg: "bg-red-100 dark:bg-red-950",
     border: "border-red-300 dark:border-red-800",
+    divide: "divide-red-300 dark:divide-red-800",
   },
   success: {
     bg: "bg-emerald-100 dark:bg-emerald-950",
     border: "border-emerald-300 dark:border-emerald-800",
+    divide: "divide-emerald-300 dark:divide-emerald-800",
   },
 } as const;
