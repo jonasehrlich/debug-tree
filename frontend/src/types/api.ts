@@ -219,6 +219,10 @@ export interface components {
         FullFlowRequestResponse: {
             flow: components["schemas"]["FlowData"];
         };
+        ListBranchesResponse: {
+            /** @description Found branches */
+            branches: components["schemas"]["Branch"][];
+        };
         ListCommitsResponse: {
             /** @description Array of commits between the base and head commit IDs
              *     in reverse chronological order. */
@@ -452,7 +456,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Branch"][];
+                    "application/json": components["schemas"]["ListBranchesResponse"];
                 };
             };
             /** @description Internal server error */

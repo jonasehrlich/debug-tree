@@ -485,6 +485,24 @@ struct Branch {
     head: Commit,
 }
 
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct ListBranchesResponse {
+    /// Found branches
+    branches: Vec<Branch>,
+}
+
+impl<I> From<I> for ListBranchesResponse
+where
+    I: IntoIterator<Item = Branch>,
+{
+    fn from(iter: I) -> Self {
+        ListBranchesResponse {
+            branches: iter.into_iter().collect(),
+        }
+    }
+}
+
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct ListBranchesQuery {
@@ -500,14 +518,14 @@ struct ListBranchesQuery {
     description = "List all local branches in the repository, optionally filtered by a glob pattern.",
     params(ListBranchesQuery),
     responses(
-        (status = http::StatusCode::OK, description = "List of branches", body = Vec<Branch>),
+        (status = http::StatusCode::OK, description = "List of branches", body = ListBranchesResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
 async fn list_branches(
     State(state): State<web::AppState>,
     Query(query): Query<ListBranchesQuery>,
-) -> Result<Json<Vec<Branch>>, api::AppError> {
+) -> Result<Json<ListBranchesResponse>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
@@ -517,25 +535,22 @@ async fn list_branches(
     let local_branches = repo
         .branches(Some(git2::BranchType::Local))
         .map_err(|e| api::AppError::InternalServerError(format!("Failed to list branches: {e}")))?;
-    let branches = local_branches
-        .filter_map(Result::ok)
-        .filter_map(|(b, _)| {
-            let name = b.name().ok()??;
-            if !name.contains(filter) {
-                return None; // Skip branches that do not match the filter
-            }
+    let branches = local_branches.filter_map(Result::ok).filter_map(|(b, _)| {
+        let name = b.name().ok()??;
+        if !name.contains(filter) {
+            return None; // Skip branches that do not match the filter
+        }
 
-            let rev = b.get();
-            let commit = rev.peel_to_commit().ok()?;
-            let branch = Branch {
-                name: name.to_string(),
-                head: Commit::from(commit),
-            };
-            Some(branch)
-        })
-        .collect();
+        let rev = b.get();
+        let commit = rev.peel_to_commit().ok()?;
+        let branch = Branch {
+            name: name.to_string(),
+            head: Commit::from(commit),
+        };
+        Some(branch)
+    });
 
-    Ok(Json(branches))
+    Ok(Json(ListBranchesResponse::from(branches)))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
