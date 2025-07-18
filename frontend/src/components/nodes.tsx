@@ -1,5 +1,10 @@
 import { BaseHandle } from "@/components/base-handle";
-import { BaseNode, NodeContent, NodeSection } from "@/components/base-node";
+import {
+  BaseNode,
+  NodeContent,
+  NodeMarkdownSection,
+  NodeSection,
+} from "@/components/base-node";
 import {
   NodeHeader,
   NodeHeaderActions,
@@ -101,7 +106,7 @@ export const ActionNode = memo(
               />
             </NodeHeaderActions>
           </NodeHeader>
-          <NodeSection children={data.description}></NodeSection>
+          <NodeMarkdownSection children={data.description} />
         </NodeContent>
         <BaseHandle
           id="target-1"
@@ -153,7 +158,7 @@ export const StatusNode = memo(
               />
             </NodeHeaderActions>
           </NodeHeader>
-          <NodeSection children={data.description}></NodeSection>
+          <NodeMarkdownSection children={data.description} />
           <NodeSection
             children={
               data.git ? (
