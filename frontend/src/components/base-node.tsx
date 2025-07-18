@@ -32,7 +32,8 @@ interface NodeSectionProps {
 export const NodeContent = ({
   children,
   ...props
-}: NodeSectionProps & HTMLAttributes<HTMLDivElement>) => {
+}: NodeSectionProps &
+  HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
   if (!children) return null;
   return <div {...props}>{children}</div>;
 };
@@ -45,7 +46,8 @@ export const NodeSection = ({
   children,
   className,
   ...props
-}: NodeSectionProps & HTMLAttributes<HTMLDivElement>) => {
+}: NodeSectionProps &
+  HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
   if (!children) return null;
   return (
     <div className={cn("px-3 py-2", className)} {...props}>
