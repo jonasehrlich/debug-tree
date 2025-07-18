@@ -1,5 +1,6 @@
+import type { GitMetadata } from "@/client";
 import { cn } from "@/lib/utils";
-import { formatGitRevision, type GitMetadata } from "@/types/nodes";
+import { formatGitRevision } from "@/types/nodes";
 import { GitBranch, Pin, Tag } from "lucide-react";
 import {
   useCallback,

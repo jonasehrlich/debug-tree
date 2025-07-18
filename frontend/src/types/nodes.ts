@@ -1,14 +1,6 @@
+import type { GitMetadata } from "@/client";
 import type { Node } from "@xyflow/react";
 import { z } from "zod";
-
-export interface GitMetadata {
-  /** Tag or commit ID */
-  rev: string;
-  /** Summary of the  */
-  summary: string;
-  /** Whether {@link rev} refers to a tag */
-  isTag: boolean;
-}
 
 /**
  * Format the revision of a {@link GitMetadata} object. If it is a tag, the {@link GitMetadata.rev}

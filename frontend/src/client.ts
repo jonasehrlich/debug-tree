@@ -1,7 +1,6 @@
 import log from "loglevel";
 import createClient, { type Middleware } from "openapi-fetch";
 import type { paths } from "./types/api";
-import type { GitMetadata } from "./types/nodes";
 
 const logger = log.getLogger("api-client");
 
@@ -38,6 +37,14 @@ const loggerMiddleware: Middleware = {
 export const client = createClient<paths>({ baseUrl: "/" });
 client.use(loggerMiddleware);
 
+export interface GitMetadata {
+  /** Tag or commit ID */
+  rev: string;
+  /** Summary of the  */
+  summary: string;
+  /** Whether {@link rev} refers to a tag */
+  isTag: boolean;
+}
 export async function getCurrentHead(): Promise<GitMetadata> {
   const rev = "HEAD";
   const { data, error } = await client.GET("/api/v1/git/commit/{rev}", {

@@ -1,10 +1,6 @@
-import { client } from "@/client";
+import { client, type GitMetadata } from "@/client";
 import type { AppNodeType } from "@/types/nodes";
-import {
-  AppNodeSchema,
-  formatGitRevision,
-  type GitMetadata,
-} from "@/types/nodes";
+import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
 import log from "loglevel";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
