@@ -58,8 +58,9 @@ export const EditNodeDialog = () => {
       onOpenChange={(open) => {
         if (!open) {
           setCurrentEditNodeData(null);
+          // At this point it is sufficient to set the current edit node data to null, the useEffect in this
+          // component will close it for us and also re-open if some component sets it at some point
         }
-        setIsOpen(open);
       }}
     >
       <DialogContent className="md:max-w-[700px]">

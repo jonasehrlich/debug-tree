@@ -14,12 +14,13 @@ import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
 
 /**
- * Whether the state before a set of {@link NodeChange}s should be added to the undo stack
+ * Whether the state before a set of {@link NodeChange}s should be added to the
+ * {@link AppState.undoStack}
  * @param changes - Array of changes passed to {@link AppState.onNodesChange}
  * @param nodes - Nodes existing before the changes are applied
  * @returns Whether the changes should be added to the undo stack
  */
-const shouldObserveNodeChangesForUndo = (
+const areNodeChangesNotableForUndoStack = (
   changes: NodeChange<AppNode>[],
   nodes: AppNode[],
 ) => {
@@ -37,7 +38,33 @@ const shouldObserveNodeChangesForUndo = (
   });
 };
 
-const shouldSaveEdgeChanges = (
+/**
+ * Whether the {@link NodeChange}s should set {@link AppState.hasUnsavedChanges}
+ * @param changes - Array of changes passed to {@link AppState.onEdgesChange}
+ * @returns Whether the {@link NodeChange}s should set {@link AppState.hasUnsavedChanges}
+ */
+const areNodeChangesNotableForHasUnsavedChanges = (
+  changes: NodeChange<AppNode>[],
+) => {
+  return changes.some((change) => {
+    return (
+      change.type === "remove" ||
+      change.type === "add" ||
+      change.type === "replace" ||
+      change.type === "position"
+    );
+  });
+};
+
+/**
+ * Whether the state before a state before a set of {@link EdgeChange}ss should be added
+ * to the {@link AppState.undoStack} and should set {@link AppState.hasUnsavedChanges}
+ * @param changes - Array of changes passed to {@link AppState.onEdgesChange}
+ * @param nodes - Nodes existing before the changes are applied
+ * @returns Whether the state before a state before a set of {@link EdgeChange}ss should be added
+ * to the {@link AppState.undoStack} and should set {@link AppState.hasUnsavedChanges}
+ */
+const areEdgeChangesNotable = (
   changes: EdgeChange<Edge>[],
   nodes: AppNode[],
 ) => {
@@ -66,6 +93,7 @@ export const useStore = create<AppState>()(
         set({ undoInProgress: true });
         set({
           ...prev,
+          hasUnsavedChanges: true,
           undoStack: undoStack.slice(0, -1),
           redoStack: [...redoStack, { nodes, edges }],
         });
@@ -86,6 +114,7 @@ export const useStore = create<AppState>()(
         const next = redoStack[redoStack.length - 1];
         set({
           ...next,
+          hasUnsavedChanges: true,
           redoStack: redoStack.slice(0, -1),
           undoStack: [...undoStack, { nodes, edges }],
         });
@@ -131,12 +160,16 @@ export const useStore = create<AppState>()(
         return false;
       },
       deleteFlow: async (id: string) => {
+        const { loadFlowsMetadata, currentFlow, closeCurrentFlow } = get();
         const { data, error } = await client.DELETE("/api/v1/flows/{id}", {
           params: { path: { id } },
         });
 
         if (data) {
-          await get().loadFlowsMetadata();
+          if (id === currentFlow?.id) {
+            closeCurrentFlow();
+          }
+          await loadFlowsMetadata();
         }
         if (error) {
           toast.error(`Error deleting flow ${id}`, {
@@ -174,50 +207,49 @@ export const useStore = create<AppState>()(
         }
       },
       saveCurrentFlow: async () => {
-        const store = get();
-        if (!store.currentFlow) {
-          return;
-        }
-        if (!store.hasUnsavedChanges) {
+        const { currentFlow, hasUnsavedChanges, nodes, edges } = get();
+        if (!currentFlow || !hasUnsavedChanges) {
           return;
         }
 
         const { error } = await client.POST("/api/v1/flows/{id}", {
           params: {
-            path: { id: store.currentFlow.id },
+            path: { id: currentFlow.id },
           },
           body: {
             flow: {
-              name: store.currentFlow.name,
-              reactflow: { nodes: store.nodes, edges: store.edges },
+              name: currentFlow.name,
+              reactflow: { nodes: nodes, edges: edges },
             },
           },
         });
         if (error) {
-          toast.error(`Saving flow ${store.currentFlow.name} failed`, {
+          const msg = `Saving flow ${currentFlow.name} failed`;
+          toast.error(msg, {
             description: error.message,
           });
+          throw Error(msg);
         } else {
           toast.success("Saved", { duration: 800 });
           set({ hasUnsavedChanges: false });
         }
       },
-      closeCurrentFlow: async () => {
-        const { saveCurrentFlow } = get();
-        await saveCurrentFlow();
+      closeCurrentFlow: () => {
         set({
           nodes: [],
           edges: [],
           currentFlow: null,
+          hasUnsavedChanges: false,
           undoStack: [],
           redoStack: [],
         });
       },
       onNodesChange: (changes) => {
-        const { nodes, undoInProgress, pushToUndoStack } = get();
+        const { nodes, undoInProgress, pushToUndoStack, hasUnsavedChanges } =
+          get();
         if (
           !undoInProgress &&
-          shouldObserveNodeChangesForUndo(changes, nodes)
+          areNodeChangesNotableForUndoStack(changes, nodes)
         ) {
           pushToUndoStack();
         }
@@ -225,12 +257,15 @@ export const useStore = create<AppState>()(
 
         set({
           nodes: newNodes,
-          hasUnsavedChanges: true,
+          hasUnsavedChanges:
+            hasUnsavedChanges ||
+            areNodeChangesNotableForHasUnsavedChanges(changes),
         });
       },
       onEdgesChange: (changes) => {
-        const { edges, nodes, undoStack } = get();
-        if (shouldSaveEdgeChanges(changes, nodes)) {
+        const { edges, nodes, undoStack, hasUnsavedChanges } = get();
+        const notableChanges = areEdgeChangesNotable(changes, nodes);
+        if (notableChanges) {
           set({
             undoStack: [...undoStack, { nodes, edges }],
             redoStack: [],
@@ -239,7 +274,7 @@ export const useStore = create<AppState>()(
 
         set({
           edges: applyEdgeChanges(changes, edges),
-          hasUnsavedChanges: true,
+          hasUnsavedChanges: hasUnsavedChanges || notableChanges,
         });
       },
       onConnect: (connection) => {

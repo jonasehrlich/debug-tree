@@ -64,6 +64,7 @@ const selector = (s: AppState) => ({
   deleteFlow: s.deleteFlow,
   loadFlow: s.loadFlow,
   setPendingNode: s.setPendingNodeData,
+  saveCurrentFlow: s.saveCurrentFlow,
 });
 
 export const FlowsDialog: React.FC<FlowsDialogProps> = ({
@@ -85,6 +86,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     createFlow,
     deleteFlow,
     setPendingNode,
+    saveCurrentFlow,
   } = useStore(useShallow(selector));
   const [isFlowsLoading, setIsFlowsLoading] = useState(false);
 
@@ -111,6 +113,15 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
       setIsOpen(false);
     }
   }, [setIsOpen, currentFlow]);
+
+  useEffect(() => {
+    if (isOpen) {
+      saveCurrentFlow().catch(() => {
+        // Close the dialog again, otherwise the dialog can be used to delete the currently opened flow
+        setIsOpen(false);
+      });
+    }
+  }, [isOpen, setIsOpen, saveCurrentFlow]);
 
   const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
   const [filterTerm, setFilterTerm] = useState<string>("");
