@@ -54,7 +54,11 @@ export interface paths {
          */
         get: operations["list_branches"];
         put?: never;
-        post?: never;
+        /**
+         * Create new branch
+         * @description Creates a new branch at the specified revision.
+         */
+        post: operations["create_branch"];
         delete?: never;
         options?: never;
         head?: never;
@@ -449,6 +453,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Branch"][];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    create_branch: {
+        parameters: {
+            query: {
+                name: string;
+                revision: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Branch created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Branch"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
                 };
             };
             /** @description Internal server error */

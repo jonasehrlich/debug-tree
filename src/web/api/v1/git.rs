@@ -10,7 +10,7 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
         .route("/tags", routing::get(list_tags).post(create_tag))
-        .route("/branches", routing::get(list_branches))
+        .route("/branches", routing::get(list_branches).post(create_branch))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -70,7 +70,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits,  list_tags, create_tag, list_branches), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -541,6 +541,45 @@ async fn list_branches(
         .collect();
 
     Ok(Json(branches))
+}
+
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct CreateBranchQuery {
+    name: String,
+    revision: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/branches",
+    summary = "Create new branch",
+    description = "Creates a new branch at the specified revision.",
+    params(CreateBranchQuery),
+    responses(
+        (status = http::StatusCode::CREATED, description = "Branch created successfully", body = Branch),
+        (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn create_branch(
+    State(state): State<web::AppState>,
+    Query(query): Query<CreateBranchQuery>,
+) -> Result<Json<Branch>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let commit = get_commit_for_revision(repo, &query.revision)?;
+    let force = false;
+    repo.branch(&query.name, &commit, force)
+        .map_err(|e| api::AppError::InternalServerError(format!("Failed to create branch: {e}")))?;
+
+    Ok(Json(Branch {
+        name: query.name,
+        head: Commit::from(commit),
+    }))
 }
 
 fn get_commit_for_revision<'repo>(
