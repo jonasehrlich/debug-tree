@@ -1,14 +1,10 @@
+import {
+  getGitMetaDataSchema,
+  isCommitMetadata,
+  type GitMetadata,
+} from "@/client";
 import type { Node } from "@xyflow/react";
 import { z } from "zod";
-
-export interface GitMetadata {
-  /** Tag or commit ID */
-  rev: string;
-  /** Summary of the  */
-  summary: string;
-  /** Whether {@link rev} refers to a tag */
-  isTag: boolean;
-}
 
 /**
  * Format the revision of a {@link GitMetadata} object. If it is a tag, the {@link GitMetadata.rev}
@@ -17,7 +13,10 @@ export interface GitMetadata {
  * @returns Git revision
  */
 export const formatGitRevision = (git: GitMetadata) => {
-  return git.isTag ? git.rev : git.rev.slice(0, 7);
+  if (isCommitMetadata(git)) {
+    return git.rev.slice(0, 7);
+  }
+  return git.rev;
 };
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -52,6 +51,8 @@ interface PendingNodeData<NodeType extends string> {
   type: NodeType;
   // Node the dropped edge is connected to
   fromNodeId?: string;
+  // default revision to display during creation
+  defaultRev?: GitMetadata;
 }
 
 export type PendingAppNodeData =
@@ -83,13 +84,7 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     data: z.object({
       ...commonNodeDataFields,
       state: z.enum(["unknown", "progress", "fail", "success"]),
-      git: z
-        .object({
-          rev: z.string(),
-          isTag: z.boolean(),
-          summary: z.string(),
-        })
-        .nullable(),
+      git: getGitMetaDataSchema().nullable(),
     }),
   }),
 ]);

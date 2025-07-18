@@ -1,10 +1,7 @@
-import { client } from "@/client";
+import { fetchCommits, fetchTags, type GitMetadata } from "@/client";
 import type { AppNodeType } from "@/types/nodes";
-import {
-  AppNodeSchema,
-  formatGitRevision,
-  type GitMetadata,
-} from "@/types/nodes";
+import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
+import log from "loglevel";
 import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -32,6 +29,8 @@ const GitRevCommandItem = (m: GitMetadata) => {
   );
 };
 
+const logger = log.getLogger("node-form");
+
 interface NodeFormProps {
   /** Node type  */
   nodeType: AppNodeType;
@@ -52,49 +51,12 @@ export const NodeForm = ({
   submitButtonText,
   cancelComponent,
 }: NodeFormProps) => {
-  const fetchGitRevisions = async (value: string): Promise<GitMetadata[]> => {
-    const { data, error } = await client.GET("/api/v1/git/commits", {
-      params: { query: { filter: value } },
-    });
-    if (data) {
-      return [
-        ...data.commits.map((commit) => {
-          return {
-            rev: commit.id,
-            summary: commit.summary,
-            isTag: false,
-          };
-        }),
-      ];
-    }
-    throw new Error(`Failed to fetch Git revisions: ${error.message}`);
-  };
-
-  const fetchGitTags = async (value: string): Promise<GitMetadata[]> => {
-    const { data, error } = await client.GET("/api/v1/git/tags", {
-      params: { query: { prefix: value } },
-    });
-
-    if (data) {
-      return [
-        ...data.tags.map((data) => {
-          return {
-            rev: data.tag,
-            summary: data.commit.summary,
-            isTag: true,
-          };
-        }),
-      ];
-    }
-    throw new Error(`Failed to fetch Git tags: ${error.message}`);
-  };
-
   const fetchGitTagsAndRevisions = async (
     value: string,
   ): Promise<GitMetadata[]> => {
     const [revisions, tags] = await Promise.all([
-      fetchGitRevisions(value),
-      fetchGitTags(value),
+      fetchCommits(value),
+      fetchTags(value),
     ]);
     return [...revisions, ...tags];
   };
@@ -105,7 +67,7 @@ export const NodeForm = ({
       <form
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         onSubmit={form.handleSubmit(submitForm, (errors) => {
-          console.log(errors);
+          logger.info("Form submission error", errors);
         })}
         className="space-y-8"
       >
@@ -202,11 +164,7 @@ export const NodeForm = ({
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           {cancelComponent}
           <Button
-            disabled={
-              !form.formState.isValid ||
-              form.formState.isSubmitting ||
-              gitRevSuggestionsIsOpen
-            }
+            disabled={form.formState.isSubmitting || gitRevSuggestionsIsOpen}
             type="submit"
           >
             {submitButtonText}
