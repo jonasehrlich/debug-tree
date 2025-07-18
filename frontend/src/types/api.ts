@@ -54,7 +54,11 @@ export interface paths {
          */
         get: operations["list_branches"];
         put?: never;
-        post?: never;
+        /**
+         * Create new branch
+         * @description Creates a new branch at the specified revision.
+         */
+        post: operations["create_branch"];
         delete?: never;
         options?: never;
         head?: never;
@@ -116,7 +120,11 @@ export interface paths {
          */
         get: operations["list_tags"];
         put?: never;
-        post?: never;
+        /**
+         * Create new tag
+         * @description Creates a new lightweight git tag with the specified name on the provided revision.
+         */
+        post: operations["create_tag"];
         delete?: never;
         options?: never;
         head?: never;
@@ -210,6 +218,10 @@ export interface components {
         };
         FullFlowRequestResponse: {
             flow: components["schemas"]["FlowData"];
+        };
+        ListBranchesResponse: {
+            /** @description Found branches */
+            branches: components["schemas"]["Branch"][];
         };
         ListCommitsResponse: {
             /** @description Array of commits between the base and head commit IDs
@@ -444,7 +456,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Branch"][];
+                    "application/json": components["schemas"]["ListBranchesResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    create_branch: {
+        parameters: {
+            query: {
+                /** @description Name of the branch to create */
+                name: string;
+                /** @description Revision to create the branch on, this can be a short hash, full hash or a tag */
+                revision: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Branch created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Branch"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
                 };
             };
             /** @description Internal server error */
@@ -561,6 +616,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListTagsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    create_tag: {
+        parameters: {
+            query: {
+                /** @description Name of the tag to create */
+                name: string;
+                /** @description Revision to tag, this can be a short hash, full hash or a tag */
+                revision: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tag created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaggedCommit"];
+                };
+            };
+            /** @description Bad request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
                 };
             };
             /** @description Internal server error */

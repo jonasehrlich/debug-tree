@@ -60,6 +60,7 @@ export function isCommitMetadata(
 ): metadata is CommitMetadata {
   return metadata.type === "commit";
 }
+
 export function isTagMetadata(metadata: GitMetadata): metadata is TagMetadata {
   return metadata.type === "tag";
 }
@@ -138,7 +139,7 @@ export async function fetchBranches(filter?: string): Promise<GitMetadata[]> {
     throw new Error(errorMessage);
   }
 
-  return data.map((branch) => ({
+  return data.branches.map((branch) => ({
     rev: branch.name,
     summary: branch.head.summary,
     type: "branch",

@@ -9,8 +9,8 @@ pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
         .route("/commits", routing::get(list_commits))
         .route("/commit/{commit_id}", routing::get(get_commit))
-        .route("/tags", routing::get(list_tags))
-        .route("/branches", routing::get(list_branches))
+        .route("/tags", routing::get(list_tags).post(create_tag))
+        .route("/branches", routing::get(list_branches).post(create_branch))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -70,7 +70,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits,  list_tags, list_branches), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_commit, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -435,6 +435,47 @@ async fn list_tags(
     )?))
 }
 
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct CreateTagQuery {
+    /// Name of the tag to create
+    name: String,
+    /// Revision to tag, this can be a short hash, full hash or a tag
+    revision: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/tags",
+    summary = "Create new tag",
+    description = "Creates a new lightweight git tag with the specified name on the provided revision.",
+    params(CreateTagQuery),
+    responses(
+        (status = http::StatusCode::CREATED, description = "Tag created successfully", body = TaggedCommit),
+        (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn create_tag(
+    State(state): State<web::AppState>,
+    Query(query): Query<CreateTagQuery>,
+) -> Result<Json<TaggedCommit>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let rev_obj = get_object_for_revision(repo, query.revision.as_str())?;
+    let force = false;
+    repo.tag_lightweight(&query.name, &rev_obj, force)
+        .map_err(|e| api::AppError::InternalServerError(format!("Failed to create tag: {e}")))?;
+
+    Ok(Json(TaggedCommit::try_from_repo_and_tag_name(
+        repo,
+        &query.name,
+    )?))
+}
+
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct Branch {
@@ -442,6 +483,24 @@ struct Branch {
     name: String,
     /// Commit ID of the branch head
     head: Commit,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct ListBranchesResponse {
+    /// Found branches
+    branches: Vec<Branch>,
+}
+
+impl<I> From<I> for ListBranchesResponse
+where
+    I: IntoIterator<Item = Branch>,
+{
+    fn from(iter: I) -> Self {
+        ListBranchesResponse {
+            branches: iter.into_iter().collect(),
+        }
+    }
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -459,14 +518,14 @@ struct ListBranchesQuery {
     description = "List all local branches in the repository, optionally filtered by a glob pattern.",
     params(ListBranchesQuery),
     responses(
-        (status = http::StatusCode::OK, description = "List of branches", body = Vec<Branch>),
+        (status = http::StatusCode::OK, description = "List of branches", body = ListBranchesResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
 async fn list_branches(
     State(state): State<web::AppState>,
     Query(query): Query<ListBranchesQuery>,
-) -> Result<Json<Vec<Branch>>, api::AppError> {
+) -> Result<Json<ListBranchesResponse>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
@@ -476,25 +535,63 @@ async fn list_branches(
     let local_branches = repo
         .branches(Some(git2::BranchType::Local))
         .map_err(|e| api::AppError::InternalServerError(format!("Failed to list branches: {e}")))?;
-    let branches = local_branches
-        .filter_map(Result::ok)
-        .filter_map(|(b, _)| {
-            let name = b.name().ok()??;
-            if !name.contains(filter) {
-                return None; // Skip branches that do not match the filter
-            }
+    let branches = local_branches.filter_map(Result::ok).filter_map(|(b, _)| {
+        let name = b.name().ok()??;
+        if !name.contains(filter) {
+            return None; // Skip branches that do not match the filter
+        }
 
-            let rev = b.get();
-            let commit = rev.peel_to_commit().ok()?;
-            let branch = Branch {
-                name: name.to_string(),
-                head: Commit::from(commit),
-            };
-            Some(branch)
-        })
-        .collect();
+        let rev = b.get();
+        let commit = rev.peel_to_commit().ok()?;
+        let branch = Branch {
+            name: name.to_string(),
+            head: Commit::from(commit),
+        };
+        Some(branch)
+    });
 
-    Ok(Json(branches))
+    Ok(Json(ListBranchesResponse::from(branches)))
+}
+
+#[derive(ToSchema, Serialize, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct CreateBranchQuery {
+    /// Name of the branch to create
+    name: String,
+    /// Revision to create the branch on, this can be a short hash, full hash or a tag
+    revision: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/branches",
+    summary = "Create new branch",
+    description = "Creates a new branch at the specified revision.",
+    params(CreateBranchQuery),
+    responses(
+        (status = http::StatusCode::CREATED, description = "Branch created successfully", body = Branch),
+        (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn create_branch(
+    State(state): State<web::AppState>,
+    Query(query): Query<CreateBranchQuery>,
+) -> Result<Json<Branch>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let commit = get_commit_for_revision(repo, &query.revision)?;
+    let force = false;
+    repo.branch(&query.name, &commit, force)
+        .map_err(|e| api::AppError::InternalServerError(format!("Failed to create branch: {e}")))?;
+
+    Ok(Json(Branch {
+        name: query.name,
+        head: Commit::from(commit),
+    }))
 }
 
 fn get_commit_for_revision<'repo>(
