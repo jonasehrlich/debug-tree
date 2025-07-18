@@ -1,4 +1,4 @@
-import { getCurrentHead } from "@/client";
+import { fetchCurrentHeadCommit } from "@/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -158,7 +158,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     }
     if (await createFlow(values.flowName)) {
       const bounds = reactflowRef.current.getBoundingClientRect();
-      const currentHead = await getCurrentHead();
+      const currentHead = await fetchCurrentHeadCommit();
 
       setPendingNode({
         type: "statusNode",

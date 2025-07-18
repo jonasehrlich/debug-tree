@@ -1,4 +1,4 @@
-import type { GitMetadata } from "@/client";
+import { isTagMetadata, type GitMetadata } from "@/client";
 import { cn } from "@/lib/utils";
 import { formatGitRevision } from "@/types/nodes";
 import { GitBranch, Pin, Tag } from "lucide-react";
@@ -45,7 +45,7 @@ export const GitRevision = ({
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>
-      {revision.isTag ? <Tag size={16} /> : <GitBranch size={16} />}
+      {isTagMetadata(revision) ? <Tag size={16} /> : <GitBranch size={16} />}
 
       <span className="flex-1 font-mono px-3  truncate align-middle">
         {formattedRev}

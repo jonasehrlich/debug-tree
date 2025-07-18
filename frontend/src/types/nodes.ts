@@ -1,4 +1,8 @@
-import type { GitMetadata } from "@/client";
+import {
+  gitMetaDataSchema,
+  isCommitMetadata,
+  type GitMetadata,
+} from "@/client";
 import type { Node } from "@xyflow/react";
 import { z } from "zod";
 
@@ -9,7 +13,10 @@ import { z } from "zod";
  * @returns Git revision
  */
 export const formatGitRevision = (git: GitMetadata) => {
-  return git.isTag ? git.rev : git.rev.slice(0, 7);
+  if (isCommitMetadata(git)) {
+    return git.rev.slice(0, 7);
+  }
+  return git.rev;
 };
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -77,13 +84,7 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     data: z.object({
       ...commonNodeDataFields,
       state: z.enum(["unknown", "progress", "fail", "success"]),
-      git: z
-        .object({
-          rev: z.string(),
-          isTag: z.boolean(),
-          summary: z.string(),
-        })
-        .nullable(),
+      git: gitMetaDataSchema().nullable(),
     }),
   }),
 ]);

@@ -1,4 +1,4 @@
-import { client, type GitMetadata } from "@/client";
+import { fetchCommits, fetchTags, type GitMetadata } from "@/client";
 import type { AppNodeType } from "@/types/nodes";
 import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
 import log from "loglevel";
@@ -51,49 +51,12 @@ export const NodeForm = ({
   submitButtonText,
   cancelComponent,
 }: NodeFormProps) => {
-  const fetchGitRevisions = async (value: string): Promise<GitMetadata[]> => {
-    const { data, error } = await client.GET("/api/v1/git/commits", {
-      params: { query: { filter: value } },
-    });
-    if (data) {
-      return [
-        ...data.commits.map((commit) => {
-          return {
-            rev: commit.id,
-            summary: commit.summary,
-            isTag: false,
-          };
-        }),
-      ];
-    }
-    throw new Error(`Failed to fetch Git revisions: ${error.message}`);
-  };
-
-  const fetchGitTags = async (value: string): Promise<GitMetadata[]> => {
-    const { data, error } = await client.GET("/api/v1/git/tags", {
-      params: { query: { prefix: value } },
-    });
-
-    if (data) {
-      return [
-        ...data.tags.map((data) => {
-          return {
-            rev: data.tag,
-            summary: data.commit.summary,
-            isTag: true,
-          };
-        }),
-      ];
-    }
-    throw new Error(`Failed to fetch Git tags: ${error.message}`);
-  };
-
   const fetchGitTagsAndRevisions = async (
     value: string,
   ): Promise<GitMetadata[]> => {
     const [revisions, tags] = await Promise.all([
-      fetchGitRevisions(value),
-      fetchGitTags(value),
+      fetchCommits(value),
+      fetchTags(value),
     ]);
     return [...revisions, ...tags];
   };
