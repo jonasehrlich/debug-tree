@@ -1,11 +1,20 @@
-import { fetchCommits, fetchTags, type GitMetadata } from "@/client";
+import {
+  createBranch,
+  createTag,
+  fetchBranches,
+  fetchCommits,
+  fetchTags,
+  type GitMetadata,
+} from "@/client";
 import type { AppNodeType } from "@/types/nodes";
 import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
 import log from "loglevel";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { AsyncCombobox } from "./async-combobox";
+import { CreateGitRevisionInput } from "./create-git-rev";
 import { IconSelectContent } from "./icon-select-content";
 import { MarkdownPreviewTextarea } from "./markdown-preview-textarea";
 import { statusNodeStateIconConfig } from "./state-colors-icons";
@@ -42,6 +51,8 @@ interface NodeFormProps {
   submitButtonText: string;
   /** Component to cancel the form */
   cancelComponent?: React.ReactNode;
+  /** Optional base revision to allow creating branches/tags from */
+  baseRev?: GitMetadata | null;
 }
 
 export const NodeForm = ({
@@ -50,8 +61,9 @@ export const NodeForm = ({
   submitForm,
   submitButtonText,
   cancelComponent,
+  baseRev,
 }: NodeFormProps) => {
-  const fetchGitTagsAndRevisions = async (
+  const fetchGitTagsAndCommits = async (
     value: string,
   ): Promise<GitMetadata[]> => {
     const [revisions, tags] = await Promise.all([
@@ -63,6 +75,38 @@ export const NodeForm = ({
 
   const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] =
     React.useState(false);
+  const fetchGitTagsAndBranches = async (value: string) => {
+    const [branches, tags] = await Promise.all([
+      fetchBranches(value),
+      fetchTags(value),
+    ]);
+
+    return [...branches, ...tags];
+  };
+
+  const createGitRev = async (
+    type: "branch" | "tag",
+    name: string,
+  ): Promise<GitMetadata | null> => {
+    if (!name || !baseRev) {
+      logger.error(`Cannot create ${type}: no name or base revision provided`);
+      return null;
+    }
+    let rev = null;
+    try {
+      if (type === "branch") {
+        rev = await createBranch(name, baseRev);
+      } else {
+        // tag
+        rev = await createTag(name, baseRev);
+      }
+      toast.success(`Created ${type} ${name} successfully`);
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+
+    return rev;
+  };
   return (
     <Form {...form}>
       <form
@@ -107,8 +151,8 @@ export const NodeForm = ({
             </FormItem>
           )}
         />
-        {nodeType === "statusNode" && (
-          <div className="space-y-8">
+        <div className="space-y-8">
+          {nodeType === "statusNode" && (
             <FormField
               control={form.control}
               name="data.state"
@@ -133,35 +177,51 @@ export const NodeForm = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="data.git"
-              render={({ field }) => (
-                <FormItem className="flex gap-4">
-                  <FormLabel className="w-24">Git Revision</FormLabel>
-                  <FormControl>
-                    <AsyncCombobox<GitMetadata>
-                      fetchItems={fetchGitTagsAndRevisions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select revision"
-                      onDropdownOpenChange={setGitRevSuggestionIsOpen}
-                      renderDropdownItem={GitRevCommandItem}
-                      renderValue={formatGitRevision}
-                      getItemValue={(item) => {
-                        return item.rev;
-                      }}
-                      fontFamily="font-mono"
-                      buttonClasses="w-[200px]"
-                      commandProps={{ shouldFilter: false }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+          )}
+          <FormField
+            control={form.control}
+            name="data.git"
+            render={({ field }) => (
+              <FormItem className="flex gap-4">
+                <FormLabel className="w-24">Git Revision</FormLabel>
+                <FormControl>
+                  <AsyncCombobox<GitMetadata>
+                    fetchItems={
+                      nodeType === "statusNode"
+                        ? fetchGitTagsAndCommits
+                        : fetchGitTagsAndBranches
+                    }
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Select revision"
+                    onDropdownOpenChange={setGitRevSuggestionIsOpen}
+                    renderDropdownItem={GitRevCommandItem}
+                    renderValue={formatGitRevision}
+                    getItemValue={(item) => {
+                      return item.rev;
+                    }}
+                    fontFamily="font-mono"
+                    buttonClasses="w-[200px]"
+                    commandProps={{ shouldFilter: false }}
+                  />
+                </FormControl>
+                {nodeType === "actionNode" && (
+                  <CreateGitRevisionInput
+                    onSubmit={async (type, name) => {
+                      const rev = await createGitRev(type, name);
+                      if (rev) {
+                        form.setValue("data.git", rev);
+                      }
+                    }}
+                    branchDisabled={!baseRev}
+                    tagDisabled={!baseRev}
+                  />
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           {cancelComponent}
           <Button

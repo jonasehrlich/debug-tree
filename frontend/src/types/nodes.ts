@@ -23,6 +23,7 @@ export const formatGitRevision = (git: GitMetadata) => {
 export type ActionNodeData = {
   title: string;
   description: string;
+  git: GitMetadata | null;
 };
 
 export type ActionNode = Node<ActionNodeData, "actionNode">;
@@ -83,6 +84,7 @@ export function isActionNode(node: Node): node is ActionNode {
 const commonNodeDataFields = {
   title: z.string().min(2),
   description: z.string(),
+  git: getGitMetaDataSchema().nullable(),
 };
 
 export const AppNodeSchema = z.discriminatedUnion("type", [
@@ -97,7 +99,6 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     data: z.object({
       ...commonNodeDataFields,
       state: z.enum(["unknown", "progress", "fail", "success"]),
-      git: getGitMetaDataSchema().nullable(),
     }),
   }),
 ]);
