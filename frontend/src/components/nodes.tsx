@@ -83,7 +83,6 @@ const AppNodeHeaderMenuAction = ({
 
 const selector = (s: AppState) => ({
   setEditNodeData: s.setCurrentEditNodeData,
-  addGitRevision: s.addGitRevision,
 });
 
 const commonNodeClasses = "w-xs" as const;
@@ -132,7 +131,6 @@ ActionNode.displayName = "ActionNode";
 
 export const StatusNode = memo(
   ({ id, data, selected }: NodeProps<StatusNodeType>) => {
-    const { addGitRevision } = useStore(useShallow(selector));
     const { updateNodeData } = useReactFlow();
 
     const handleIds = useMemo(() => {
@@ -177,14 +175,7 @@ export const StatusNode = memo(
           </NodeHeader>
           <NodeMarkdownSection children={data.description} />
           <NodeSection
-            children={
-              data.git ? (
-                <GitRevision
-                  revision={data.git}
-                  onClickPinRevision={addGitRevision}
-                />
-              ) : null
-            }
+            children={data.git ? <GitRevision revision={data.git} /> : null}
           />
         </NodeContent>
         {!data.isRootNode && (
