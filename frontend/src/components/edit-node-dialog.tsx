@@ -19,7 +19,8 @@ import { NodeForm } from "./node-form";
 import { Button } from "./ui/button";
 
 const selector = (s: AppState) => ({
-  currentEditNode: s.currentEditNodeData,
+  currentEditNode:
+    s.dialogNodeData?.type === "edit" ? s.dialogNodeData.data : null,
   setCurrentEditNodeData: s.setCurrentEditNodeData,
 });
 

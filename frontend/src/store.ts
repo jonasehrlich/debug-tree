@@ -122,10 +122,13 @@ export const useStore = create<AppState>()(
       currentFlow: null,
       flows: [],
       hasUnsavedChanges: false,
-      currentEditNodeData: null,
-      pendingNodeData: null,
+      dialogNodeData: null,
       setPendingNodeData(nodeData) {
-        set({ pendingNodeData: nodeData });
+        if (nodeData === null) {
+          set({ dialogNodeData: null });
+          return;
+        }
+        set({ dialogNodeData: { type: "pending", data: nodeData } });
       },
       gitRevisions: [],
       addGitRevision(rev) {
@@ -320,7 +323,11 @@ export const useStore = create<AppState>()(
         set({ edges });
       },
       setCurrentEditNodeData: (data) => {
-        set({ currentEditNodeData: data });
+        if (data === null) {
+          set({ dialogNodeData: null });
+          return;
+        }
+        set({ dialogNodeData: { type: "edit", data: data } });
       },
     }),
     {
@@ -329,7 +336,10 @@ export const useStore = create<AppState>()(
         edges: state.edges,
         currentFlow: state.currentFlow,
         hasUnsavedChanges: state.hasUnsavedChanges,
-        pendingNodeData: state.pendingNodeData,
+        dialogNodeData:
+          state.dialogNodeData?.type === "pending"
+            ? state.dialogNodeData
+            : null,
       }),
       name: "debug-flow-flow-storage",
     },
