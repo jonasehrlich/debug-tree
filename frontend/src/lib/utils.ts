@@ -2,7 +2,6 @@ import type { AppNodeType } from "@/types/nodes";
 import { clsx, type ClassValue } from "clsx";
 import log from "loglevel";
 import { twMerge } from "tailwind-merge";
-
 const logger = log.getLogger("utils");
 
 export function cn(...inputs: ClassValue[]) {
