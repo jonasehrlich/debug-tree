@@ -76,7 +76,7 @@ export const ActionButton = ({
           disabled={props.disabled ?? isSuccess}
         >
           <span className="sr-only">{tooltipContent}</span>
-          {isSuccess ? <Check /> : icon}
+          {isSuccess ? <Check data-testid="check-icon" /> : icon}
           {text}
         </Button>
       </TooltipTrigger>

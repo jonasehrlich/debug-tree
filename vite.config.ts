@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -28,5 +29,15 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./frontend/src"),
     },
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./vitest.setup.ts",
+    //  browser: {
+    //     enabled: true,
+    //     provider: "playwright",
+    //     instances: [{ browser: "chromium" }],
+    //   },
   },
 });
