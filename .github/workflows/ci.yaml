@@ -94,7 +94,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
       - name: test
-        run: npm run test run
+        run: npm run test
 
 
   build:
