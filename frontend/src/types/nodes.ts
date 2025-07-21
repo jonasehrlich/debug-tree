@@ -51,13 +51,26 @@ interface PendingNodeData<NodeType extends string> {
   type: NodeType;
   // Node the dropped edge is connected to
   fromNodeId?: string;
-  // default revision to display during creation
-  defaultRev?: GitMetadata;
+  // Default revision to display during creation
+  defaultRev: GitMetadata | null;
 }
 
 export type PendingAppNodeData =
   | PendingNodeData<"actionNode">
   | PendingNodeData<"statusNode">;
+
+interface EditNodeData<
+  NodeType extends string,
+  NodeDataType extends Record<string, unknown>,
+> {
+  id: string;
+  type: NodeType;
+  data: NodeDataType;
+}
+
+export type EditAppNodeData =
+  | EditNodeData<"actionNode", ActionNodeData>
+  | EditNodeData<"statusNode", StatusNodeData>;
 
 export function isStatusNode(node: Node): node is StatusNode {
   return node.type == "statusNode";

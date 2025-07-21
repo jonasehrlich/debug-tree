@@ -14,12 +14,13 @@ import {
 } from "@/components/node-header";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
-import {
-  type ActionNode as ActionNodeType,
-  type StatusNodeState,
-  type StatusNode as StatusNodeType,
+import type {
+  ActionNode as ActionNodeType,
+  EditAppNodeData,
+  StatusNodeState,
+  StatusNode as StatusNodeType,
 } from "@/types/nodes";
-import type { AppState, EditAppNodeData } from "@/types/state";
+import type { AppState } from "@/types/state";
 import { Position, useReactFlow, type NodeProps } from "@xyflow/react";
 import {
   ChartLine,
