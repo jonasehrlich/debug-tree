@@ -111,7 +111,6 @@ export const ActionNode = memo(
           </NodeHeader>
           <NodeMarkdownSection children={data.description} />
         </NodeContent>
-        {data.description && <div className="py-2">{data.description}</div>}
         <BaseHandle
           id={handleIds.target}
           type="target"
