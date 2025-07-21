@@ -11,7 +11,7 @@ import { AppNodeSchema } from "@/types/nodes";
 import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
-import { useEffect, useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useShallow } from "zustand/react/shallow";
@@ -24,7 +24,7 @@ const selector = (s: AppState) => ({
 });
 
 export const EditNodeDialog = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
   const { setCurrentEditNodeData, currentEditNode } = useStore(
     useShallow(selector),
   );
@@ -32,7 +32,7 @@ export const EditNodeDialog = () => {
     resolver: zodResolver(AppNodeSchema),
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (currentEditNode) {
       setIsOpen(true);
       form.reset(currentEditNode);
@@ -58,7 +58,7 @@ export const EditNodeDialog = () => {
       onOpenChange={(open) => {
         if (!open) {
           setCurrentEditNodeData(null);
-          // At this point it is sufficient to set the current edit node data to null, the useEffect in this
+          // At this point it is sufficient to set the current edit node data to null, theReact.useEffect in this
           // component will close it for us and also re-open if some component sets it at some point
         }
       }}

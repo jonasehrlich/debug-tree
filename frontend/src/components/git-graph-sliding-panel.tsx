@@ -4,7 +4,7 @@ import type { components } from "@/types/api";
 import type { AppState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
 import { GitCompareArrows } from "lucide-react";
-import { useEffect, useState } from "react";
+import React from "react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { GitDiffView } from "./git-diff-view";
@@ -32,10 +32,10 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
 }) => {
   const { gitRevisions } = useStore(useShallow(selector));
 
-  const [data, setData] = useState<GitGraphData>();
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = React.useState<GitGraphData>();
+  const [loading, setLoading] = React.useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // This effect can be used to perform any side effects when the panel opens or closes
     if (isOpen && gitRevisions.length >= 1) {
       client
@@ -70,13 +70,13 @@ export const GitGraphSlidingPanel: React.FC<GitGraphSlidingPanelProps> = ({
     }
   }, [isOpen, gitRevisions]);
 
-  const [openIndex, setOpenIndex] = useState<null | number>(null);
+  const [openIndex, setOpenIndex] = React.useState<null | number>(null);
 
   const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
-  const [gitDiffIsVisible, setGitDiffIsVisible] = useState(false);
+  const [gitDiffIsVisible, setGitDiffIsVisible] = React.useState(false);
   return (
     <SlidingPanel isOpen={isOpen} onClose={onClose}>
       <div>

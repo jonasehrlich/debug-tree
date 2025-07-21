@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useRef } from "react";
+import React from "react";
 
 interface SlidingPanelProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   onClose,
   children,
 }) => {
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
   return (

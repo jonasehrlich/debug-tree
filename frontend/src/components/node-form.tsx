@@ -2,7 +2,7 @@ import { fetchCommits, fetchTags, type GitMetadata } from "@/client";
 import type { AppNodeType } from "@/types/nodes";
 import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
 import log from "loglevel";
-import { useState } from "react";
+import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { AsyncCombobox } from "./async-combobox";
@@ -61,7 +61,8 @@ export const NodeForm = ({
     return [...revisions, ...tags];
   };
 
-  const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] = useState(false);
+  const [gitRevSuggestionsIsOpen, setGitRevSuggestionIsOpen] =
+    React.useState(false);
   return (
     <Form {...form}>
       <form

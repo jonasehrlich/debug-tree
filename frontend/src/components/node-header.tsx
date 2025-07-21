@@ -1,11 +1,6 @@
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import { EllipsisVertical, Trash } from "lucide-react";
-import {
-  forwardRef,
-  useCallback,
-  type HTMLAttributes,
-  type ReactNode,
-} from "react";
+import React from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,13 +14,13 @@ import { type ButtonProps } from "./ui/button-props";
 
 /* NODE HEADER -------------------------------------------------------------- */
 
-export type NodeHeaderProps = HTMLAttributes<HTMLElement>;
+export type NodeHeaderProps = React.HTMLAttributes<HTMLElement>;
 
 /**
  * A container for a consistent header layout intended to be used inside the
  * `<BaseNode />` component.
  */
-export const NodeHeader = forwardRef<HTMLElement, NodeHeaderProps>(
+export const NodeHeader = React.forwardRef<HTMLElement, NodeHeaderProps>(
   ({ className, ...props }, ref) => {
     return (
       <header
@@ -46,7 +41,7 @@ NodeHeader.displayName = "NodeHeader";
 
 /* NODE HEADER TITLE -------------------------------------------------------- */
 
-export type NodeHeaderTitleProps = HTMLAttributes<HTMLHeadingElement> & {
+export type NodeHeaderTitleProps = React.HTMLAttributes<HTMLHeadingElement> & {
   asChild?: boolean;
 };
 
@@ -54,7 +49,7 @@ export type NodeHeaderTitleProps = HTMLAttributes<HTMLHeadingElement> & {
  * The title text for the node. To maintain a native application feel, the title
  * text is not selectable.
  */
-export const NodeHeaderTitle = forwardRef<
+export const NodeHeaderTitle = React.forwardRef<
   HTMLHeadingElement,
   NodeHeaderTitleProps
 >(({ className, asChild, ...props }, ref) => {
@@ -73,26 +68,27 @@ NodeHeaderTitle.displayName = "NodeHeaderTitle";
 
 /* NODE HEADER ICON --------------------------------------------------------- */
 
-export type NodeHeaderIconProps = HTMLAttributes<HTMLSpanElement>;
+export type NodeHeaderIconProps = React.HTMLAttributes<HTMLSpanElement>;
 
-export const NodeHeaderIcon = forwardRef<HTMLSpanElement, NodeHeaderIconProps>(
-  ({ className, ...props }, ref) => {
-    return (
-      <span ref={ref} {...props} className={cn(className, "[&>*]:size-5")} />
-    );
-  },
-);
+export const NodeHeaderIcon = React.forwardRef<
+  HTMLSpanElement,
+  NodeHeaderIconProps
+>(({ className, ...props }, ref) => {
+  return (
+    <span ref={ref} {...props} className={cn(className, "[&>*]:size-5")} />
+  );
+});
 
 NodeHeaderIcon.displayName = "NodeHeaderIcon";
 
 /* NODE HEADER ACTIONS ------------------------------------------------------ */
 
-export type NodeHeaderActionsProps = HTMLAttributes<HTMLDivElement>;
+export type NodeHeaderActionsProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * A container for right-aligned action buttons in the node header.
  */
-export const NodeHeaderActions = forwardRef<
+export const NodeHeaderActions = React.forwardRef<
   HTMLDivElement,
   NodeHeaderActionsProps
 >(({ className, ...props }, ref) => {
@@ -124,7 +120,7 @@ export type NodeHeaderActionProps = ButtonProps & {
  * important to provide a meaningful and accessible `label` prop that describes
  * the action.
  */
-export const NodeHeaderAction = forwardRef<
+export const NodeHeaderAction = React.forwardRef<
   HTMLButtonElement,
   NodeHeaderActionProps
 >(({ className, label, title, ...props }, ref) => {
@@ -148,7 +144,7 @@ export type NodeHeaderMenuActionProps = Omit<
   NodeHeaderActionProps,
   "onClick"
 > & {
-  trigger?: ReactNode;
+  trigger?: React.ReactNode;
 };
 
 /**
@@ -161,7 +157,7 @@ export type NodeHeaderMenuActionProps = Omit<
  * here: https://ui.shadcn.com/docs/components/dropdown-menu
  *
  */
-export const NodeHeaderMenuAction = forwardRef<
+export const NodeHeaderMenuAction = React.forwardRef<
   HTMLButtonElement,
   NodeHeaderMenuActionProps
 >(({ trigger, children, ...props }, ref) => {
@@ -185,7 +181,7 @@ export const NodeHeaderDeleteAction = () => {
   const id = useNodeId();
   const { setNodes } = useReactFlow();
 
-  const handleClick = useCallback(() => {
+  const handleClick = React.useCallback(() => {
     setNodes((prevNodes) => prevNodes.filter((node) => node.id !== id));
   }, [id, setNodes]);
 

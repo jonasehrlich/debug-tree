@@ -10,7 +10,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import debounce from "lodash.debounce";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
@@ -80,7 +80,7 @@ export const App = () => {
     redo,
   } = useStore(useShallow(selector));
 
-  const reactFlowRef = useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
+  const reactFlowRef = React.useRef<HTMLDivElement>(null); // Ref for the ReactFlow component itself
   const { theme } = useTheme();
   const { getNodeConnections, getNode } = useReactFlow();
 
@@ -113,7 +113,9 @@ export const App = () => {
       preventDefault: true,
     },
   );
-  const doPushToUndoStack = useCallback(pushToUndoStack, [pushToUndoStack]);
+  const doPushToUndoStack = React.useCallback(pushToUndoStack, [
+    pushToUndoStack,
+  ]);
 
   // TODO: Check if these useHotkeys keyboard shortcuts work on Windows / Linux
   useHotkeys(
@@ -140,7 +142,7 @@ export const App = () => {
   );
 
   // On macOS we have to implement the undo / redo handlers manually, see https://github.com/JohannesKlauss/react-hotkeys-hook/issues/1018
-  useEffect(() => {
+  React.useEffect(() => {
     const handleKeyDown = debounce((e: KeyboardEvent) => {
       // Check for both Ctrl and Command (Meta) keys
       const shouldHandle = !(
@@ -175,7 +177,7 @@ export const App = () => {
     isKeybindingsDialogOpen,
   ]);
 
-  const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = useState(false);
+  const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = React.useState(false);
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
       <GitGraphSlidingPanel

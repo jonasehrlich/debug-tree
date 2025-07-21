@@ -1,6 +1,6 @@
 import "@/lib/logging.ts";
 import { ReactFlowProvider } from "@xyflow/react";
-import { StrictMode } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { HotkeysProvider } from "react-hotkeys-hook";
 import { App } from "./App.tsx";
@@ -9,7 +9,7 @@ import "./index.css";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
+  <React.StrictMode>
     <ThemeProvider attribute="class" storageKey="app-theme" enableSystem>
       <HotkeysProvider>
         <ReactFlowProvider>
@@ -17,5 +17,5 @@ createRoot(document.getElementById("root")!).render(
         </ReactFlowProvider>
       </HotkeysProvider>
     </ThemeProvider>
-  </StrictMode>,
+  </React.StrictMode>,
 );
