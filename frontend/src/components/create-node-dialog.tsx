@@ -61,6 +61,10 @@ export const CreateNodeDialog = () => {
 
   const { addNodes, addEdges, screenToFlowPosition } = useReactFlow();
 
+  const closable = React.useMemo(() => {
+    return nodes.length > 0;
+  }, [nodes]);
+
   if (pendingNode === null) {
     return null;
   }
@@ -97,6 +101,7 @@ export const CreateNodeDialog = () => {
   return (
     <Dialog
       open={isOpen}
+      data-testid="create-node-dialog"
       onOpenChange={(open) => {
         if (!open) {
           if (nodes.length === 0) {
@@ -114,10 +119,7 @@ export const CreateNodeDialog = () => {
         }
       }}
     >
-      <DialogContent
-        className="md:max-w-[700px]"
-        showCloseButton={nodes.length > 0}
-      >
+      <DialogContent className="md:max-w-[700px]" showCloseButton={closable}>
         <DialogHeader>
           <DialogTitle>
             New{" "}
@@ -133,9 +135,11 @@ export const CreateNodeDialog = () => {
           submitForm={submitForm}
           submitButtonText="Create"
           cancelComponent={
-            nodes.length > 0 ? (
+            closable ? (
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button data-testid="cancel-button" variant="outline">
+                  Cancel
+                </Button>
               </DialogClose>
             ) : null
           }
