@@ -1,11 +1,11 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import React from "react";
 
 import { cn } from "@/lib/utils";
 import Markdown, { type Options as MarkdownOptions } from "react-markdown";
 
-export const BaseNode = forwardRef<
+export const BaseNode = React.forwardRef<
   HTMLDivElement,
-  HTMLAttributes<HTMLDivElement> & { selected?: boolean }
+  React.HTMLAttributes<HTMLDivElement> & { selected?: boolean }
 >(({ className, selected, ...props }, ref) => (
   <div
     ref={ref}
@@ -34,7 +34,7 @@ export const NodeContent = ({
   children,
   ...props
 }: NodeSectionProps &
-  HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
+  React.HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
   if (!children) return null;
   return <div {...props}>{children}</div>;
 };
@@ -48,7 +48,7 @@ export const NodeSection = ({
   className,
   ...props
 }: NodeSectionProps &
-  HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
+  React.HTMLAttributes<HTMLDivElement>): React.ReactElement | null => {
   if (!children) return null;
   return (
     <div className={cn("px-3 py-2", className)} {...props}>
@@ -73,7 +73,7 @@ export const NodeMarkdownSection = ({
   markdownOptions,
   ...props
 }: NodeMarkdownSectionProps &
-  Omit<HTMLAttributes<HTMLDivElement>, "children">) => {
+  Omit<React.HTMLAttributes<HTMLDivElement>, "children">) => {
   if (!children) return null;
   return (
     <NodeSection className={cn(className, "prose prose-markdown")} {...props}>

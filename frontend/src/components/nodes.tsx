@@ -28,7 +28,7 @@ import {
   Rocket,
   Trash,
 } from "lucide-react";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import React from "react";
 import { useShallow } from "zustand/react/shallow";
 import { GitRevision } from "./git-revision";
 import { IconSelect } from "./icon-select";
@@ -47,11 +47,11 @@ const AppNodeHeaderMenuAction = ({
   const { setEditNodeData } = useStore(useShallow(selector));
   const { setNodes } = useReactFlow();
 
-  const deleteNode = useCallback(() => {
+  const deleteNode = React.useCallback(() => {
     setNodes((prevNodes) => prevNodes.filter((node) => node.id !== id));
   }, [id, setNodes]);
 
-  const ref = useRef<HTMLButtonElement>(null);
+  const ref = React.useRef<HTMLButtonElement>(null);
   return (
     <NodeHeaderMenuAction
       ref={ref}
@@ -87,9 +87,9 @@ const selector = (s: AppState) => ({
 
 const commonNodeClasses = "w-xs" as const;
 
-export const ActionNode = memo(
+export const ActionNode = React.memo(
   ({ id, data, selected }: NodeProps<ActionNodeType>) => {
-    const [handleIds] = useState(() => {
+    const [handleIds] = React.useState(() => {
       return { target: `target-${id}`, source: `source-${id}` };
     });
 
@@ -128,11 +128,11 @@ export const ActionNode = memo(
 
 ActionNode.displayName = "ActionNode";
 
-export const StatusNode = memo(
+export const StatusNode = React.memo(
   ({ id, data, selected }: NodeProps<StatusNodeType>) => {
     const { updateNodeData } = useReactFlow();
 
-    const handleIds = useMemo(() => {
+    const handleIds = React.useMemo(() => {
       return {
         target: `target-${id}`,
         source: `source-${id}`,

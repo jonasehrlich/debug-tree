@@ -1,6 +1,6 @@
 import { copyToClipboard } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
-import React, { useCallback } from "react";
+import React from "react";
 import { Button } from "./ui/button";
 import type { ButtonProps } from "./ui/button-props";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
@@ -51,7 +51,7 @@ export const ConfirmingButton = ({
     };
   }, [isSuccess]);
 
-  const handleClick = useCallback(() => {
+  const handleClick = React.useCallback(() => {
     const r = onClick();
     if (typeof r === "boolean") {
       setIsSuccess(r);

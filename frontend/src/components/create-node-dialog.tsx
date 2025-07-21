@@ -12,7 +12,7 @@ import { AppNodeSchema } from "@/types/nodes";
 import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
-import { useEffect, useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useShallow } from "zustand/react/shallow";
@@ -26,13 +26,13 @@ const selector = (state: AppState) => ({
 });
 
 export const CreateNodeDialog = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
   const { pendingNode, setPendingNode, nodes } = useStore(useShallow(selector));
   const form = useForm<z.infer<typeof AppNodeSchema>>({
     resolver: zodResolver(AppNodeSchema),
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (pendingNode) {
       if (pendingNode.type === "statusNode") {
         form.reset({
@@ -108,7 +108,7 @@ export const CreateNodeDialog = () => {
           // dialog, as pendingNodeData still has a value. This avoids that a the dialog is automatically
           // opened after a reload
           setPendingNode(null);
-          // At this point it is sufficient to set the pending node data to null, the useEffect in this
+          // At this point it is sufficient to set the pending node data to null, theReact.useEffect in this
           // component will close it for us
         }
       }}

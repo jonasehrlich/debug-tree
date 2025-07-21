@@ -1,4 +1,4 @@
-import { memo } from "react";
+import React from "react";
 import type { OptionListAndValueMap } from "./state-colors-icons";
 import { SelectContent, SelectItem } from "./ui/select";
 
@@ -13,7 +13,7 @@ interface IconSelectContentProps {
  * next to the label from {@link OptionListAndValueMap.options} in each SelectItem.
  * @see {@link IconSelectContentProps} for props
  */
-export const IconSelectContent = memo(
+export const IconSelectContent = React.memo(
   ({ optionsAndIcons: iconConfig }: IconSelectContentProps) => {
     return (
       <SelectContent position="popper">

@@ -34,8 +34,7 @@ import type { AppState, UiState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
 import { Trash } from "lucide-react";
-import * as React from "react";
-import { useEffect, useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -89,10 +88,10 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     setPendingNode,
     saveCurrentFlow,
   } = useStore(useShallow(selector));
-  const [isFlowsLoading, setIsFlowsLoading] = useState(false);
+  const [isFlowsLoading, setIsFlowsLoading] = React.useState(false);
 
   // Load flows when isOpen is changed to true
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       setIsFlowsLoading(true);
       loadFlowsMetadata()
@@ -106,8 +105,8 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
   }, [loadFlowsMetadata, isOpen]);
 
   // When current flow is set to null, open the dialog and close it automatically if a current
-  // flow is set. This might trigger other useEffect hooks.
-  useEffect(() => {
+  // flow is set. This might trigger otherReact.useEffect hooks.
+  React.useEffect(() => {
     if (currentFlow === null) {
       setIsOpen(true);
     } else {
@@ -115,7 +114,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     }
   }, [setIsOpen, currentFlow]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       saveCurrentFlow().catch(() => {
         // Close the dialog again, otherwise the dialog can be used to delete the currently opened flow
@@ -124,8 +123,8 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     }
   }, [isOpen, setIsOpen, saveCurrentFlow]);
 
-  const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
-  const [filterTerm, setFilterTerm] = useState<string>("");
+  const [selectedFlow, setSelectedFlow] = React.useState<string | null>(null);
+  const [filterTerm, setFilterTerm] = React.useState<string>("");
 
   const onLoadFlowClick = () => {
     if (selectedFlow) {

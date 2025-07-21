@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
 import debounce from "lodash.debounce";
-import { useEffect, useMemo, useState } from "react";
+import React from "react";
 
 import {
   Popover,
@@ -66,12 +66,12 @@ export const AsyncCombobox = <ItemType,>({
   buttonClasses = "",
   commandProps = {},
 }: AsyncComboboxProps<ItemType>) => {
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState(value ? renderValue(value) : "");
-  const [items, setItems] = useState<ItemType[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [input, setInput] = React.useState(value ? renderValue(value) : "");
+  const [items, setItems] = React.useState<ItemType[]>([]);
+  const [loading, setLoading] = React.useState(false);
 
-  const debouncedFetch = useMemo(
+  const debouncedFetch = React.useMemo(
     () =>
       debounce(async (input: string) => {
         if (!input) {
@@ -93,13 +93,13 @@ export const AsyncCombobox = <ItemType,>({
     [fetchItems],
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     return () => {
       debouncedFetch.cancel();
     };
   }, [debouncedFetch]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (input.trim().length > 0) {
       void debouncedFetch(input);
     } else {
@@ -108,7 +108,7 @@ export const AsyncCombobox = <ItemType,>({
   }, [input, debouncedFetch]);
 
   // Notify the parent component about the dropdown being open, to e.g. disabling form submit
-  useEffect(() => {
+  React.useEffect(() => {
     onDropdownOpenChange?.(open);
   }, [open, onDropdownOpenChange]);
 

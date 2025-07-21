@@ -2,7 +2,7 @@ import { useUiStore } from "@/store";
 import type { components } from "@/types/api";
 import type { UiState } from "@/types/state";
 import { useTheme } from "next-themes";
-import { memo, useEffect, useState } from "react";
+import React from "react";
 import ReactDiffViewer from "react-diff-viewer-continued";
 import { useShallow } from "zustand/react/shallow";
 import { ButtonGroup } from "./button-group";
@@ -19,7 +19,7 @@ const selector = (s: UiState) => ({
   setIsInlineDiff: s.setIsInlineDiff,
 });
 
-export const GitDiffView = memo(
+export const GitDiffView = React.memo(
   ({
     isVisible,
     baseRev,
@@ -34,10 +34,10 @@ export const GitDiffView = memo(
       }
       return theme;
     };
-    const [isDarkMode, setIsDarkMode] = useState(
+    const [isDarkMode, setIsDarkMode] = React.useState(
       getTheme(theme ?? "system", systemTheme ?? "light") === "dark",
     );
-    useEffect(() => {
+    React.useEffect(() => {
       setIsDarkMode(
         getTheme(theme ?? "system", systemTheme ?? "light") === "dark",
       );
