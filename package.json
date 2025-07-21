@@ -14,7 +14,8 @@
     "fmt:files": "prettier --write",
     "fmt:check": "prettier --check .",
     "api:create": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json -o frontend/src/types/api.ts",
-    "api:check": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json --check -o frontend/src/types/api.ts"
+    "api:check": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json --check -o frontend/src/types/api.ts",
+    "test": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -73,6 +74,7 @@
     "tw-animate-css": "^1.3.4",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "^3.2.4"
   }
 }
