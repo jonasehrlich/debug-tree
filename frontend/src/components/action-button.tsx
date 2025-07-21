@@ -6,12 +6,12 @@ import type { ButtonProps } from "./ui/button-props";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 /**
- * @interface ConfirmingButtonProps
- * @description Props for the ConfirmingButtonProps component.
+ * @interface ActionButtonProps
+ * @description Props for the ActionButton component.
  * @property {string} value - Value to copy
  * @property {string} ctx - Context of the copy button
  */
-interface ConfirmingButtonProps extends Omit<ButtonProps, "onClick" | "value"> {
+interface ActionButtonProps extends Omit<ButtonProps, "onClick" | "value"> {
   /**
    * onClick handler for the button, can be sync or async. If a promise is returned and it
    * @returns Whether it was successful. For async functions a resolving promise is interpreted as success
@@ -29,14 +29,14 @@ interface ConfirmingButtonProps extends Omit<ButtonProps, "onClick" | "value"> {
  * A button component which shows an icon and changes the icon to a checkmark when the onClick handler
  * is successful
  */
-export const ConfirmingButton = ({
+export const ActionButton = ({
   tooltipContent,
   variant = "ghost",
   icon,
   text,
   onClick,
   ...props
-}: ConfirmingButtonProps) => {
+}: ActionButtonProps) => {
   const [isSuccess, setIsSuccess] = React.useState(false);
 
   React.useEffect(() => {
@@ -68,7 +68,7 @@ export const ConfirmingButton = ({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          data-slot="confirming-button"
+          data-slot="action-button"
           {...props}
           className={props.className}
           variant={variant}
@@ -92,7 +92,7 @@ interface CopyButtonProps {
 
 export const CopyButton = ({ value }: CopyButtonProps) => {
   return (
-    <ConfirmingButton
+    <ActionButton
       className="size-6"
       tooltipContent="Copy to clipboard"
       icon={<Copy />}

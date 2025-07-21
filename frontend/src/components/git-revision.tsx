@@ -6,7 +6,7 @@ import type { AppState } from "@/types/state";
 import { GitBranch, Pin, Tag } from "lucide-react";
 import React from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ConfirmingButton, CopyButton } from "./confirming-button";
+import { ActionButton, CopyButton } from "./action-button";
 
 /**
  * @interface GitRevisionProps
@@ -34,7 +34,7 @@ export const GitRevision = ({ revision }: GitRevisionProps) => {
       <span className="flex-1 font-mono px-3  truncate align-middle">
         {formattedRev}
       </span>
-      <ConfirmingButton
+      <ActionButton
         tooltipContent="Pin revision"
         icon={<Pin />}
         onClick={() => {
