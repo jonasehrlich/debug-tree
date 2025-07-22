@@ -2,7 +2,6 @@ import type { AppNodeType } from "@/types/nodes";
 import { clsx, type ClassValue } from "clsx";
 import log from "loglevel";
 import { twMerge } from "tailwind-merge";
-
 const logger = log.getLogger("utils");
 
 export function cn(...inputs: ClassValue[]) {
@@ -24,7 +23,9 @@ export const getNodeId = (nodeType: AppNodeType) => {
 };
 
 /**
- * Whether the user agent indicates that the browser is running on macOS or iOS
+ * Whether the user agent indicates that the browser is running on macOS or iOS.
+ * It would be preferred to use [navigator.userAgentData](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/userAgentData)
+ * but that is only available in Chrome-like browsers.
  */
 export const isApple = (() => {
   return /Mac|iPod|iPhone|iPad/.test(navigator.userAgent);

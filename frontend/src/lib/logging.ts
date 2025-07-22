@@ -16,7 +16,22 @@ log.methodFactory = (methodName, logLevel, loggerName) => {
     rawMethod(prefix, ...message);
   };
 };
-log.setDefaultLevel(process.env.NODE_ENV === "production" ? "warn" : "info");
+
+const _defaultLevelForEnv = {
+  test: log.levels.SILENT,
+  development: log.levels.INFO,
+  production: log.levels.WARN,
+} as const;
+
+const getDefaultLevel = () => {
+  const nodeEnv = process.env.NODE_ENV ?? "production";
+  if (Object.prototype.hasOwnProperty.call(_defaultLevelForEnv, nodeEnv)) {
+    return _defaultLevelForEnv[nodeEnv as keyof typeof _defaultLevelForEnv];
+  }
+  return log.levels.WARN;
+};
+
+log.setDefaultLevel(getDefaultLevel());
 log.rebuild();
 
 if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {

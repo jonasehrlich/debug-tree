@@ -25,5 +25,5 @@
       "@/*": ["*"]
     }
   },
-  "include": ["frontend/src"]
+  "include": ["frontend/src", "vitest.setup.ts"]
 }

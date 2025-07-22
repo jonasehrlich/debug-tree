@@ -112,6 +112,8 @@ export interface AppState {
    * @param nodes - List of nodes to set
    */
   setEdges: (edges: Edge[]) => void;
+  /** Reset the store to its initial state */
+  reset: () => void;
 }
 
 export interface UiState {

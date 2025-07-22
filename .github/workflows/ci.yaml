@@ -83,7 +83,19 @@ jobs:
       - name: Run tests
         run: cargo test
 
-  # TODO: Add frontend tests
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: test
+        run: npm run test
+
 
   build:
     runs-on: ubuntu-latest

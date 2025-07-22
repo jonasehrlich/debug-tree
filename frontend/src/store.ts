@@ -77,13 +77,23 @@ const areEdgeChangesNotable = (
   });
 };
 
+const initialState = {
+  nodes: [],
+  edges: [],
+  undoStack: [],
+  undoInProgress: false,
+  redoStack: [],
+  currentFlow: null,
+  flows: [],
+  hasUnsavedChanges: false,
+  dialogNodeData: null,
+  gitRevisions: [],
+};
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      nodes: [],
-      edges: [],
-      undoStack: [],
-      undoInProgress: false,
+      ...initialState,
       undo() {
         const { undoStack, redoStack, nodes, edges } = get();
         if (undoStack.length === 0) return;
@@ -106,7 +116,6 @@ export const useStore = create<AppState>()(
         const newUndoStack = [...undoStack, { nodes, edges }];
         set({ undoStack: newUndoStack, redoStack: [] });
       },
-      redoStack: [],
       redo() {
         const { undoStack, redoStack, nodes, edges } = get();
         if (redoStack.length === 0) return;
@@ -119,10 +128,6 @@ export const useStore = create<AppState>()(
           undoStack: [...undoStack, { nodes, edges }],
         });
       },
-      currentFlow: null,
-      flows: [],
-      hasUnsavedChanges: false,
-      dialogNodeData: null,
       setPendingNodeData(nodeData) {
         if (nodeData === null) {
           set({ dialogNodeData: null });
@@ -130,7 +135,6 @@ export const useStore = create<AppState>()(
         }
         set({ dialogNodeData: { type: "pending", data: nodeData } });
       },
-      gitRevisions: [],
       addGitRevision(rev) {
         const revs = get().gitRevisions;
         if (revs.length == 2) {
@@ -328,6 +332,9 @@ export const useStore = create<AppState>()(
           return;
         }
         set({ dialogNodeData: { type: "edit", data: data } });
+      },
+      reset: () => {
+        set({ ...initialState });
       },
     }),
     {
