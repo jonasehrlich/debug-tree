@@ -12,7 +12,7 @@ use utoipa::OpenApi;
 
 #[cfg(not(debug_assertions))]
 #[derive(rust_embed::RustEmbed)]
-#[folder = "frontend/dist"]
+#[folder = "../../frontend/dist"]
 #[exclude = ".gitkeep"]
 pub struct Asset;
 
