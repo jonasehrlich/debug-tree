@@ -21,7 +21,8 @@ import { Button } from "./ui/button";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
-  pendingNode: state.pendingNodeData,
+  pendingNode:
+    state.dialogNodeData?.type === "pending" ? state.dialogNodeData.data : null,
   setPendingNode: state.setPendingNodeData,
 });
 

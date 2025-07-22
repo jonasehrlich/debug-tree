@@ -62,14 +62,15 @@ export interface AppState {
   flows: FlowMetadata[];
   /** Whether there are unsaved modifications in the nodes or edges */
   hasUnsavedChanges: boolean;
-  /** A node that's currently being edited, set it through {@link setCurrentEditNodeData} */
-  currentEditNodeData: EditAppNodeData | null;
   /** Set the node data to be edited */
   setCurrentEditNodeData: (data: EditAppNodeData | null) => void;
-  /** Data of a note that is pending to be created. If this is set the CreateNodeDialog will be opened */
-  pendingNodeData: PendingAppNodeData | null;
   /** Set the {@link pendingNodeData} */
   setPendingNodeData: (nodeData: PendingAppNodeData | null) => void;
+  /** Node data that opens a dialog, this can either trigger a create node dialog or an edit node dialog */
+  dialogNodeData:
+    | { type: "pending"; data: PendingAppNodeData }
+    | { type: "edit"; data: EditAppNodeData }
+    | null;
   /** Array of revisions pinned for a diff. The array can only con */
   gitRevisions: string[];
   /**

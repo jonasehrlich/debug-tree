@@ -45,8 +45,7 @@ const selector = (state: AppState) => ({
   pushToUndoStack: state.pushToUndoStack,
   undo: state.undo,
   redo: state.redo,
-  isEditOrCreateNodeDialogOpen:
-    (state.pendingNodeData ?? state.currentEditNodeData) ? true : false,
+  isEditOrCreateNodeDialogOpen: state.dialogNodeData !== null,
 });
 
 const uiStoreSelector = (state: UiState) => ({
