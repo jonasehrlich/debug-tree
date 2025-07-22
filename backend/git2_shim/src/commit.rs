@@ -6,6 +6,7 @@ use crate::{Result, utils};
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
+#[derive(Clone)]
 #[allow(dead_code)]
 struct Signature {
     name: String,
@@ -37,6 +38,7 @@ impl From<Git2Time> for chrono::DateTime<chrono::Utc> {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
+#[derive(Clone)]
 #[allow(dead_code)]
 pub struct Commit {
     id: String,

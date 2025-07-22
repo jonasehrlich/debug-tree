@@ -137,40 +137,20 @@ struct ListTagsQuery {
     filter: Option<String>,
 }
 
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct TaggedCommit {
-    /// Tag on the commit
-    tag: String,
-    /// Commit the tag is on
-    commit: git2_shim::Commit,
-}
-
-impl TaggedCommit {
-    pub fn try_from_repo_and_tag_name(
-        repo: &git2::Repository,
-        tag_name: &str,
-    ) -> Result<Self, api::AppError> {
-        Ok(Self {
-            tag: tag_name.to_string(),
-            commit: git2_shim::utils::get_commit_for_revision(repo, tag_name)?.into(),
-        })
-    }
-}
-
 #[derive(ToSchema, Serialize)]
 struct ListTagsResponse {
-    tags: Vec<TaggedCommit>,
+    tags: Vec<git2_shim::TaggedCommit>,
 }
 impl ListTagsResponse {
     fn try_from_tagged_commits<T>(iter: T) -> Result<Self, api::AppError>
     where
-        T: IntoIterator<Item = Result<TaggedCommit, api::AppError>>,
+        T: IntoIterator<Item = Result<git2_shim::TaggedCommit, git2_shim::Error>>,
     {
         Ok(ListTagsResponse {
             tags: iter
                 .into_iter()
-                .collect::<Result<Vec<_>, api::AppError>>()?,
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(api::AppError::from)?,
         })
     }
 }
@@ -193,25 +173,10 @@ async fn list_tags(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
-        .repo();
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let tag_names = repo
-        .tag_names(
-            query
-                .filter
-                .as_deref()
-                .map(git2_shim::utils::to_safe_glob)
-                .as_deref(),
-        )
-        .map_err(|e| api::AppError::InternalServerError(format!("Could not get tags: {e}")))?;
-
-    let tagged_commits = tag_names
-        .iter()
-        .flatten()
-        .map(|name| TaggedCommit::try_from_repo_and_tag_name(repo, name));
     Ok(Json(ListTagsResponse::try_from_tagged_commits(
-        tagged_commits,
+        repo.iter_tags(query.filter.as_deref())?,
     )?))
 }
 
@@ -231,7 +196,7 @@ struct CreateTagQuery {
     description = "Creates a new lightweight git tag with the specified name on the provided revision.",
     params(CreateTagQuery),
     responses(
-        (status = http::StatusCode::CREATED, description = "Tag created successfully", body = TaggedCommit),
+        (status = http::StatusCode::CREATED, description = "Tag created successfully", body = git2_shim::TaggedCommit),
         (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
@@ -239,43 +204,29 @@ struct CreateTagQuery {
 async fn create_tag(
     State(state): State<web::AppState>,
     Query(query): Query<CreateTagQuery>,
-) -> Result<Json<TaggedCommit>, api::AppError> {
+) -> Result<Json<git2_shim::TaggedCommit>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
-        .repo();
-
-    let rev_obj = git2_shim::utils::get_object_for_revision(repo, query.revision.as_str())?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
     let force = false;
-    repo.tag_lightweight(&query.name, &rev_obj, force)
-        .map_err(|e| api::AppError::InternalServerError(format!("Failed to create tag: {e}")))?;
-
-    Ok(Json(TaggedCommit::try_from_repo_and_tag_name(
-        repo,
+    Ok(Json(repo.create_lightweight_tag(
         &query.name,
+        query.revision.as_str(),
+        force,
     )?))
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct Branch {
-    /// Name of the branch
-    name: String,
-    /// Commit ID of the branch head
-    head: git2_shim::Commit,
 }
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct ListBranchesResponse {
     /// Found branches
-    branches: Vec<Branch>,
+    branches: Vec<git2_shim::Branch>,
 }
 
 impl<I> From<I> for ListBranchesResponse
 where
-    I: IntoIterator<Item = Branch>,
+    I: IntoIterator<Item = git2_shim::Branch>,
 {
     fn from(iter: I) -> Self {
         ListBranchesResponse {
@@ -310,29 +261,11 @@ async fn list_branches(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
-        .repo();
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let filter = &query.filter.unwrap_or("".to_string());
-    let local_branches = repo
-        .branches(Some(git2::BranchType::Local))
-        .map_err(|e| api::AppError::InternalServerError(format!("Failed to list branches: {e}")))?;
-    let branches = local_branches.filter_map(Result::ok).filter_map(|(b, _)| {
-        let name = b.name().ok()??;
-        if !name.contains(filter) {
-            return None; // Skip branches that do not match the filter
-        }
-
-        let rev = b.get();
-        let commit = rev.peel_to_commit().ok()?;
-        let branch = Branch {
-            name: name.to_string(),
-            head: git2_shim::Commit::from(commit),
-        };
-        Some(branch)
-    });
-
-    Ok(Json(ListBranchesResponse::from(branches)))
+    Ok(Json(ListBranchesResponse::from(
+        repo.iter_branches(query.filter.as_deref())?,
+    )))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -351,7 +284,7 @@ struct CreateBranchQuery {
     description = "Creates a new branch at the specified revision.",
     params(CreateBranchQuery),
     responses(
-        (status = http::StatusCode::CREATED, description = "Branch created successfully", body = Branch),
+        (status = http::StatusCode::CREATED, description = "Branch created successfully", body = git2_shim::Branch),
         (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
@@ -359,22 +292,17 @@ struct CreateBranchQuery {
 async fn create_branch(
     State(state): State<web::AppState>,
     Query(query): Query<CreateBranchQuery>,
-) -> Result<Json<Branch>, api::AppError> {
+) -> Result<Json<git2_shim::Branch>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
-        .repo();
-
-    let commit = git2_shim::utils::get_commit_for_revision(repo, &query.revision)?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
     let force = false;
-    repo.branch(&query.name, &commit, force)
-        .map_err(|e| api::AppError::InternalServerError(format!("Failed to create branch: {e}")))?;
-
-    Ok(Json(Branch {
-        name: query.name,
-        head: git2_shim::Commit::from(commit),
-    }))
+    Ok(Json(repo.create_branch(
+        &query.name,
+        &query.revision,
+        force,
+    )?))
 }
 
 fn filter_commit(filter: &str, commit: &git2_shim::Commit) -> bool {

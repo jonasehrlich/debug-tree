@@ -1,4 +1,4 @@
-use crate::{Commit, Diff, Error, Result, utils};
+use crate::{Branch, Commit, Diff, Error, Result, TaggedCommit, utils};
 use std::path::Path;
 
 pub struct Repository {
@@ -85,5 +85,75 @@ impl Repository {
                 }
             }
         }))
+    }
+
+    /// Returns an iterator over tags in the repository which names contain `filter`
+    ///
+    /// * `filter` - Name to filter the tags for
+    pub fn iter_tags(
+        &self,
+        filter: Option<&str>,
+    ) -> Result<impl IntoIterator<Item = Result<TaggedCommit>>> {
+        let tag_names: Vec<String> = self
+            .repo
+            .tag_names(filter.map(utils::to_safe_glob).as_deref())
+            .map_err(|e| Error::from_ctx_and_error("Failed to get tags", e))?
+            .iter()
+            .flatten()
+            .map(|name| name.to_string())
+            .collect();
+
+        Ok(tag_names
+            .into_iter()
+            .map(move |name| TaggedCommit::try_from_repo_and_tag_name(&self.repo, &name)))
+    }
+
+    /// Create a lightweight tag with name `name` on `revision`
+    ///
+    /// * `name` - Name of the tag to create
+    /// * `revision` - Revision to create the tag on
+    /// * `force` - If force is true and a reference already exists with the given name, it will be replaced.
+    pub fn create_lightweight_tag(
+        &self,
+        name: &str,
+        revision: &str,
+        force: bool,
+    ) -> Result<TaggedCommit> {
+        let rev_obj = utils::get_object_for_revision(&self.repo, revision)?;
+
+        self.repo
+            .tag_lightweight(name, &rev_obj, force)
+            .map_err(|e| Error::from_ctx_and_error(format!("Failed to create tag '{name}"), e))?;
+
+        TaggedCommit::try_from_repo_and_tag_name(&self.repo, name)
+    }
+
+    pub fn create_branch(&self, name: &str, revision: &str, force: bool) -> Result<Branch> {
+        let commit = utils::get_commit_for_revision(&self.repo, revision)?;
+        self.repo.branch(name, &commit, force).map_err(|e| {
+            Error::from_ctx_and_error(format!("Failed to create branch '{name}'"), e)
+        })?;
+        Ok(Branch::from_name_and_commit(name, &commit))
+    }
+
+    pub fn iter_branches(&self, filter: Option<&str>) -> Result<impl IntoIterator<Item = Branch>> {
+        let filter = filter.unwrap_or("");
+
+        let local_branches = self
+            .repo
+            .branches(Some(git2::BranchType::Local))
+            .map_err(|e| Error::from_ctx_and_error("Failed to list branches", e))?;
+        Ok(local_branches
+            .filter_map(std::result::Result::ok)
+            .filter_map(move |(b, _)| {
+                let name = b.name().ok()??;
+                if !name.contains(filter) {
+                    return None;
+                }
+
+                let rev = b.get();
+                let commit = rev.peel_to_commit().ok()?;
+                Some(Branch::from_name_and_commit(name, &commit))
+            }))
     }
 }
