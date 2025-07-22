@@ -2,6 +2,7 @@ use crate::{web, web::api};
 
 use axum::extract::{Path, Query, State};
 use axum::{Json, routing};
+use git2_shim::commit;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -11,62 +12,6 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/commit/{commit_id}", routing::get(get_commit))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct Signature {
-    name: String,
-    email: String,
-}
-impl From<git2::Signature<'_>> for Signature {
-    fn from(signature: git2::Signature<'_>) -> Self {
-        Signature {
-            name: signature.name().unwrap_or("").to_string(),
-            email: signature.email().unwrap_or("").to_string(),
-        }
-    }
-}
-
-struct Git2Time(git2::Time);
-
-impl From<Git2Time> for chrono::DateTime<chrono::Utc> {
-    fn from(time: Git2Time) -> Self {
-        chrono::DateTime::from_timestamp(time.0.seconds(), 0).unwrap_or_else(|| {
-            chrono::DateTime::from_timestamp(0, 0)
-                .unwrap_or_else(|| panic!("Failed to convert git2::Time to chrono::DateTime"))
-        })
-    }
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct Commit {
-    id: String,
-    summary: String,
-    body: String,
-    time: chrono::DateTime<chrono::Utc>,
-    committer: Signature,
-    author: Signature,
-}
-
-impl<'repo> From<&git2::Commit<'repo>> for Commit {
-    fn from(commit: &git2::Commit<'repo>) -> Self {
-        Commit {
-            id: commit.id().to_string(),
-            summary: commit.summary().unwrap_or("").to_string(),
-            body: commit.body().unwrap_or("").to_string(),
-            time: Git2Time(commit.time()).into(),
-            committer: commit.committer().into(),
-            author: commit.author().into(),
-        }
-    }
-}
-
-impl<'repo> From<git2::Commit<'repo>> for Commit {
-    fn from(commit: git2::Commit<'repo>) -> Self {
-        Commit::from(&commit)
-    }
 }
 
 #[derive(utoipa::OpenApi)]
@@ -86,7 +31,7 @@ pub(super) struct ApiDoc;
     description = "Get a single commit by its revision.\n\n\
     The revision can be anything accepted by `git rev-parse`.",
     responses(
-        (status = http::StatusCode::OK, description = "Commit exists", body = Commit),
+        (status = http::StatusCode::OK, description = "Commit exists", body = commit::Commit),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "Commit not found", body = api::ApiStatusDetailResponse),
     )
@@ -94,13 +39,15 @@ pub(super) struct ApiDoc;
 async fn get_commit(
     State(state): State<web::AppState>,
     Path(commit_id): Path<String>,
-) -> Result<Json<Commit>, api::AppError> {
+) -> Result<Json<commit::Commit>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    Ok(Json(get_commit_for_revision(repo, &commit_id)?.into()))
+    Ok(Json(
+        git2_shim::utils::get_commit_for_revision(repo, &commit_id)?.into(),
+    ))
 }
 
 #[derive(Serialize, ToSchema, PartialEq)]
@@ -204,7 +151,7 @@ impl Diff {
 struct ListCommitsResponse {
     /// Array of commits between the base and head commit IDs
     /// in reverse chronological order.
-    commits: Vec<Commit>,
+    commits: Vec<git2_shim::Commit>,
     /// Array of diffs in this commit range
     diffs: Vec<Diff>,
 }
@@ -215,12 +162,13 @@ impl ListCommitsResponse {
         diffs_iter: D,
     ) -> Result<Self, api::AppError>
     where
-        I: IntoIterator<Item = Result<Commit, api::AppError>>,
+        I: IntoIterator<Item = Result<git2_shim::Commit, git2_shim::Error>>,
         D: IntoIterator<Item = Result<Diff, api::AppError>>,
     {
         let commits = commits_iter
             .into_iter()
-            .collect::<Result<Vec<_>, api::AppError>>()?;
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(api::AppError::from)?;
 
         let diffs = diffs_iter
             .into_iter()
@@ -240,46 +188,6 @@ struct CommitRangeQuery {
     head_rev: Option<String>,
     /// string filter for the commits. Filters commits by their ID or summary.
     filter: Option<String>,
-}
-
-impl CommitRangeQuery {
-    /// Get a Revwalk object for the given commit range. This allows iterating over commits
-    /// in the specified range, starting from the head commit and excluding the base commit.
-    pub fn revwalk<'repo>(
-        &self,
-        repo: &'repo git2::Repository,
-    ) -> Result<git2::Revwalk<'repo>, api::AppError> {
-        let mut revwalk = repo.revwalk().map_err(|e| {
-            api::AppError::InternalServerError(format!("Failed to create revwalk: {e}"))
-        })?;
-
-        match &self.head_rev {
-            Some(head) => {
-                let oid = get_object_for_revision(repo, head)?.id();
-                revwalk.push(oid).map_err(|e| {
-                    api::AppError::InternalServerError(format!(
-                        "Failed to push head commit '{head}': {e}",
-                    ))
-                })?;
-            }
-            _ => {
-                revwalk.push_head().map_err(|e| {
-                    api::AppError::InternalServerError(format!("Failed to push head commit: {e}"))
-                })?;
-            }
-        }
-
-        if let Some(base) = &self.base_rev {
-            let oid = get_object_for_revision(repo, base)?.id();
-            revwalk.hide(oid).map_err(|e| {
-                api::AppError::InternalServerError(format!(
-                    "Failed to push base commit '{base}': {e}",
-                ))
-            })?;
-        }
-
-        Ok(revwalk)
-    }
 }
 
 #[utoipa::path(
@@ -303,29 +211,29 @@ async fn list_commits(
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let revwalk = query.revwalk(repo)?;
-
     let filter = query.filter.unwrap_or("".to_owned());
-    let commits = revwalk
-        .map(|oid_result| {
-            oid_result
-                .map_err(|e| {
-                    api::AppError::InternalServerError(format!("Error creating commit tree': {e}",))
-                })
-                .and_then(|oid| get_commit_for_oid(repo, oid))
-        })
-        .filter_map(|commit_result| match commit_result {
-            Ok(commit) => filter_commit(&filter, &commit).map(|c| Ok(c.into())),
-            Err(e) => Some(Err(e)),
-        });
+    let commits = git2_shim::commit::iter_commits(
+        repo,
+        query.base_rev.as_deref(),
+        query.head_rev.as_deref(),
+    )?
+    .into_iter()
+    .filter(|commit_result| match commit_result {
+        Ok(commit) => filter_commit(&filter, commit),
+        Err(_) => true,
+    });
 
-    let rev = query.head_rev.unwrap_or_else(|| "HEAD".to_string());
-    let tree = get_tree_for_revision(repo, &rev)?;
+    let rev = query.head_rev.clone().unwrap_or_else(|| "HEAD".to_string());
+    let tree = git2_shim::utils::get_tree_for_revision(repo, &rev)?;
 
-    let base_tree = match query.base_rev.map(|rev| get_tree_for_revision(repo, &rev)) {
+    let base_tree = match query
+        .base_rev
+        .clone()
+        .map(|rev| git2_shim::utils::get_tree_for_revision(repo, &rev))
+    {
         Some(Ok(tree)) => Some(tree),
         Some(Err(e)) => {
-            return Err(e);
+            return Err(e.into());
         }
         None => None,
     };
@@ -370,7 +278,7 @@ struct TaggedCommit {
     /// Tag on the commit
     tag: String,
     /// Commit the tag is on
-    commit: Commit,
+    commit: git2_shim::Commit,
 }
 
 impl TaggedCommit {
@@ -380,7 +288,7 @@ impl TaggedCommit {
     ) -> Result<Self, api::AppError> {
         Ok(Self {
             tag: tag_name.to_string(),
-            commit: get_commit_for_revision(repo, tag_name)?.into(),
+            commit: git2_shim::utils::get_commit_for_revision(repo, tag_name)?.into(),
         })
     }
 }
@@ -423,7 +331,13 @@ async fn list_tags(
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
     let tag_names = repo
-        .tag_names(query.filter.as_deref().map(to_safe_glob).as_deref())
+        .tag_names(
+            query
+                .filter
+                .as_deref()
+                .map(git2_shim::utils::to_safe_glob)
+                .as_deref(),
+        )
         .map_err(|e| api::AppError::InternalServerError(format!("Could not get tags: {e}")))?;
 
     let tagged_commits = tag_names
@@ -465,7 +379,7 @@ async fn create_tag(
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let rev_obj = get_object_for_revision(repo, query.revision.as_str())?;
+    let rev_obj = git2_shim::utils::get_object_for_revision(repo, query.revision.as_str())?;
     let force = false;
     repo.tag_lightweight(&query.name, &rev_obj, force)
         .map_err(|e| api::AppError::InternalServerError(format!("Failed to create tag: {e}")))?;
@@ -482,7 +396,7 @@ struct Branch {
     /// Name of the branch
     name: String,
     /// Commit ID of the branch head
-    head: Commit,
+    head: git2_shim::Commit,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -545,7 +459,7 @@ async fn list_branches(
         let commit = rev.peel_to_commit().ok()?;
         let branch = Branch {
             name: name.to_string(),
-            head: Commit::from(commit),
+            head: git2_shim::Commit::from(commit),
         };
         Some(branch)
     });
@@ -583,44 +497,18 @@ async fn create_branch(
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
-    let commit = get_commit_for_revision(repo, &query.revision)?;
+    let commit = git2_shim::utils::get_commit_for_revision(repo, &query.revision)?;
     let force = false;
     repo.branch(&query.name, &commit, force)
         .map_err(|e| api::AppError::InternalServerError(format!("Failed to create branch: {e}")))?;
 
     Ok(Json(Branch {
         name: query.name,
-        head: Commit::from(commit),
+        head: git2_shim::Commit::from(commit),
     }))
 }
 
-fn get_commit_for_revision<'repo>(
-    repo: &'repo git2::Repository,
-    rev: &str,
-) -> Result<git2::Commit<'repo>, api::AppError> {
-    let oid = get_object_for_revision(repo, rev)?.id();
-    get_commit_for_oid(repo, oid)
-}
-
-fn get_commit_for_oid<'repo>(
-    repo: &'repo git2::Repository,
-    oid: git2::Oid,
-) -> Result<git2::Commit<'repo>, api::AppError> {
-    repo.find_commit(oid).map_err(|e| match e.code() {
-        git2::ErrorCode::Invalid => {
-            api::AppError::BadRequest(format!("Invalid commit ID '{oid}': {e}"))
-        }
-        git2::ErrorCode::NotFound => {
-            api::AppError::NotFound(format!("Commit '{oid}' not found: {e}"))
-        }
-        _ => api::AppError::InternalServerError(format!("Failed to find commit '{oid}': {e}")),
-    })
-}
-
-fn filter_commit<'repo, 'commit>(
-    filter: &str,
-    commit: &'commit git2::Commit<'repo>,
-) -> Option<&'commit git2::Commit<'repo>> {
+fn filter_commit(filter: &str, commit: &git2_shim::Commit) -> bool {
     let id_matches = commit
         .id()
         .to_string()
@@ -628,36 +516,12 @@ fn filter_commit<'repo, 'commit>(
         .contains(&filter.to_lowercase());
     let summary_matches = commit
         .summary()
-        .is_some_and(|s| s.to_lowercase().contains(&filter.to_lowercase()));
-    if id_matches || summary_matches {
-        Some(commit)
-    } else {
-        None
-    }
-}
-
-fn get_object_for_revision<'repo>(
-    repo: &'repo git2::Repository,
-    rev: &str,
-) -> Result<git2::Object<'repo>, api::AppError> {
-    repo.revparse_single(rev).map_err(|e| {
-        api::AppError::InternalServerError(format!("Failed to find revision '{rev}': {e}",))
-    })
-}
-
-fn get_tree_for_revision<'repo>(
-    repo: &'repo git2::Repository,
-    rev: &str,
-) -> Result<git2::Tree<'repo>, api::AppError> {
-    get_commit_for_revision(repo, rev)?.tree().map_err(|_| {
-        api::AppError::InternalServerError(format!("Rev {rev} is not a tree").to_string())
-    })
-}
-
-fn to_safe_glob(prefix: &str) -> String {
-    let escaped = prefix
-        .replace('*', "\\*")
-        .replace('[', "\\[")
-        .replace('?', "\\?");
-    format!("*{escaped}*")
+        .to_lowercase()
+        .contains(&filter.to_lowercase());
+    id_matches || summary_matches
+    // if id_matches || summary_matches {
+    //     Some(commit)
+    // } else {
+    //     None
+    // }
 }

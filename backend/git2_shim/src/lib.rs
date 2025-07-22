@@ -1,14 +1,50 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use std::fmt::Display;
+
+pub mod commit;
+pub mod utils;
+
+pub use commit::Commit;
+
+#[derive(thiserror::Error, Debug)]
+pub struct ErrorCtx {
+    pub ctx: String,
+    #[source]
+    pub err: git2::Error,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+impl Display for ErrorCtx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.ctx, self.err)
     }
 }
+
+impl ErrorCtx {
+    fn new(ctx: impl Into<String>, err: git2::Error) -> Self {
+        ErrorCtx {
+            ctx: ctx.into(),
+            err,
+        }
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Generic Error: {0}")]
+    Generic(ErrorCtx),
+    #[error("{0} not found")]
+    NotFound(ErrorCtx),
+    #[error("Invalid {0}")]
+    Invalid(ErrorCtx),
+}
+
+impl Error {
+    fn from_ctx_and_error(ctx: impl Into<String>, e: git2::Error) -> Self {
+        match e.code() {
+            git2::ErrorCode::NotFound => Error::NotFound(ErrorCtx::new(ctx, e)),
+            git2::ErrorCode::Invalid => Error::Invalid(ErrorCtx::new(ctx, e)),
+            _ => Error::Generic(ErrorCtx::new(ctx, e)),
+        }
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
