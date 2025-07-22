@@ -2,7 +2,7 @@ use crate::{web, web::api};
 
 use axum::extract::{Path, Query, State};
 use axum::{Json, routing};
-use git2_shim::commit;
+use git2_ox::commit;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -52,9 +52,9 @@ async fn get_commit(
 struct ListCommitsResponse {
     /// Array of commits between the base and head commit IDs
     /// in reverse chronological order.
-    commits: Vec<git2_shim::Commit>,
+    commits: Vec<git2_ox::Commit>,
     /// Array of diffs in this commit range
-    diffs: Vec<git2_shim::Diff>,
+    diffs: Vec<git2_ox::Diff>,
 }
 
 impl ListCommitsResponse {
@@ -63,8 +63,8 @@ impl ListCommitsResponse {
         diffs_iter: D,
     ) -> Result<Self, api::AppError>
     where
-        I: IntoIterator<Item = Result<git2_shim::Commit, git2_shim::Error>>,
-        D: IntoIterator<Item = Result<git2_shim::Diff, git2_shim::Error>>,
+        I: IntoIterator<Item = Result<git2_ox::Commit, git2_ox::Error>>,
+        D: IntoIterator<Item = Result<git2_ox::Diff, git2_ox::Error>>,
     {
         let commits = commits_iter
             .into_iter()
@@ -139,12 +139,12 @@ struct ListTagsQuery {
 
 #[derive(ToSchema, Serialize)]
 struct ListTagsResponse {
-    tags: Vec<git2_shim::TaggedCommit>,
+    tags: Vec<git2_ox::TaggedCommit>,
 }
 impl ListTagsResponse {
     fn try_from_tagged_commits<T>(iter: T) -> Result<Self, api::AppError>
     where
-        T: IntoIterator<Item = Result<git2_shim::TaggedCommit, git2_shim::Error>>,
+        T: IntoIterator<Item = Result<git2_ox::TaggedCommit, git2_ox::Error>>,
     {
         Ok(ListTagsResponse {
             tags: iter
@@ -196,7 +196,7 @@ struct CreateTagQuery {
     description = "Creates a new lightweight git tag with the specified name on the provided revision.",
     params(CreateTagQuery),
     responses(
-        (status = http::StatusCode::CREATED, description = "Tag created successfully", body = git2_shim::TaggedCommit),
+        (status = http::StatusCode::CREATED, description = "Tag created successfully", body = git2_ox::TaggedCommit),
         (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
@@ -204,7 +204,7 @@ struct CreateTagQuery {
 async fn create_tag(
     State(state): State<web::AppState>,
     Query(query): Query<CreateTagQuery>,
-) -> Result<Json<git2_shim::TaggedCommit>, api::AppError> {
+) -> Result<Json<git2_ox::TaggedCommit>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
@@ -221,12 +221,12 @@ async fn create_tag(
 #[serde(rename_all = "camelCase")]
 struct ListBranchesResponse {
     /// Found branches
-    branches: Vec<git2_shim::Branch>,
+    branches: Vec<git2_ox::Branch>,
 }
 
 impl<I> From<I> for ListBranchesResponse
 where
-    I: IntoIterator<Item = git2_shim::Branch>,
+    I: IntoIterator<Item = git2_ox::Branch>,
 {
     fn from(iter: I) -> Self {
         ListBranchesResponse {
@@ -284,7 +284,7 @@ struct CreateBranchQuery {
     description = "Creates a new branch at the specified revision.",
     params(CreateBranchQuery),
     responses(
-        (status = http::StatusCode::CREATED, description = "Branch created successfully", body = git2_shim::Branch),
+        (status = http::StatusCode::CREATED, description = "Branch created successfully", body = git2_ox::Branch),
         (status = http::StatusCode::BAD_REQUEST, description = "Bad request", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
@@ -292,7 +292,7 @@ struct CreateBranchQuery {
 async fn create_branch(
     State(state): State<web::AppState>,
     Query(query): Query<CreateBranchQuery>,
-) -> Result<Json<git2_shim::Branch>, api::AppError> {
+) -> Result<Json<git2_ox::Branch>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
@@ -305,7 +305,7 @@ async fn create_branch(
     )?))
 }
 
-fn filter_commit(filter: &str, commit: &git2_shim::Commit) -> bool {
+fn filter_commit(filter: &str, commit: &git2_ox::Commit) -> bool {
     let id_matches = commit
         .id()
         .to_string()

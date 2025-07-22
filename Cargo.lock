@@ -519,8 +519,7 @@ dependencies = [
  "chrono",
  "clap",
  "env_logger",
- "git2",
- "git2_shim",
+ "git2-ox",
  "log",
  "mime_guess",
  "rust-embed",
@@ -735,7 +734,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "git2_shim"
+name = "git2-ox"
 version = "0.1.0"
 dependencies = [
  "chrono",

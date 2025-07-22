@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["backend/app", "backend/git2_shim"]
+members = ["backend/app", "backend/git2-ox"]

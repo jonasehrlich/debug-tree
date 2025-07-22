@@ -55,10 +55,10 @@ impl IntoResponse for AppError {
     }
 }
 
-impl From<git2_shim::Error> for AppError {
-    fn from(error: git2_shim::Error) -> Self {
+impl From<git2_ox::Error> for AppError {
+    fn from(error: git2_ox::Error) -> Self {
         match error {
-            git2_shim::Error::NotFound(_) => AppError::NotFound(error.to_string()),
+            git2_ox::Error::NotFound(_) => AppError::NotFound(error.to_string()),
             _ => AppError::InternalServerError(error.to_string()),
         }
     }
