@@ -81,6 +81,10 @@ export function isActionNode(node: Node): node is ActionNode {
   return node.type == "actionNode";
 }
 
+export function isAppNode(node: Node): node is AppNode {
+  return isStatusNode(node) || isActionNode(node);
+}
+
 const commonNodeDataFields = {
   title: z.string().min(2),
   description: z.string(),
