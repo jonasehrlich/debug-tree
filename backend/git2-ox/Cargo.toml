@@ -3,6 +3,7 @@ name = "git2-ox"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "Rust-like abstractions for the `git2` crate"
 
 [dependencies]
 log = "^0.4.27"
