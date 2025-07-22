@@ -7,35 +7,17 @@ import {
 } from "@xyflow/react";
 import { type FlowMetadata } from "./api-types";
 import type { EdgeType } from "./edge";
-import type {
-  ActionNodeData,
-  AppNode,
-  PendingAppNodeData,
-  StatusNodeData,
-} from "./nodes";
+import type { AppNode, EditAppNodeData, PendingAppNodeData } from "./nodes";
 
 export interface FlowIdAndName {
   id: string;
   name: string;
 }
 
-interface EditNodeData<
-  NodeType extends string,
-  NodeDataType extends Record<string, unknown>,
-> {
-  id: string;
-  type: NodeType;
-  data: NodeDataType;
-}
-
 interface NodesAndEdges {
   nodes: AppNode[];
   edges: Edge[];
 }
-
-export type EditAppNodeData =
-  | EditNodeData<"actionNode", ActionNodeData>
-  | EditNodeData<"statusNode", StatusNodeData>;
 
 export interface AppState {
   /** Nodes of the currently opened flow */

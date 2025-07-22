@@ -305,7 +305,7 @@ export const useStore = create<AppState>()(
           eventScreenPosition: { x: clientX, y: clientY },
           type: nodeType,
           fromNodeId: fromNode.id,
-          defaultRev: undefined,
+          defaultRev: null,
         });
       },
       setEdgeType: (newType) => {
