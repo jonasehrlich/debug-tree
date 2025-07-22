@@ -742,10 +742,8 @@ dependencies = [
  "git2",
  "log",
  "serde",
- "serde_json",
  "thiserror 2.0.12",
  "utoipa",
- "utoipa-axum",
 ]
 
 [[package]]

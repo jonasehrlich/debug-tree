@@ -1,9 +1,12 @@
 use crate::{Result, utils};
-use serde::Serialize;
-use utoipa::ToSchema;
 
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(dead_code)]
 struct Signature {
     name: String,
     email: String,
@@ -28,8 +31,13 @@ impl From<Git2Time> for chrono::DateTime<chrono::Utc> {
     }
 }
 
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize),
+    serde(rename_all = "camelCase")
+)]
+#[allow(dead_code)]
 pub struct Commit {
     id: String,
     summary: String,
