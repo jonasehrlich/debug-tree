@@ -1,10 +1,12 @@
 use std::fmt::Display;
 
 pub mod commit;
+pub mod diff;
 pub mod repository;
 pub mod utils;
 
 pub use commit::Commit;
+pub use diff::Diff;
 pub use repository::Repository;
 
 #[derive(thiserror::Error, Debug)]

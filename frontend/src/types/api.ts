@@ -180,8 +180,8 @@ export interface components {
             flow: components["schemas"]["FlowMetadata"];
         };
         Diff: {
-            /** @description Type of the diff */
-            diffType: components["schemas"]["DiffType"];
+            /** @description Kind of the diff */
+            kind: components["schemas"]["DiffKind"];
             new?: null | components["schemas"]["DiffFile"];
             old?: null | components["schemas"]["DiffFile"];
             /** @description Patch between old and new */
@@ -194,7 +194,7 @@ export interface components {
             path?: string | null;
         };
         /** @enum {string} */
-        DiffType: "binary" | "text";
+        DiffKind: "binary" | "text";
         FlowData: {
             /** @description Name of the debug flow */
             name: string;

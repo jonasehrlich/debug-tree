@@ -43,108 +43,8 @@ async fn get_commit(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
-        .repo();
-
-    Ok(Json(
-        git2_shim::utils::get_commit_for_revision(repo, &commit_id)?.into(),
-    ))
-}
-
-#[derive(Serialize, ToSchema, PartialEq)]
-#[serde(rename_all = "lowercase")]
-enum DiffType {
-    Binary,
-    Text,
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct DiffFile {
-    /// Path to the diff file
-    path: Option<String>,
-    /// Content of the diff file
-    content: Option<String>,
-}
-
-impl DiffFile {
-    pub fn try_from_repo_and_diff_file(
-        repo: &git2::Repository,
-        diff_file: &git2::DiffFile,
-    ) -> Option<DiffFile> {
-        let oid = diff_file.id();
-        if oid.is_zero() {
-            return None;
-        }
-
-        let content = match repo.find_blob(oid) {
-            Ok(blob) if diff_file.is_not_binary() => {
-                Some(String::from_utf8_lossy(blob.content()).into_owned())
-            }
-            _ => {
-                log::warn!("Did not find blob for {:?}", diff_file.path());
-                None
-            }
-        };
-
-        Some(DiffFile {
-            path: diff_file
-                .path()
-                .map(|p| p.to_str().unwrap_or("unknown").to_owned()),
-            content,
-        })
-    }
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct Diff {
-    /// Old file path and content
-    old: Option<DiffFile>,
-    /// New file path and content
-    new: Option<DiffFile>,
-    /// Type of the diff
-    diff_type: DiffType,
-    /// Patch between old and new
-    patch: String,
-}
-
-impl Diff {
-    pub fn from_repo_and_patch(repo: &git2::Repository, patch: &mut git2::Patch) -> Diff {
-        let (old, new, diff_type) = {
-            let delta = patch.delta();
-            let diff_type = if delta.flags().is_binary() {
-                DiffType::Binary
-            } else {
-                DiffType::Text
-            };
-            (
-                DiffFile::try_from_repo_and_diff_file(repo, &delta.old_file()),
-                DiffFile::try_from_repo_and_diff_file(repo, &delta.new_file()),
-                diff_type,
-            )
-        };
-
-        let patch_buf = patch.to_buf().expect("failed unwrapping patch buffer");
-        let patch_text = patch_buf.as_str().unwrap_or("").to_owned();
-        Self {
-            old,
-            new,
-            diff_type,
-            patch: patch_text,
-        }
-    }
-
-    pub fn binary_from_repo_and_delta(repo: &git2::Repository, delta: &git2::DiffDelta) -> Diff {
-        let old = DiffFile::try_from_repo_and_diff_file(repo, &delta.old_file());
-        let new = DiffFile::try_from_repo_and_diff_file(repo, &delta.new_file());
-        Self {
-            old,
-            new,
-            diff_type: DiffType::Binary,
-            patch: "".to_string(),
-        }
-    }
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+    Ok(Json(repo.get_commit_for_revision(&commit_id)?))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -154,7 +54,7 @@ struct ListCommitsResponse {
     /// in reverse chronological order.
     commits: Vec<git2_shim::Commit>,
     /// Array of diffs in this commit range
-    diffs: Vec<Diff>,
+    diffs: Vec<git2_shim::Diff>,
 }
 
 impl ListCommitsResponse {
@@ -164,7 +64,7 @@ impl ListCommitsResponse {
     ) -> Result<Self, api::AppError>
     where
         I: IntoIterator<Item = Result<git2_shim::Commit, git2_shim::Error>>,
-        D: IntoIterator<Item = Result<Diff, api::AppError>>,
+        D: IntoIterator<Item = Result<git2_shim::Diff, git2_shim::Error>>,
     {
         let commits = commits_iter
             .into_iter()
@@ -173,7 +73,8 @@ impl ListCommitsResponse {
 
         let diffs = diffs_iter
             .into_iter()
-            .collect::<Result<Vec<_>, api::AppError>>()?;
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(api::AppError::from)?;
         Ok(ListCommitsResponse { commits, diffs })
     }
 }
@@ -220,44 +121,9 @@ async fn list_commits(
             Ok(commit) => filter_commit(&filter, commit),
             Err(_) => true,
         });
-    let git2_repo = repo.repo();
-
-    let rev = query.head_rev.clone().unwrap_or_else(|| "HEAD".to_string());
-    let tree = git2_shim::utils::get_tree_for_revision(git2_repo, &rev)?;
-
-    let base_tree = match query
-        .base_rev
-        .clone()
-        .map(|rev| git2_shim::utils::get_tree_for_revision(git2_repo, &rev))
-    {
-        Some(Ok(tree)) => Some(tree),
-        Some(Err(e)) => {
-            return Err(e.into());
-        }
-        None => None,
-    };
-
-    let diff = git2_repo
-        .diff_tree_to_tree(base_tree.as_ref(), Some(&tree), None)
-        .map_err(|e| api::AppError::InternalServerError(format!("Failed to diff tree : {e}")))?;
 
     let diffs_iter =
-        (0..diff.deltas().len()).filter_map(|delta_idx| {
-            match git2::Patch::from_diff(&diff, delta_idx) {
-                Err(e) => Some(Err(api::AppError::InternalServerError(format!(
-                    "Failed to create patch: {e}"
-                )))),
-                Ok(Some(mut patch)) => Some(Ok(Diff::from_repo_and_patch(git2_repo, &mut patch))),
-                Ok(None) => {
-                    if let Some(delta) = diff.get_delta(delta_idx) {
-                        Some(Ok(Diff::binary_from_repo_and_delta(git2_repo, &delta)))
-                    } else {
-                        log::error!("Failed to get delta for idx {delta_idx}");
-                        None
-                    }
-                }
-            }
-        });
+        repo.iter_diffs_between_revisions(query.base_rev.as_deref(), query.head_rev.as_deref())?;
 
     Ok(Json(ListCommitsResponse::try_from_commits_and_diffs(
         commits, diffs_iter,
