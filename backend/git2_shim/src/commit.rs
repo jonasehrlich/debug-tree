@@ -1,4 +1,4 @@
-use crate::{Error, Result, utils};
+use crate::{Result, utils};
 use serde::Serialize;
 use utoipa::ToSchema;
 
@@ -82,22 +82,4 @@ impl<'repo> Commit {
     pub fn try_for_oid(repo: &'repo git2::Repository, oid: git2::Oid) -> Result<Self> {
         Ok(utils::get_commit_for_oid(repo, oid)?.into())
     }
-}
-
-/// Returns an iterator over Commits in the repository from `head_rev` to `base_rev`
-///
-/// * `repo` - Repository object to get the commits from
-/// * `base_rev` - Base revision until which to iterate. Iterating to initial commit if set to `None`
-/// * `head_rev` - Head revision from which to iterate. Iterating from current `HEAD` if set to `None`
-pub fn iter_commits(
-    repo: &git2::Repository,
-    base_rev: Option<&str>,
-    head_rev: Option<&str>,
-) -> Result<impl IntoIterator<Item = Result<Commit>>> {
-    let revwalk = utils::revwalk_for_range(repo, base_rev, head_rev)?;
-    Ok(revwalk.map(|oid_result| {
-        oid_result
-            .map_err(|e| Error::from_ctx_and_error("Failed to get oid object", e))
-            .and_then(|oid| Commit::try_for_oid(repo, oid))
-    }))
 }

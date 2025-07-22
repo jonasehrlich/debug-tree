@@ -43,7 +43,8 @@ async fn get_commit(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
+        .repo();
 
     Ok(Json(
         git2_shim::utils::get_commit_for_revision(repo, &commit_id)?.into(),
@@ -212,24 +213,22 @@ async fn list_commits(
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
 
     let filter = query.filter.unwrap_or("".to_owned());
-    let commits = git2_shim::commit::iter_commits(
-        repo,
-        query.base_rev.as_deref(),
-        query.head_rev.as_deref(),
-    )?
-    .into_iter()
-    .filter(|commit_result| match commit_result {
-        Ok(commit) => filter_commit(&filter, commit),
-        Err(_) => true,
-    });
+    let commits = repo
+        .iter_commits(query.base_rev.as_deref(), query.head_rev.as_deref())?
+        .into_iter()
+        .filter(|commit_result| match commit_result {
+            Ok(commit) => filter_commit(&filter, commit),
+            Err(_) => true,
+        });
+    let git2_repo = repo.repo();
 
     let rev = query.head_rev.clone().unwrap_or_else(|| "HEAD".to_string());
-    let tree = git2_shim::utils::get_tree_for_revision(repo, &rev)?;
+    let tree = git2_shim::utils::get_tree_for_revision(git2_repo, &rev)?;
 
     let base_tree = match query
         .base_rev
         .clone()
-        .map(|rev| git2_shim::utils::get_tree_for_revision(repo, &rev))
+        .map(|rev| git2_shim::utils::get_tree_for_revision(git2_repo, &rev))
     {
         Some(Ok(tree)) => Some(tree),
         Some(Err(e)) => {
@@ -238,7 +237,7 @@ async fn list_commits(
         None => None,
     };
 
-    let diff = repo
+    let diff = git2_repo
         .diff_tree_to_tree(base_tree.as_ref(), Some(&tree), None)
         .map_err(|e| api::AppError::InternalServerError(format!("Failed to diff tree : {e}")))?;
 
@@ -248,10 +247,10 @@ async fn list_commits(
                 Err(e) => Some(Err(api::AppError::InternalServerError(format!(
                     "Failed to create patch: {e}"
                 )))),
-                Ok(Some(mut patch)) => Some(Ok(Diff::from_repo_and_patch(repo, &mut patch))),
+                Ok(Some(mut patch)) => Some(Ok(Diff::from_repo_and_patch(git2_repo, &mut patch))),
                 Ok(None) => {
                     if let Some(delta) = diff.get_delta(delta_idx) {
-                        Some(Ok(Diff::binary_from_repo_and_delta(repo, &delta)))
+                        Some(Ok(Diff::binary_from_repo_and_delta(git2_repo, &delta)))
                     } else {
                         log::error!("Failed to get delta for idx {delta_idx}");
                         None
@@ -328,7 +327,8 @@ async fn list_tags(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
+        .repo();
 
     let tag_names = repo
         .tag_names(
@@ -377,7 +377,8 @@ async fn create_tag(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
+        .repo();
 
     let rev_obj = git2_shim::utils::get_object_for_revision(repo, query.revision.as_str())?;
     let force = false;
@@ -443,7 +444,8 @@ async fn list_branches(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
+        .repo();
 
     let filter = &query.filter.unwrap_or("".to_string());
     let local_branches = repo
@@ -495,7 +497,8 @@ async fn create_branch(
     let guard = state.repo().lock().await;
     let repo = guard
         .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?
+        .repo();
 
     let commit = git2_shim::utils::get_commit_for_revision(repo, &query.revision)?;
     let force = false;
@@ -519,9 +522,4 @@ fn filter_commit(filter: &str, commit: &git2_shim::Commit) -> bool {
         .to_lowercase()
         .contains(&filter.to_lowercase());
     id_matches || summary_matches
-    // if id_matches || summary_matches {
-    //     Some(commit)
-    // } else {
-    //     None
-    // }
 }

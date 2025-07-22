@@ -1,9 +1,11 @@
 use std::fmt::Display;
 
 pub mod commit;
+pub mod repository;
 pub mod utils;
 
 pub use commit::Commit;
+pub use repository::Repository;
 
 #[derive(thiserror::Error, Debug)]
 pub struct ErrorCtx {
