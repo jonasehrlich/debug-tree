@@ -55,18 +55,20 @@ type BranchMetadata = CommonGitMetadata<"branch">;
 export type GitMetadata = CommitMetadata | TagMetadata | BranchMetadata;
 
 export function isCommitMetadata(
-  metadata: GitMetadata,
+  metadata: GitMetadata | null,
 ): metadata is CommitMetadata {
-  return metadata.type === "commit";
+  return !!metadata && metadata.type === "commit";
 }
 
-export function isTagMetadata(metadata: GitMetadata): metadata is TagMetadata {
-  return metadata.type === "tag";
+export function isTagMetadata(
+  metadata: GitMetadata | null,
+): metadata is TagMetadata {
+  return !!metadata && metadata.type === "tag";
 }
 export function isBranchMetadata(
-  metadata: GitMetadata,
+  metadata: GitMetadata | null,
 ): metadata is BranchMetadata {
-  return metadata.type === "branch";
+  return !!metadata && metadata.type === "branch";
 }
 
 export function getGitMetaDataSchema() {
@@ -151,6 +153,15 @@ export async function fetchBranches(filter?: string): Promise<GitMetadata[]> {
     summary: branch.head.summary,
     type: "branch",
   }));
+}
+
+export async function fetchBranch(name: string): Promise<BranchMetadata> {
+  const head = await fetchCommitForRevision(name);
+  return {
+    rev: name,
+    summary: head.summary,
+    type: "branch",
+  };
 }
 
 export async function createBranch(

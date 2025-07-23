@@ -1,5 +1,7 @@
 import {
+  fetchCommitForRevision,
   getGitMetaDataSchema,
+  isBranchMetadata,
   isCommitMetadata,
   type GitMetadata,
 } from "@/client";
@@ -81,8 +83,8 @@ export function isActionNode(node: Node): node is ActionNode {
   return node.type == "actionNode";
 }
 
-export function isAppNode(node: Node): node is AppNode {
-  return isStatusNode(node) || isActionNode(node);
+export function isAppNode(node: Node | null): node is AppNode {
+  return !!node && (isStatusNode(node) || isActionNode(node));
 }
 
 const commonNodeDataFields = {
@@ -106,3 +108,21 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     }),
   }),
 ]);
+
+export async function getMatchingMetaData(
+  metadata: GitMetadata | null,
+  nodeType: AppNodeType,
+): Promise<GitMetadata | null> {
+  if (!metadata) {
+    return null;
+  }
+  let clonedMetadata = { ...metadata };
+
+  if (isBranchMetadata(clonedMetadata)) {
+    const refetchedHead = await fetchCommitForRevision(clonedMetadata.rev);
+    clonedMetadata.summary = refetchedHead.summary;
+    // Status nodes should only have Tags or Commits as git metadata
+    clonedMetadata = nodeType === "statusNode" ? refetchedHead : clonedMetadata;
+  }
+  return clonedMetadata;
+}
