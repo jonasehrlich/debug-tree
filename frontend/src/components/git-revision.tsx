@@ -14,7 +14,7 @@ const selector = (s: AppState) => ({
 
 interface GitRevisionIconProps {
   revision: GitMetadata;
-  size: number;
+  size?: number;
 }
 export const GitRevisionIcon = ({
   revision,

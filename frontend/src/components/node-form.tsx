@@ -33,15 +33,11 @@ import { Select, SelectTrigger, SelectValue } from "./ui/select";
 
 const GitRevCommandItem = (m: GitMetadata) => {
   return (
-    <div className="font-mono">
-      <span className="inline-flex items-center font-bold">
-        <GitRevisionIcon revision={m} size={1} />
-
-        <span className="ml-1">{formatGitRevision(m)}</span>
-      </span>
-      {" • "}
-      {m.summary}
-    </div>
+    <>
+      <GitRevisionIcon revision={m} />
+      <div className="mr-1 font-bold">{formatGitRevision(m)}</div>
+      <span>{m.summary}</span>
+    </>
   );
 };
 
