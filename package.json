@@ -19,7 +19,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:build": "cargo run --bin dump-openapi-schema && vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
