@@ -6,6 +6,9 @@ pub struct Repository {
 }
 
 impl Repository {
+    /// Attempt to open an already-existing repository at `path`.
+    ///
+    /// * `path` - Root path of the repository
     pub fn open(path: &Path) -> Result<Self> {
         let repo = git2::Repository::open(path)
             .map_err(|e| Error::from_ctx_and_error("Failed to open repository", e))?;
@@ -35,7 +38,8 @@ impl Repository {
 
     /// Get a commit for a revision
     ///
-    /// * `rev` - Revision to get the commit for
+    /// * `rev` - Revision to get the commit for. This can be the short hash, full hash, a tag, or any other
+    ///   reference such as `HEAD`, a branch name or a tag name
     pub fn get_commit_for_revision(&self, rev: &str) -> Result<Commit> {
         Commit::try_for_revision(&self.repo, rev)
     }
@@ -128,6 +132,11 @@ impl Repository {
         TaggedCommit::try_from_repo_and_tag_name(&self.repo, name)
     }
 
+    /// Create a branch with name `name` on `revision`
+    ///
+    /// * `name` - Name of the branch
+    /// * `revision` - Revision to create the branch on
+    /// * `force` - If `force` is true and a reference already exists with the given name, it will be replaced.
     pub fn create_branch(&self, name: &str, revision: &str, force: bool) -> Result<Branch> {
         let commit = utils::get_commit_for_revision(&self.repo, revision)?;
         self.repo.branch(name, &commit, force).map_err(|e| {
@@ -136,6 +145,10 @@ impl Repository {
         Ok(Branch::from_name_and_commit(name, &commit))
     }
 
+    /// Return an iterator over local branches containing `filter`
+    ///
+    /// * `filter` - If `Some(filter)` only branches containing `filter` will be returned, if
+    ///   `None` all branches will be returned
     pub fn iter_branches(&self, filter: Option<&str>) -> Result<impl IntoIterator<Item = Branch>> {
         let filter = filter.unwrap_or("");
 
