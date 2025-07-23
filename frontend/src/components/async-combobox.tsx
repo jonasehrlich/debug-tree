@@ -152,42 +152,42 @@ export const AsyncCombobox = <ItemType,>({
             placeholder="Search..."
           />
           <RemoveScroll>
-            <CommandList>
-              {loading && <CommandItem disabled>Loading...</CommandItem>}
-              {!loading && (
-                <>
-                  {items.length === 0 ? (
-                    <CommandEmpty>No results found.</CommandEmpty>
-                  ) : (
-                    <CommandGroup>
-                      {items.map((item) => {
-                        const v = getItemValue(item);
-                        return (
-                          <CommandItem
-                            key={v}
-                            value={v}
-                            onSelect={() => {
-                              onChange(item);
-                              setOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "h-4 w-4",
-                                currentValueString === v
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {renderDropdownItem(item)}
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  )}
-                </>
-              )}
-            </CommandList>
+          <CommandList>
+            {loading && <CommandItem disabled>Loading...</CommandItem>}
+            {!loading && (
+              <>
+                {items.length === 0 ? (
+                  <CommandEmpty>No results found.</CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {items.map((item) => {
+                      const v = getItemValue(item);
+                      return (
+                        <CommandItem
+                          key={v}
+                          value={v}
+                          onSelect={() => {
+                            onChange(item);
+                            setOpen(false);
+                          }}
+                        >
+                          {renderDropdownItem(item)}
+                          <Check
+                            className={cn(
+                              "h-4 w-4",
+                              currentValueString === v
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                )}
+              </>
+            )}
+          </CommandList>
           </RemoveScroll>
         </Command>
       </PopoverContent>
