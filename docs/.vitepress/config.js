@@ -1,10 +1,8 @@
 import { defineConfig } from "vitepress";
 import { useSidebar } from "vitepress-openapi";
-import spec from "../../openapi-schema.json";
+import spec from "../../openapi-schema.json" with { type: "json" };
 
-// eslint-disable-next-line react-hooks/rules-of-hooks
 const sidebar = useSidebar({
-  // @ts-expect-error openapi field does not match, typescript is stupid
   spec,
   linkPrefix: "/backend/api/operations/",
 });

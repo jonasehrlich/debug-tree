@@ -25,10 +25,5 @@
       "@/*": ["*"]
     }
   },
-  "include": [
-    "frontend/src",
-    "vitest.setup.ts",
-    "docs/.vitepress/config.ts",
-    "docs/.vitepress/theme/index.ts"
-  ]
+  "include": ["frontend/src", "vitest.setup.ts"]
 }
