@@ -10,7 +10,7 @@ impl Repository {
     /// Attempt to open an already-existing repository at `path`.
     ///
     /// * `path` - Root path of the repository
-    pub fn open(path: &Path) -> Result<Self> {
+    pub fn try_open(path: &Path) -> Result<Self> {
         let repo = git2::Repository::open(path)
             .map_err(|e| Error::from_ctx_and_error("Failed to open repository", e))?;
         Ok(Repository { repo })

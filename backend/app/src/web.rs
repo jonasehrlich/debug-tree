@@ -36,7 +36,7 @@ struct AppState {
 impl AppState {
     pub fn new(flows_dir: flow::FlowsDir) -> Self {
         let repo = match flows_dir.path().parent() {
-            Some(p) => match git2_ox::Repository::open(p) {
+            Some(p) => match git2_ox::Repository::try_open(p) {
                 Ok(repo) => Some(repo),
                 Err(_) => {
                     log::warn!("Repository not found in '{}'", p.display());
