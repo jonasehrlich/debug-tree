@@ -50,6 +50,7 @@ where
 #[utoipa::path(
     get,
     path = "",
+    summary="List debug flows",
     description = "List all debug flows",
     responses(
         (status = http::StatusCode::OK, description = "List debug flows", body = ListFlowsResponse),
@@ -92,7 +93,8 @@ impl TryFrom<flow::Flow> for CreateFlowResponse {
 #[utoipa::path(
     post,
     path = "",
-    description = "Create a debug flow",
+    summary="Create debug flow",
+    description = "Create debug flow",
     responses(
         (status = http::StatusCode::OK, description = "Debug Flow created", body = CreateFlowResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -139,7 +141,8 @@ impl From<&flow::FlowData> for FullFlowRequestResponse {
 #[utoipa::path(
     get,
     path = "/{id}",
-    description = "Get a debug flow",
+    summary="Get debug flow",
+    description = "Get debug flow",
     responses(
         (status = http::StatusCode::OK, description = "Debug flow is available", body = FullFlowRequestResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -171,7 +174,8 @@ async fn get_flow(
 #[utoipa::path(
     delete,
     path = "/{id}",
-    description = "Delete a debug flow",
+    summary = "Delete debug flow",
+    description = "Delete debug flow",
     responses(
         (status = http::StatusCode::OK, description = "Debug flow is deleted", body = api::ApiStatusResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -197,7 +201,8 @@ async fn delete_flow(
 #[utoipa::path(
     post,
     path = "/{id}",
-    description = "Store a debug flow",
+    summary = "Store debug flow",
+    description = "Store debug flow",
     responses(
         (status = http::StatusCode::OK, description = "Debug flow is stored", body = api::ApiStatusResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),

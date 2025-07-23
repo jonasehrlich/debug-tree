@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all debug flows */
+        /**
+         * List debug flows
+         * @description List all debug flows
+         */
         get: operations["list_flows"];
         put?: never;
-        /** @description Create a debug flow */
+        /**
+         * Create debug flow
+         * @description Create debug flow
+         */
         post: operations["create_flow"];
         delete?: never;
         options?: never;
@@ -29,12 +35,21 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Get a debug flow */
+        /**
+         * Get debug flow
+         * @description Get debug flow
+         */
         get: operations["get_flow"];
         put?: never;
-        /** @description Store a debug flow */
+        /**
+         * Store debug flow
+         * @description Store debug flow
+         */
         post: operations["store_flow"];
-        /** @description Delete a debug flow */
+        /**
+         * Delete debug flow
+         * @description Delete debug flow
+         */
         delete: operations["delete_flow"];
         options?: never;
         head?: never;

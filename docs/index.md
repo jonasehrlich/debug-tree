@@ -4,15 +4,12 @@ layout: home
 
 hero:
   name: "debug-flow"
-  text: "Documentation for debug-flow"
-  tagline: My great project tagline
+  # text: "Documentation for debug-flow"
+  tagline: Flow charts with Git integration
   actions:
-    - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: API Documentation
+      link: /backend/api/
 
 features:
   - title: Git repository integration
