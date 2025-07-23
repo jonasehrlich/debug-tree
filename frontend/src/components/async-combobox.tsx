@@ -6,17 +6,17 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Command as CommandPrimitive } from "cmdk";
-import debounce from "lodash.debounce";
-import React from "react";
-
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Command as CommandPrimitive } from "cmdk";
+import debounce from "lodash.debounce";
 import { Check, ChevronsUpDown } from "lucide-react";
+import React from "react";
+import { RemoveScroll } from "react-remove-scroll";
 import { Button } from "./ui/button";
 
 interface AsyncComboboxProps<ItemType> {
@@ -141,7 +141,7 @@ export const AsyncCombobox = <ItemType,>({
           Clear
         </Button>
       )}
-      <PopoverContent className="w-[500px] p-0 " align="start">
+      <PopoverContent className="w-[500px] p-0" align="start">
         <Command
           {...commandProps}
           className={cn(commandProps.className, fontFamily)}
@@ -151,42 +151,44 @@ export const AsyncCombobox = <ItemType,>({
             onValueChange={setInput}
             placeholder="Search..."
           />
-          <CommandList>
-            {loading && <CommandItem disabled>Loading...</CommandItem>}
-            {!loading && (
-              <>
-                {items.length === 0 ? (
-                  <CommandEmpty>No results found.</CommandEmpty>
-                ) : (
-                  <CommandGroup>
-                    {items.map((item) => {
-                      const v = getItemValue(item);
-                      return (
-                        <CommandItem
-                          key={v}
-                          value={v}
-                          onSelect={() => {
-                            onChange(item);
-                            setOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              currentValueString === v
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          {renderDropdownItem(item)}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                )}
-              </>
-            )}
-          </CommandList>
+          <RemoveScroll>
+            <CommandList>
+              {loading && <CommandItem disabled>Loading...</CommandItem>}
+              {!loading && (
+                <>
+                  {items.length === 0 ? (
+                    <CommandEmpty>No results found.</CommandEmpty>
+                  ) : (
+                    <CommandGroup>
+                      {items.map((item) => {
+                        const v = getItemValue(item);
+                        return (
+                          <CommandItem
+                            key={v}
+                            value={v}
+                            onSelect={() => {
+                              onChange(item);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                currentValueString === v
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                            {renderDropdownItem(item)}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  )}
+                </>
+              )}
+            </CommandList>
+          </RemoveScroll>
         </Command>
       </PopoverContent>
     </Popover>
