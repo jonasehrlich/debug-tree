@@ -65,7 +65,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git/commit/{rev}": {
+    "/api/v1/git/commit/{revision}": {
         parameters: {
             query?: never;
             header?: never;
@@ -73,12 +73,11 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get commit
+         * Get commit for a revision
          * @description Get a single commit by its revision.
-         *
-         *     The revision can be anything accepted by `git rev-parse`.
+         *         The revision can be anything accepted by `git rev-parse`. For a branch it will return the HEAD of the branch.
          */
-        get: operations["get_commit"];
+        get: operations["get_revision"];
         put?: never;
         post?: never;
         delete?: never;
@@ -513,7 +512,7 @@ export interface operations {
             };
         };
     };
-    get_commit: {
+    get_revision: {
         parameters: {
             query?: never;
             header?: never;
@@ -521,10 +520,10 @@ export interface operations {
                 /**
                  * @description The revision of the commit to retrieve.
                  *
-                 *     This can be the short hash, full hash, a tag, or any other reference such as HEAD or a branch name
+                 *     This can be the short hash, full hash, a tag, or any other reference such as `HEAD`, a branch name or a tag name
                  * @example HEAD
                  */
-                rev: string;
+                revision: string;
             };
             cookie?: never;
         };

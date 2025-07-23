@@ -8,35 +8,35 @@ use utoipa::{IntoParams, ToSchema};
 
 pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
+        .route("/commit/{revision}", routing::get(get_revision))
         .route("/commits", routing::get(list_commits))
-        .route("/commit/{commit_id}", routing::get(get_commit))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_commit, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_revision, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
     get,
-    path = "/commit/{rev}",
+    path = "/commit/{revision}",
     params(
-        ("rev",
+        ("revision",
         description = "The revision of the commit to retrieve.\n\n\
             This can be the short hash, full hash, a tag, or any other \
-            reference such as HEAD or a branch name", example = "HEAD"),
+            reference such as `HEAD`, a branch name or a tag name", example = "HEAD"),
     ),
-    summary="Get commit",
-    description = "Get a single commit by its revision.\n\n\
-    The revision can be anything accepted by `git rev-parse`.",
+    summary="Get commit for a revision",
+    description = "Get a single commit by its revision.
+    The revision can be anything accepted by `git rev-parse`. For a branch it will return the HEAD of the branch.",
     responses(
         (status = http::StatusCode::OK, description = "Commit exists", body = commit::Commit),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
         (status = http::StatusCode::NOT_FOUND, description = "Commit not found", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn get_commit(
+async fn get_revision(
     State(state): State<web::AppState>,
     Path(commit_id): Path<String>,
 ) -> Result<Json<commit::Commit>, api::AppError> {
