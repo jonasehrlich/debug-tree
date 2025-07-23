@@ -1,4 +1,5 @@
-use crate::{Error, Result};
+use crate::Result;
+use crate::error::Error;
 
 pub fn get_commit_for_oid<'repo>(
     repo: &'repo git2::Repository,

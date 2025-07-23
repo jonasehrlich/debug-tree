@@ -1,4 +1,5 @@
-use crate::{Branch, Commit, Diff, Error, Result, TaggedCommit, utils};
+use crate::error::Error;
+use crate::{Branch, Commit, Diff, Result, TaggedCommit, utils};
 use std::path::Path;
 
 pub struct Repository {

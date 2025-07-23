@@ -63,8 +63,8 @@ impl ListCommitsResponse {
         diffs_iter: D,
     ) -> Result<Self, api::AppError>
     where
-        I: IntoIterator<Item = Result<git2_ox::Commit, git2_ox::Error>>,
-        D: IntoIterator<Item = Result<git2_ox::Diff, git2_ox::Error>>,
+        I: IntoIterator<Item = Result<git2_ox::Commit, git2_ox::error::Error>>,
+        D: IntoIterator<Item = Result<git2_ox::Diff, git2_ox::error::Error>>,
     {
         let commits = commits_iter
             .into_iter()
@@ -144,7 +144,7 @@ struct ListTagsResponse {
 impl ListTagsResponse {
     fn try_from_tagged_commits<T>(iter: T) -> Result<Self, api::AppError>
     where
-        T: IntoIterator<Item = Result<git2_ox::TaggedCommit, git2_ox::Error>>,
+        T: IntoIterator<Item = Result<git2_ox::TaggedCommit, git2_ox::error::Error>>,
     {
         Ok(ListTagsResponse {
             tags: iter
