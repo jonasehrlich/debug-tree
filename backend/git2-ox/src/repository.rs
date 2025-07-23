@@ -16,8 +16,22 @@ impl Repository {
         Ok(Repository { repo })
     }
 
+    /// Attempt to initialize a repository at `path`
+    ///
+    /// * `path`- Path to create the repository in
+    pub fn try_init(path: &Path) -> Result<Self> {
+        let repo = git2::Repository::init(path)
+            .map_err(|e| Error::from_ctx_and_error("Failed to initialize repository", e))?;
+        Ok(Repository { repo })
+    }
+
     pub fn repo(&self) -> &git2::Repository {
         &self.repo
+    }
+
+    /// Get the name of the current branch
+    pub fn current_branch_name(&self) -> Option<String> {
+        self.repo().head().ok()?.shorthand().map(|s| s.to_string())
     }
 
     /// Returns an iterator over Commits in the repository from `head_rev` to `base_rev`
