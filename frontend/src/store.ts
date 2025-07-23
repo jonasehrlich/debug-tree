@@ -6,11 +6,18 @@ import {
   type EdgeChange,
   type NodeChange,
 } from "@xyflow/react";
+import log from "loglevel";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { client } from "./client";
-import { isStatusNode, type AppNode, type AppNodeType } from "./types/nodes";
+import {
+  getMatchingMetaData,
+  isAppNode,
+  isStatusNode,
+  type AppNode,
+  type AppNodeType,
+} from "./types/nodes";
 import { type AppState, type UiState } from "./types/state";
 
 /**
@@ -90,6 +97,7 @@ const initialState = {
   gitRevisions: [],
 };
 
+const logger = log.getLogger("store");
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -295,22 +303,30 @@ export const useStore = create<AppState>()(
         if (connectedToAnotherNode) {
           return;
         }
-        const { clientX, clientY } =
-          "changedTouches" in event ? event.changedTouches[0] : event;
+
         const fromNode = connectionState.fromNode;
-        if (fromNode === null) {
+        if (!isAppNode(fromNode)) {
           return;
         }
-        const nodeType: AppNodeType = isStatusNode(fromNode)
+        const newNodeType: AppNodeType = isStatusNode(fromNode)
           ? "actionNode"
           : "statusNode";
 
-        get().setPendingNodeData({
-          eventScreenPosition: { x: clientX, y: clientY },
-          type: nodeType,
-          fromNodeId: fromNode.id,
-          defaultRev: null,
-        });
+        const fromMetadata = fromNode.data.git;
+        getMatchingMetaData(fromMetadata, newNodeType)
+          .then((fromMetadata) => {
+            const { clientX, clientY } =
+              "changedTouches" in event ? event.changedTouches[0] : event;
+            get().setPendingNodeData({
+              eventScreenPosition: { x: clientX, y: clientY },
+              type: newNodeType,
+              fromNodeId: fromNode.id,
+              defaultRev: fromMetadata,
+            });
+          })
+          .catch((e: unknown) => {
+            logger.error("Error getting matching metadata", e);
+          });
       },
       setEdgeType: (newType) => {
         set((state) => ({

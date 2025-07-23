@@ -1,5 +1,7 @@
 import {
+  fetchCommitForRevision,
   getGitMetaDataSchema,
+  isBranchMetadata,
   isCommitMetadata,
   type GitMetadata,
 } from "@/client";
@@ -23,6 +25,7 @@ export const formatGitRevision = (git: GitMetadata) => {
 export type ActionNodeData = {
   title: string;
   description: string;
+  git: GitMetadata | null;
 };
 
 export type ActionNode = Node<ActionNodeData, "actionNode">;
@@ -80,9 +83,14 @@ export function isActionNode(node: Node): node is ActionNode {
   return node.type == "actionNode";
 }
 
+export function isAppNode(node: Node | null): node is AppNode {
+  return !!node && (isStatusNode(node) || isActionNode(node));
+}
+
 const commonNodeDataFields = {
   title: z.string().min(2),
   description: z.string(),
+  git: getGitMetaDataSchema().nullable(),
 };
 
 export const AppNodeSchema = z.discriminatedUnion("type", [
@@ -97,7 +105,24 @@ export const AppNodeSchema = z.discriminatedUnion("type", [
     data: z.object({
       ...commonNodeDataFields,
       state: z.enum(["unknown", "progress", "fail", "success"]),
-      git: getGitMetaDataSchema().nullable(),
     }),
   }),
 ]);
+
+export async function getMatchingMetaData(
+  metadata: GitMetadata | null,
+  nodeType: AppNodeType,
+): Promise<GitMetadata | null> {
+  if (!metadata) {
+    return null;
+  }
+  let clonedMetadata = { ...metadata };
+
+  if (isBranchMetadata(clonedMetadata)) {
+    const refetchedHead = await fetchCommitForRevision(clonedMetadata.rev);
+    clonedMetadata.summary = refetchedHead.summary;
+    // Status nodes should only have Tags or Commits as git metadata
+    clonedMetadata = nodeType === "statusNode" ? refetchedHead : clonedMetadata;
+  }
+  return clonedMetadata;
+}

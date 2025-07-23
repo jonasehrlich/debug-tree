@@ -7,10 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useStore } from "@/store";
-import { AppNodeSchema } from "@/types/nodes";
+import { AppNodeSchema, isAppNode } from "@/types/nodes";
 import type { AppState } from "@/types/state";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReactFlow } from "@xyflow/react";
+import log from "loglevel";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -42,16 +43,41 @@ export const EditNodeDialog = () => {
       form.reset();
     }
   }, [currentEditNode, form]);
-  const { updateNodeData } = useReactFlow();
+  const { updateNodeData, getNodeConnections, getNode } = useReactFlow();
 
   if (currentEditNode === null) {
     return null;
   }
+
+  const logger = log.getLogger("edit-node-dialog");
+
   const submitForm = (values: z.infer<typeof AppNodeSchema>) => {
     const data = { ...currentEditNode.data, ...values.data };
     updateNodeData(currentEditNode.id, data);
     setCurrentEditNodeData(null);
   };
+
+  const sourceConnections = getNodeConnections({
+    type: "target",
+    nodeId: currentEditNode.id,
+  });
+  if (sourceConnections.length > 1) {
+    logger.warn(
+      `Node ${currentEditNode.id} has more than one source connection, this is unexpected.`,
+    );
+  }
+
+  let baseRev = null;
+  if (sourceConnections.length > 0) {
+    const sourceNode = getNode(sourceConnections[0].source);
+    if (sourceNode && isAppNode(sourceNode)) {
+      baseRev = sourceNode.data.git;
+    } else {
+      logger.warn(
+        `No valid source node ${sourceConnections[0].source} not found for node ${currentEditNode.id}.`,
+      );
+    }
+  }
 
   return (
     <Dialog
@@ -64,7 +90,7 @@ export const EditNodeDialog = () => {
         }
       }}
     >
-      <DialogContent className="md:max-w-[700px]">
+      <DialogContent className="md:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Edit Node</DialogTitle>
           <DialogDescription>Update node attributes.</DialogDescription>
@@ -79,6 +105,7 @@ export const EditNodeDialog = () => {
               <Button variant="outline">Cancel</Button>
             </DialogClose>
           }
+          baseRev={baseRev}
         />
       </DialogContent>
     </Dialog>
