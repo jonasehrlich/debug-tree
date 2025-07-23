@@ -2,6 +2,7 @@
 name = "debug-flow"
 version = "0.1.0"
 edition = "2024"
+default-run = "debug-flow"
 
 [dependencies]
 git2-ox = { path = "../git2-ox", features = ["utoipa"] }
