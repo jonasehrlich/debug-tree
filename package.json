@@ -17,7 +17,10 @@
     "api:check": "cargo run --bin dump-openapi-schema && npx openapi-typescript openapi-schema.json --check -o frontend/src/types/api.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -83,6 +86,7 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0",
+    "vitepress": "^1.6.3",
     "vitest": "^3.2.4",
     "vitest-browser-react": "^1.0.0"
   }
