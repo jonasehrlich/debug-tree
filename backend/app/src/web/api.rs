@@ -55,6 +55,15 @@ impl IntoResponse for AppError {
     }
 }
 
+impl From<git2_ox::error::Error> for AppError {
+    fn from(error: git2_ox::error::Error) -> Self {
+        match error {
+            git2_ox::error::Error::NotFound(_) => AppError::NotFound(error.to_string()),
+            _ => AppError::InternalServerError(error.to_string()),
+        }
+    }
+}
+
 #[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 /// Basic serializable API status response

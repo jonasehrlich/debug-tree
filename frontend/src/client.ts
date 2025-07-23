@@ -78,10 +78,22 @@ export function getGitMetaDataSchema() {
   });
 }
 
-export async function fetchCurrentHeadCommit(): Promise<GitMetadata> {
-  const rev = "HEAD";
-  const { data, error } = await client.GET("/api/v1/git/commit/{rev}", {
-    params: { path: { rev } },
+export async function fetchCurrentHeadCommit(): Promise<CommitMetadata> {
+  return await fetchCommitForRevision("HEAD");
+}
+
+/**
+ * Fetches the commit for a revision.
+ *
+ * @param revision Revision to get the commit for. This can be a long hash, a short hash, a branch name,
+ * a tag name fixed revisions such as `HEAD`.
+ * @returns Commit metadata
+ */
+export const fetchCommitForRevision = async (
+  revision: string,
+): Promise<CommitMetadata> => {
+  const { data, error } = await client.GET("/api/v1/git/commit/{revision}", {
+    params: { path: { revision } },
   });
 
   if (error) {
@@ -90,7 +102,7 @@ export async function fetchCurrentHeadCommit(): Promise<GitMetadata> {
     throw new Error(errorMessage);
   }
   return { rev: data.id, summary: data.summary, type: "commit" };
-}
+};
 
 export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/commits", {

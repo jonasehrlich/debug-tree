@@ -1,0 +1,19 @@
+[package]
+name = "git2-ox"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Rust-like abstractions for the `git2` crate"
+
+[dependencies]
+log = "^0.4.27"
+thiserror = "^2.0.12"
+chrono = { version = "^0.4.41" }
+git2 = "0.20.2"
+utoipa = { version = "^5.3.1", features = ["chrono"], optional = true }
+serde = { version = "^1.0.219", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde", "chrono/serde"]
+utoipa = ["dep:utoipa", "serde"]

@@ -12,7 +12,7 @@ use utoipa::OpenApi;
 
 #[cfg(not(debug_assertions))]
 #[derive(rust_embed::RustEmbed)]
-#[folder = "frontend/dist"]
+#[folder = "../../frontend/dist"]
 #[exclude = ".gitkeep"]
 pub struct Asset;
 
@@ -30,13 +30,13 @@ pub struct ApiDoc;
 #[derive(Clone)]
 struct AppState {
     flows_dir: flow::FlowsDir,
-    repo: Arc<Mutex<Option<git2::Repository>>>,
+    repo: Arc<Mutex<Option<git2_ox::Repository>>>,
 }
 
 impl AppState {
     pub fn new(flows_dir: flow::FlowsDir) -> Self {
         let repo = match flows_dir.path().parent() {
-            Some(p) => match git2::Repository::open(p) {
+            Some(p) => match git2_ox::Repository::try_open(p) {
                 Ok(repo) => Some(repo),
                 Err(_) => {
                     log::warn!("Repository not found in '{}'", p.display());
@@ -62,7 +62,7 @@ impl AppState {
         &self.flows_dir
     }
 
-    pub fn repo(&self) -> &Arc<Mutex<Option<git2::Repository>>> {
+    pub fn repo(&self) -> &Arc<Mutex<Option<git2_ox::Repository>>> {
         &self.repo
     }
 }
