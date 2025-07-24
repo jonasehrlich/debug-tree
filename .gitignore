@@ -32,3 +32,5 @@ frontend/.vite/
 openapi-schema.json
 # Local debug-flow runs
 .debug-flow/
+docs/.vitepress/dist
+docs/.vitepress/cache
