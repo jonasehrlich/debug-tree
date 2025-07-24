@@ -94,7 +94,12 @@ export interface paths {
          */
         get: operations["get_revision"];
         put?: never;
-        post?: never;
+        /**
+         * Checkout commit for a revision
+         * @description Checkout a commit by its revision.
+         *         The revision can be anything accepted by `git rev-parse`. For a branch it will checkout the HEAD of the branch.
+         */
+        post: operations["checkout_revision"];
         delete?: never;
         options?: never;
         head?: never;
@@ -554,6 +559,52 @@ export interface operations {
                 };
             };
             /** @description Commit not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    checkout_revision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The revision of the commit to checkout.
+                 *
+                 *     This can be the short hash, full hash, a tag, or any other reference such as `HEAD`, a branch name or a tag name
+                 * @example HEAD
+                 */
+                revision: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revision checked out successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commit"];
+                };
+            };
+            /** @description Revision not found */
             404: {
                 headers: {
                     [name: string]: unknown;

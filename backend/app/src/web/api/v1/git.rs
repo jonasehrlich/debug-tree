@@ -8,14 +8,17 @@ use utoipa::{IntoParams, ToSchema};
 
 pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
-        .route("/commit/{revision}", routing::get(get_revision))
+        .route(
+            "/commit/{revision}",
+            routing::get(get_revision).post(checkout_revision),
+        )
         .route("/commits", routing::get(list_commits))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_revision, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -77,6 +80,36 @@ impl ListCommitsResponse {
             .map_err(api::AppError::from)?;
         Ok(ListCommitsResponse { commits, diffs })
     }
+}
+
+#[utoipa::path(
+    post,
+    path = "/commit/{revision}",
+    params(
+        ("revision",
+        description = "The revision of the commit to checkout.\n\n\
+            This can be the short hash, full hash, a tag, or any other \
+            reference such as `HEAD`, a branch name or a tag name", example = "HEAD"),
+    ),
+    summary="Checkout commit for a revision",
+    description = "Checkout a commit by its revision.
+    The revision can be anything accepted by `git rev-parse`. For a branch it will checkout the HEAD of the branch.",
+    responses(
+        (status = http::StatusCode::OK, description = "Revision checked out successfully", body = commit::Commit),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+        (status = http::StatusCode::NOT_FOUND, description = "Revision not found", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn checkout_revision(
+    State(state): State<web::AppState>,
+    Path(commit_id): Path<String>,
+) -> Result<Json<commit::Commit>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+    let commit = repo.checkout_revision(&commit_id)?;
+    Ok(Json(commit))
 }
 
 #[derive(Serialize, ToSchema, Deserialize, IntoParams)]

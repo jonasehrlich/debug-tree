@@ -59,6 +59,34 @@ impl Repository {
         Commit::try_for_revision(&self.repo, rev)
     }
 
+    /// Checkout a revision
+    ///
+    /// * `rev` - Revision to checkout. This can be the short hash, full hash, a tag, or any other
+    ///   reference such as `HEAD`, a branch name or a tag name
+    pub fn checkout_revision(&self, rev: &str) -> Result<Commit> {
+        let (object, reference) = self.repo.revparse_ext(rev).map_err(|e| {
+            Error::from_ctx_and_error(format!("Failed to parse revision '{rev}'"), e)
+        })?;
+
+        self.repo.checkout_tree(&object, None).map_err(|e| {
+            Error::from_ctx_and_error(format!("Failed to checkout revision '{rev}'"), e)
+        })?;
+
+        match reference {
+            // gref is an actual reference like branches or tags
+            Some(gref) => self.repo.set_head(gref.name().unwrap_or_default()),
+            // this is a commit, not a reference
+            None => self.repo.set_head_detached(object.id()),
+        }
+        .map_err(|e| {
+            Error::from_ctx_and_error(format!("Failed to set head to revision '{rev}'"), e)
+        })?;
+        // self.repo
+        //     .set_head(obj.Ok
+        //     .map_err(|e| Error::from_ctx_and_error(format!("Failed to set head to {rev}"), e))?;
+        Commit::try_for_revision(&self.repo, rev)
+    }
+
     /// Returns an iterator over diffs between two revisions `base_rev` and `head_rev`
     ///
     /// * `base_rev` - Base revision to use as a tree, uses initial commit if set to `None`
