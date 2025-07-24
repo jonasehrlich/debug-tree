@@ -131,7 +131,8 @@ jobs:
       - name: Build documentation
         run: npm run docs:build
       - name: Upload documentation artifact (only on push to main)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/upload-artifact@v4
         with:
+          name: docs-artifact
           path: docs/.vitepress/dist
