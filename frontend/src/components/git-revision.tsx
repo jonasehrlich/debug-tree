@@ -8,6 +8,24 @@ import React from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ActionButton, CopyButton } from "./action-button";
 
+const selector = (s: AppState) => ({
+  addGitRevision: s.addGitRevision,
+});
+
+interface GitRevisionIconProps {
+  revision: GitMetadata;
+  size?: number;
+}
+export const GitRevisionIcon = ({
+  revision,
+  size,
+}: GitRevisionIconProps): React.JSX.Element => {
+  if (isTagMetadata(revision)) {
+    return <Tag size={size} />;
+  }
+  return <GitBranch size={size} />;
+};
+
 /**
  * @interface GitRevisionProps
  * @description Props for the GitRevisionProps component.
@@ -16,11 +34,6 @@ import { ActionButton, CopyButton } from "./action-button";
 interface GitRevisionProps {
   revision: GitMetadata;
 }
-
-const selector = (s: AppState) => ({
-  addGitRevision: s.addGitRevision,
-});
-
 export const GitRevision = ({ revision }: GitRevisionProps) => {
   const { addGitRevision } = useStore(useShallow(selector));
 
@@ -30,7 +43,7 @@ export const GitRevision = ({ revision }: GitRevisionProps) => {
 
   return (
     <div className={cn("flex flex-1 items-center text-muted-foreground")}>
-      {isTagMetadata(revision) ? <Tag size={16} /> : <GitBranch size={16} />}
+      <GitRevisionIcon revision={revision} size={16} />
       <span className="flex-1 font-mono px-3  truncate align-middle">
         {formattedRev}
       </span>

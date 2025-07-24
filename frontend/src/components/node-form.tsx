@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { AsyncCombobox } from "./async-combobox";
 import { CreateGitRevisionInput } from "./create-git-rev";
+import { GitRevisionIcon } from "./git-revision";
 import { IconSelectContent } from "./icon-select-content";
 import { MarkdownPreviewTextarea } from "./markdown-preview-textarea";
 import { statusNodeStateIconConfig } from "./state-colors-icons";
@@ -32,8 +33,12 @@ import { Select, SelectTrigger, SelectValue } from "./ui/select";
 
 const GitRevCommandItem = (m: GitMetadata) => {
   return (
-    <div className="font-mono">
-      <span className="font-bold">{formatGitRevision(m)}</span> • {m.summary}
+    <div className="flex flex-col justify-between h-full w-full">
+      <div className="flex items-center space-x-2 truncate">
+        <GitRevisionIcon revision={m} />
+        <span className="font-bold truncate">{formatGitRevision(m)}</span>
+      </div>
+      <div className="text-xs text-muted-foreground">{m.summary}</div>
     </div>
   );
 };

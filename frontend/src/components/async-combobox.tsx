@@ -171,15 +171,21 @@ export const AsyncCombobox = <ItemType,>({
                               setOpen(false);
                             }}
                           >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                currentValueString === v
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {renderDropdownItem(item)}
+                            <div className="flex w-full items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                {renderDropdownItem(item)}
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4 flex-shrink-0",
+                                    currentValueString === v
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                              </div>
+                            </div>
                           </CommandItem>
                         );
                       })}
