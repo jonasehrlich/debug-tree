@@ -30,6 +30,7 @@ export default defineConfig({
             link: "/introduction/what-is-debug-flow",
           },
           { text: "Getting Started", link: "/introduction/getting-started" },
+          { text: "Usage", link: "/introduction/usage" },
           { text: "Build and Run", link: "/introduction/build-and-run" },
         ],
       },

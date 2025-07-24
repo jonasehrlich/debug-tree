@@ -1,6 +1,6 @@
-# debug-tree
+# debug-flow
 
-✨ Flow charts with Git integration ✨
+## ✨ Flow charts with Git integration ✨
 
 `debug-flow` is a developer tool for creating interactive flow charts to visualize and document debugging processes, with built-in Git integration to track your progress alongside your code.
 

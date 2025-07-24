@@ -1,5 +1,10 @@
 # Build and Run
 
+> [!NOTE]
+> This is only required for the development and build of `debug-flow`, not for using it.
+>
+> See [Getting Started](./getting-started) for how to get started using it!
+
 ## Production
 
 For the production build, `debug-flow` uses a cargo-based build flow.
