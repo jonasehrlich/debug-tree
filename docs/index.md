@@ -7,6 +7,9 @@ hero:
   # text: "Documentation for debug-flow"
   tagline: Flow charts with Git integration
   actions:
+    - theme: brand
+      text: What is debug-flow?
+      link: /introduction/what-is-debug-flow/
     - theme: alt
       text: API Documentation
       link: /backend/api/

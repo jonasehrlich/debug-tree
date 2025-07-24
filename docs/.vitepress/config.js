@@ -47,6 +47,13 @@ export default defineConfig({
           },
         ],
       },
+      {
+        text: "Frontend",
+        items: [
+          { text: "Introduction", link: "/frontend/introduction" },
+          { text: "Logging", link: "/frontend/logging" },
+        ],
+      },
     ],
 
     socialLinks: [
