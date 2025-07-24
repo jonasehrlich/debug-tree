@@ -17,3 +17,7 @@ serde = { version = "^1.0.219", features = ["derive"], optional = true }
 default = []
 serde = ["dep:serde", "chrono/serde"]
 utoipa = ["dep:utoipa", "serde"]
+
+[dev-dependencies]
+tempfile = "3.20.0"
+uuid = { version = "1.17.0", features = ["v4"] }
