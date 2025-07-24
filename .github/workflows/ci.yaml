@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+  workflow_dispatch:
+
+
 jobs:
   check-format-backend:
     runs-on: ubuntu-latest
