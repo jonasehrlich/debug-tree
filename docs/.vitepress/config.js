@@ -11,6 +11,9 @@ const sidebar = useSidebar({
 export default defineConfig({
   title: "debug-flow",
   description: "Documentation for debug-flow",
+  base: process.env.GITHUB_REPOSITORY
+    ? `/${process.env.GITHUB_REPOSITORY.split("/")[1]}/`
+    : "/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
