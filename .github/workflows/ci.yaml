@@ -8,7 +8,6 @@ on:
 
   workflow_dispatch:
 
-
 jobs:
   check-format-backend:
     runs-on: ubuntu-latest
@@ -99,6 +98,21 @@ jobs:
       - name: test
         run: npm run test
 
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build documentation
+        run: npm run docs:build
 
   build:
     runs-on: ubuntu-latest
