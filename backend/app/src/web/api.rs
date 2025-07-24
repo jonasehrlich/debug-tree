@@ -119,12 +119,6 @@ pub(super) fn router() -> routing::Router<web::AppState> {
 #[openapi(
         nest(
             (path = "/v1", api = v1::ApiDoc)
-        ),
-        info(
-            title = "Debug Flow API",
-            version = "1.0.0",
-            description = "API for the debug-flow project",
-            license (name= "MIT", url = "https://mit-license.org/")
         )
     )]
 pub(super) struct ApiDoc;

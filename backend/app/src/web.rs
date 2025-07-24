@@ -19,7 +19,11 @@ pub struct Asset;
 pub mod api;
 
 #[derive(utoipa::OpenApi)]
-#[openapi(
+#[openapi(info(
+            title = "Debug Flow API",
+            description = "API for the debug-flow project",
+            license(name= "MIT", url = "https://mit-license.org/", identifier = "MIT"),
+        ),
         nest(
             (path = "/api", api = api::ApiDoc)
         )
