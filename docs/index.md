@@ -11,12 +11,23 @@ hero:
       text: What is debug-flow?
       link: /introduction/what-is-debug-flow/
     - theme: alt
+      text: Development
+      link: /dev/
+    - theme: alt
       text: API Documentation
-      link: /backend/api/
+      link: /dev/api/
 
 features:
-  - title: Git repository integration
-    details: Integrates progress tracking with your local Git repository
-  - title: Interactive Flow Editor
+  - icon:
+      dark: /xyflow-white.svg
+      light: /xyflow-1A192B.svg
+    title: Interactive Flow Editor
     details: Interactive flow editor using React Flow
+    link: https://reactflow.dev
+    linkText: reactflow.dev
+  - icon:
+      light: /Git-Icon-1788C.svg
+      dark: /Git-Icon-White.svg
+    title: Git repository integration
+    details: Integrates progress tracking with your local Git repository
 ---

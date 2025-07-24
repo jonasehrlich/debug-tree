@@ -1,3 +1,13 @@
 # What is debug-flow?
 
-asdf
+<!--@include: ../../README.md#introduction-->
+
+## Nodes
+
+`debug-flow` has two kinds of nodes status nodes and action nodes
+
+### Status Node
+
+### Action Node
+
+### Markdown support

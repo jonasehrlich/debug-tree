@@ -2,11 +2,6 @@ import { defineConfig } from "vitepress";
 import { useSidebar } from "vitepress-openapi";
 import spec from "../../openapi-schema.json" with { type: "json" };
 
-const sidebar = useSidebar({
-  spec,
-  linkPrefix: "/backend/api/operations/",
-});
-
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   title: "debug-flow",
@@ -30,28 +25,26 @@ export default defineConfig({
             link: "/introduction/what-is-debug-flow",
           },
           { text: "Getting Started", link: "/introduction/getting-started" },
-          { text: "Build and Run", link: "/introduction/build-and-run" },
+          { text: "Usage", link: "/introduction/usage" },
         ],
       },
       {
-        text: "Backend",
+        text: "Development",
+        link: "/dev/",
         items: [
-          { text: "Introduction", link: "/backend/introduction" },
+          { text: "Frontend", link: "/dev/frontend" },
+          { text: "Backend", link: "/dev/backend" },
           {
             text: "API",
+            link: "/dev/api/",
             collapsed: true,
             items: [
-              { text: "Introduction", link: "/backend/api/" },
-              ...sidebar.generateSidebarGroups(),
+              ...useSidebar({
+                spec,
+                linkPrefix: "/dev/api/operations/",
+              }).generateSidebarGroups(),
             ],
           },
-        ],
-      },
-      {
-        text: "Frontend",
-        items: [
-          { text: "Introduction", link: "/frontend/introduction" },
-          { text: "Logging", link: "/frontend/logging" },
         ],
       },
     ],

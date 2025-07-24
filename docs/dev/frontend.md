@@ -1,4 +1,6 @@
-# Logging
+# Frontend
+
+## Logging
 
 For logging the frontend uses [`loglevel`](https://www.npmjs.com/package/loglevel).
 
