@@ -39,10 +39,7 @@ struct NewArgs {
 struct ServeArgs {
     #[clap(flatten)]
     flows_dir: DebugFlowDirArgs,
-    /// Host to bind the server to
-    #[arg(long, default_value = "localhost")]
-    host: String,
-    /// Port to bind the server to
+    /// Port to bind the server to, use 0 to let the operating system select a free port
     #[arg(short, long, default_value_t = 8000)]
     port: u16,
     /// Port on localhost to proxy all fallback requests to, only available in debug builds
@@ -81,14 +78,9 @@ async fn main() {
         Commands::Serve(args) => {
             let flows_dir = debug_flow::flow::FlowsDir::new(args.flows_dir.dir.clone())
                 .expect("Error creating debug flow directory");
-            debug_flow::web::serve(
-                args.host.as_str(),
-                args.port,
-                args.frontend_proxy_port,
-                flows_dir,
-            )
-            .await
-            .unwrap();
+            debug_flow::web::serve("localhost", args.port, args.frontend_proxy_port, flows_dir)
+                .await
+                .unwrap();
         }
     };
 }
