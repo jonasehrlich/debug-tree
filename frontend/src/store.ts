@@ -10,7 +10,7 @@ import log from "loglevel";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { client } from "./client";
+import { checkoutRevision, client } from "./client";
 import {
   getMatchingMetaData,
   isAppNode,
@@ -154,6 +154,16 @@ export const useStore = create<AppState>()(
       },
       clearGitRevisions() {
         set({ gitRevisions: [] });
+      },
+      async checkoutGitRevision(rev: string) {
+        try {
+          await checkoutRevision(rev);
+          toast.success(`Checked out revision ${rev}`);
+        } catch (e: unknown) {
+          toast.error(`Error checking out revision ${rev}`, {
+            description: (e as Error).message,
+          });
+        }
       },
       createFlow: async (name: string) => {
         const { data, error } = await client.POST("/api/v1/flows", {

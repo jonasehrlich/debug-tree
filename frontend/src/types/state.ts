@@ -63,6 +63,8 @@ export interface AppState {
   addGitRevision: (rev: string) => void;
   /** Clear the Git revisions array */
   clearGitRevisions: () => void;
+  /** Checkout a git reivision */
+  checkoutGitRevision: (rev: string) => Promise<void>;
   /**
    * Create a flow on the server through the API
    * @description After successful creation of the flow, it will call {@link setNodes}, {@link setEdges}

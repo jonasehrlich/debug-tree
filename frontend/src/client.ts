@@ -104,6 +104,17 @@ export const fetchCommitForRevision = async (
   return { rev: data.id, summary: data.summary, type: "commit" };
 };
 
+export async function checkoutRevision(revision: string): Promise<void> {
+  const { error } = await client.POST("/api/v1/git/commit/{revision}", {
+    params: { path: { revision } },
+  });
+  if (error) {
+    throw new Error(
+      `Error checking out revision ${revision}: ${error.message}`,
+    );
+  }
+}
+
 export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/commits", {
     params: { query: { filter } },
