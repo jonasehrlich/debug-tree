@@ -4,6 +4,11 @@
 
 ### Production Build
 
+![debug-flow production setup](/debug-flow-prod-setup.drawio.svg)
+
+When running in production mode, the `debug-flow` application bundles the static files generated as
+part of the frontend build in the binary and serves them.
+
 For the production build, `debug-flow` uses a cargo-based build flow.
 To build the backend application which bundles the frontend application, run
 
@@ -11,7 +16,8 @@ To build the backend application which bundles the frontend application, run
 cargo build --release
 ```
 
-The `build.rs` script will automatically install the frontend dependencies, build the web-frontend application and bundle it with the backend application.
+The `build.rs` script will automatically install the frontend dependencies, build the web-frontend
+application and bundle it with the backend application.
 
 Run the application from `./target/release/debug-flow`.
 
@@ -20,7 +26,7 @@ Run the application from `./target/release/debug-flow`.
 For development purposes the frontend is served from a [`vite`](https://vite.dev/) development server to benefit from
 features such as hot module reloading.
 
-<!-- TODO: Add diagram of dev-setup mermaidjs?-->
+![Dev setup](/debug-flow-dev-setup.drawio.svg)
 
 #### Install frontend dependencies
 
@@ -69,4 +75,19 @@ Re-create the API types for the Frontend using:
 
 ```sh
 npm run api:create
+```
+
+## Documentation
+
+The documentation is built using [VitePress](https://vitepress.dev). The development server for the documentation can
+be started using
+
+```sh
+npm run docs:dev
+```
+
+The release version of the documentation is build using
+
+```sh
+npm run docs:build
 ```
