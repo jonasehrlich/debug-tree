@@ -126,6 +126,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/git/repository/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get repository status
+         * @description Get the current status of the repository, including the current HEAD commit and branch.
+         */
+        get: operations["get_repository_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/git/tags": {
         parameters: {
             query?: never;
@@ -260,6 +280,12 @@ export interface components {
             edges: unknown[];
             /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
             nodes: unknown[];
+        };
+        RepositoryStatusResponse: {
+            /** @description The current branch name, not set if in a detached HEAD state */
+            currentBranch?: string | null;
+            /** @description The current HEAD commit */
+            head: components["schemas"]["Commit"];
         };
         Signature: {
             email: string;
@@ -649,6 +675,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListCommitsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    get_repository_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryStatusResponse"];
                 };
             };
             /** @description Internal server error */

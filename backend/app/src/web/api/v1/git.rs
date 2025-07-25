@@ -15,10 +15,11 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/commits", routing::get(list_commits))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
+        .route("/repository/status", routing::get(get_repository_status))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -336,6 +337,41 @@ async fn create_branch(
         &query.revision,
         force,
     )?))
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct RepositoryStatusResponse {
+    /// The current HEAD commit
+    head: git2_ox::Commit,
+    /// The current branch name, not set if in a detached HEAD state
+    current_branch: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/repository/status",
+    summary = "Get repository status",
+    description = "Get the current status of the repository, including the current HEAD commit and branch.",
+    responses(
+        (status = http::StatusCode::OK, description = "Repository status", body = RepositoryStatusResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    ))
+]
+async fn get_repository_status(
+    State(state): State<web::AppState>,
+) -> Result<Json<RepositoryStatusResponse>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let head_commit = repo.get_commit_for_revision("HEAD")?;
+    let current_branch = repo.current_branch_name();
+    Ok(Json(RepositoryStatusResponse {
+        head: head_commit,
+        current_branch,
+    }))
 }
 
 fn filter_commit(filter: &str, commit: &git2_ox::Commit) -> bool {
