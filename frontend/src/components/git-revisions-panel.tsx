@@ -59,7 +59,13 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      onClick={restoreGitStatus}
+                      onClick={() => {
+                        restoreGitStatus()
+                          .then()
+                          .catch((e: unknown) => {
+                            console.warn("Failed to restore git status:", e);
+                          });
+                      }}
                       variant="destructive"
                       className="max-w-[150px] truncate"
                     >
