@@ -216,3 +216,33 @@ export async function createTag(
     type: "tag",
   };
 }
+
+export interface GitStatus {
+  /** current checked out branch/ commit (detached HEAD) */
+  revision: BranchMetadata | CommitMetadata;
+}
+export async function fetchStatus(): Promise<GitStatus> {
+  const { data, error } = await client.GET("/api/v1/git/repository/status", {});
+  if (error) {
+    throw new Error(`Error fetching Git status: ${error.message}`);
+  }
+
+  let revision;
+  if (data.currentBranch) {
+    revision = {
+      rev: data.currentBranch,
+      summary: data.head.summary,
+      type: "branch",
+    } as BranchMetadata;
+  } else {
+    revision = {
+      rev: data.head.id,
+      summary: data.head.summary,
+      type: "commit",
+    } as CommitMetadata;
+  }
+
+  return {
+    revision,
+  };
+}

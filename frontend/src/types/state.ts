@@ -1,3 +1,4 @@
+import type { GitStatus } from "@/client";
 import {
   type Edge,
   type OnConnect,
@@ -63,8 +64,15 @@ export interface AppState {
   addGitRevision: (rev: string) => void;
   /** Clear the Git revisions array */
   clearGitRevisions: () => void;
-  /** Checkout a git reivision */
+  /** The current Git status of the repository */
+  gitStatus: GitStatus | null;
+  /** The Git status of the repository before the checkout*/
+  prevGitStatus: GitStatus | null;
+  /** Checkout a git revision, save back the current state */
   checkoutGitRevision: (rev: string) => Promise<void>;
+  /** Restore the original git status before a checkout */
+  restoreGitStatus: () => Promise<void>;
+
   /**
    * Create a flow on the server through the API
    * @description After successful creation of the flow, it will call {@link setNodes}, {@link setEdges}

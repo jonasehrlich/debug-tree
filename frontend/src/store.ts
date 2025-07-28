@@ -10,7 +10,7 @@ import log from "loglevel";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { checkoutRevision, client } from "./client";
+import { checkoutRevision, client, fetchStatus } from "./client";
 import {
   getMatchingMetaData,
   isAppNode,
@@ -95,6 +95,8 @@ const initialState = {
   hasUnsavedChanges: false,
   dialogNodeData: null,
   gitRevisions: [],
+  gitStatus: null,
+  prevGitStatus: null,
 };
 
 const logger = log.getLogger("store");
@@ -157,13 +159,39 @@ export const useStore = create<AppState>()(
       },
       async checkoutGitRevision(rev: string) {
         try {
+          const prevGitStatus = await fetchStatus();
+          await checkoutRevision(rev);
+          const gitStatus = await fetchStatus();
+          toast.success(`Checked out revision ${rev}`);
+          set({
+            prevGitStatus,
+            gitStatus,
+          });
+        } catch (e: unknown) {
+          toast.error(`Error checking out revision ${rev}`, {
+            description: (e as Error).message,
+          });
+        }
+      },
+      async restoreGitStatus() {
+        const rev = get().prevGitStatus?.revision.rev;
+        if (!rev) {
+          return;
+        }
+
+        try {
           await checkoutRevision(rev);
           toast.success(`Checked out revision ${rev}`);
         } catch (e: unknown) {
           toast.error(`Error checking out revision ${rev}`, {
             description: (e as Error).message,
           });
+          return;
         }
+        set({
+          prevGitStatus: null,
+          gitStatus: null,
+        });
       },
       createFlow: async (name: string) => {
         const { data, error } = await client.POST("/api/v1/flows", {
