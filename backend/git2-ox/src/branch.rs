@@ -14,6 +14,16 @@ pub struct Branch {
 }
 
 impl Branch {
+    /// Get the name of the branch
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get the head commit of the branch at the time when the Branch object was created
+    pub fn head(&self) -> &Commit {
+        &self.head
+    }
+
     pub fn from_name_and_commit(name: &str, head: &git2::Commit) -> Self {
         Self {
             name: name.to_string(),
