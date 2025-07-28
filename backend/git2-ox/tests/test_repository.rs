@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 mod common;
 
 #[test]
@@ -205,5 +207,73 @@ fn test_list_commits_multiple_branches() {
             })
             .collect::<Vec<_>>(),
         foo_commits
+    );
+}
+
+#[test]
+fn test_create_branch_force() {
+    let t = common::TempRepository::try_init().unwrap();
+    t.create_and_commit_random_file();
+    // Create a branch foo
+    let r = t.repo().create_branch("foo", "HEAD", false);
+    assert!(r.is_ok());
+    let foo_rev = r.unwrap().head().id().to_string();
+
+    t.create_and_commit_random_file();
+    let r = t.repo().create_branch("foo", "HEAD", false);
+    assert!(r.is_err());
+    let r = t.repo().create_branch("foo", "HEAD", true);
+    assert!(r.is_ok());
+    let foo_rev2 = r.unwrap().head().id().to_string();
+    assert_ne!(foo_rev, foo_rev2);
+}
+
+#[test]
+fn test_iter_branches() {
+    use std::collections::HashSet;
+
+    let t = common::TempRepository::try_init().unwrap();
+    t.create_and_commit_random_file();
+    let default_branch_name = t.repo().current_branch_name().unwrap();
+    let branch_names = ["foo", "bar", "baz"];
+
+    for branch_name in &branch_names {
+        t.repo().create_branch(branch_name, "HEAD", false).unwrap();
+    }
+
+    let existing_branch_names = t
+        .repo()
+        .iter_branches(None)
+        .unwrap()
+        .into_iter()
+        .map(|b| b.name().to_string());
+    let mut expected_branch_names: HashSet<String> =
+        HashSet::from_iter(branch_names.iter().map(|s| s.to_string()));
+    expected_branch_names.insert(default_branch_name);
+    assert_eq!(
+        HashSet::from_iter(existing_branch_names),
+        expected_branch_names
+    );
+
+    let no_branches: Vec<String> = t
+        .repo()
+        .iter_branches(Some("no-such-branch"))
+        .unwrap()
+        .into_iter()
+        .map(|b| b.name().to_string())
+        .collect();
+    assert_eq!(no_branches.len(), 0);
+
+    let filtered_branch_names = t
+        .repo()
+        .iter_branches(Some("ba"))
+        .unwrap()
+        .into_iter()
+        .map(|b| b.name().to_string());
+    let expected_branch_names: HashSet<String> =
+        HashSet::from_iter(vec!["bar", "baz"].iter().map(|s| s.to_string()));
+    assert_eq!(
+        HashSet::from_iter(filtered_branch_names),
+        expected_branch_names
     );
 }
