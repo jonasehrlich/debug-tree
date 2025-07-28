@@ -29,9 +29,14 @@ impl Repository {
         &self.repo
     }
 
-    /// Get the name of the current branch
+    /// Get the name of the current branch, None in case of a detached HEAD
     pub fn current_branch_name(&self) -> Option<String> {
-        self.repo().head().ok()?.shorthand().map(|s| s.to_string())
+        let head = self.repo().head().ok()?;
+        if head.is_branch() {
+            head.shorthand().map(|s| s.to_string())
+        } else {
+            None
+        }
     }
 
     /// Returns an iterator over Commits in the repository from `head_rev` to `base_rev`
