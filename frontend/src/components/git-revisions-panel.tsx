@@ -26,6 +26,8 @@ const selector = (state: AppState) => ({
   gitStatus: state.gitStatus,
   prevGitStatus: state.prevGitStatus,
   restoreGitStatus: state.restoreGitStatus,
+  hasRevisions: state.gitRevisions.length > 0,
+  displayPanel: state.gitRevisions.length > 0 || state.gitStatus != null,
 });
 
 interface GitRevisionsPanelProps {
@@ -39,11 +41,10 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
     gitStatus,
     prevGitStatus,
     restoreGitStatus,
+    hasRevisions,
+    displayPanel,
   } = useStore(useShallow(selector));
 
-  const hasRevisions = gitRevisions.length > 0;
-  const hasStatus = gitStatus != null;
-  const displayPanel = hasRevisions || hasStatus;
   const prevRevison = prevGitStatus
     ? formatGitRevision(prevGitStatus.revision)
     : "previous status";
@@ -52,7 +53,7 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
     displayPanel && (
       <TooltipProvider>
         <Panel position="bottom-right">
-          {hasStatus && (
+          {gitStatus && (
             <GitStatusCard
               status={gitStatus}
               footer={() => (
