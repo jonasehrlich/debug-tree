@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatGitRevision } from "@/types/nodes";
+import { OctagonAlert } from "lucide-react";
 
 interface GitStatusCardProps {
   status: GitStatus;
@@ -22,8 +23,15 @@ export function GitStatusCard({ status, footer }: GitStatusCardProps) {
     <Card className="w-80">
       <CardHeader className="flex flex-row justify-between items-center">
         <CardTitle>Git Status</CardTitle>
-        <Badge variant={isDetached ? "destructive" : "default"}>
-          {isDetached ? "Detached HEAD" : "On Branch"}
+        <Badge variant="default">
+          {isDetached ? (
+            <span className="flex items-center gap-1">
+              <OctagonAlert className="w-4 h-4" />
+              Detached HEAD
+            </span>
+          ) : (
+            "On Branch"
+          )}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-1">
