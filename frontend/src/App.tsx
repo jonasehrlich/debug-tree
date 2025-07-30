@@ -243,9 +243,10 @@ export const App = () => {
         />
       </ReactFlow>
       <Toaster
-        position="bottom-left"
+        position="bottom-right"
         toastOptions={{
-          className: "max-w-xs text-sm", // global default for all toasts
+          className: "max-w-xs text-sm",
+          duration: 1500,
         }}
         richColors
       />

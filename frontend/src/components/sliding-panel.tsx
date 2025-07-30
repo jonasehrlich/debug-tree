@@ -16,6 +16,7 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
   const panelRef = React.useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
+
   return (
     <div
       onClick={(e) => {
@@ -23,11 +24,11 @@ export const SlidingPanel: React.FC<SlidingPanelProps> = ({
           onClose();
         }
       }}
-      className="bg-muted/30 fixed inset-0 z-40 backdrop-blur-sm justify-end"
+      className="bg-muted/30 fixed inset-0 z-40 backdrop-blur-sm justify-start" // ⬅️ Aligns content to the left
     >
       <div
         ref={panelRef}
-        className="fixed top-0 right-0 h-full p-4 fit-content bg-muted shadow-lg z-50"
+        className="fixed top-0 left-0 h-full p-4 fit-content bg-muted shadow-lg z-50" // ⬅️ Aligned to the left
       >
         <div className="flex justify-end items-center m-4">
           <button onClick={onClose} aria-label="Close">

@@ -52,7 +52,7 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
   return (
     displayPanel && (
       <TooltipProvider>
-        <Panel position="bottom-right">
+        <Panel position="bottom-left">
           {gitStatus && (
             <GitStatusCard
               status={gitStatus}
