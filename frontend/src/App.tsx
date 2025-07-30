@@ -16,7 +16,7 @@ import { useShallow } from "zustand/react/shallow";
 import { AppMenubar } from "./components/app-menubar";
 import { CreateNodeDialog } from "./components/create-node-dialog";
 import { EditNodeDialog } from "./components/edit-node-dialog";
-import { GitGraphSlidingPanel } from "./components/git-graph-sliding-panel";
+import { GitDialog } from "./components/git-dialog";
 import { GitRevisionsPanel } from "./components/git-revisions-panel";
 import { HelpDialog, KeybindingsDialog } from "./components/help-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
@@ -41,7 +41,6 @@ const selector = (state: AppState) => ({
   onConnectEnd: state.onConnectEnd,
   saveCurrentFlow: state.saveCurrentFlow,
   setCurrentEditNodeData: state.setCurrentEditNodeData,
-  clearGitRevisions: state.clearGitRevisions,
   pushToUndoStack: state.pushToUndoStack,
   undo: state.undo,
   redo: state.redo,
@@ -72,7 +71,6 @@ export const App = () => {
     onConnectEnd,
     saveCurrentFlow,
     setCurrentEditNodeData,
-    clearGitRevisions,
     pushToUndoStack,
     isEditOrCreateNodeDialogOpen,
     undo,
@@ -176,16 +174,8 @@ export const App = () => {
     isKeybindingsDialogOpen,
   ]);
 
-  const [isGitGraphPanelOpen, setIsGitGraphPanelOpen] = React.useState(false);
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      <GitGraphSlidingPanel
-        isOpen={isGitGraphPanelOpen}
-        onClose={() => {
-          clearGitRevisions();
-          setIsGitGraphPanelOpen(false);
-        }}
-      ></GitGraphSlidingPanel>
       <ReactFlow
         ref={reactFlowRef}
         nodes={nodes}
@@ -236,11 +226,8 @@ export const App = () => {
         <KeybindingsDialog />
         <EditNodeDialog />
         <CreateNodeDialog />
-        <GitRevisionsPanel
-          openGitGraph={() => {
-            setIsGitGraphPanelOpen(true);
-          }}
-        />
+        <GitDialog />
+        <GitRevisionsPanel />
       </ReactFlow>
       <Toaster
         position="bottom-right"

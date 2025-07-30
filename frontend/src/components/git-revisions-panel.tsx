@@ -12,9 +12,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useStore } from "@/store";
+import { useStore, useUiStore } from "@/store";
 import { formatGitRevision } from "@/types/nodes";
-import type { AppState } from "@/types/state";
+import type { AppState, UiState } from "@/types/state";
 import { Panel } from "@xyflow/react";
 import { GitGraph, X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
@@ -30,11 +30,11 @@ const selector = (state: AppState) => ({
   displayPanel: state.gitRevisions.length > 0 || state.gitStatus != null,
 });
 
-interface GitRevisionsPanelProps {
-  openGitGraph: () => void;
-}
+const uiSelector = (s: UiState) => ({
+  setIsGitDialogOpen: s.setIsGitDialogOpen,
+});
 
-export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
+export const GitRevisionsPanel = () => {
   const {
     gitRevisions,
     clearGitRevisions,
@@ -44,6 +44,8 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
     hasRevisions,
     displayPanel,
   } = useStore(useShallow(selector));
+
+  const { setIsGitDialogOpen } = useUiStore(useShallow(uiSelector));
 
   const prevRevison = prevGitStatus
     ? formatGitRevision(prevGitStatus.revision)
@@ -104,7 +106,12 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
                   <X /> Clear
                 </Button>
                 {gitRevisions.length === 2 && (
-                  <Button onClick={openGitGraph} variant="outline">
+                  <Button
+                    onClick={() => {
+                      setIsGitDialogOpen(true);
+                    }}
+                    variant="outline"
+                  >
                     <GitGraph />
                     Show Graph
                   </Button>

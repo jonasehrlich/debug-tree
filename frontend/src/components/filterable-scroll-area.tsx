@@ -14,7 +14,6 @@ function FilterableScrollArea({
   children,
   placeholder,
   filterTerm,
-
   setFilterTerm,
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root> &

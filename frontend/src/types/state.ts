@@ -141,13 +141,6 @@ export interface UiState {
    * @param isVisible - Whether the Minimap should be visible
    */
   setIsMiniMapVisible: (isVisible: boolean) => void;
-  /** Whether to use inline diffs for the diff view */
-  isInlineDiff: boolean;
-  /**
-   * Set {@link isInlineDiff}
-   * @param isInlineDiff - Whether to use an inline diff
-   */
-  setIsInlineDiff: (isInlineDiff: boolean) => void;
   /** Whether the help dialog should be displayed */
   isHelpDialogOpen: boolean;
   /**
@@ -162,4 +155,11 @@ export interface UiState {
    * @param isOpen - Whether the dialog should be opened or closed
    */
   setIsKeybindingsDialogOpen: (isOpen: boolean) => void;
+  /** Whether the Git Dialog should be displayed */
+  isGitDialogOpen: boolean;
+  /**
+   * Set {@link isGitDialogOpen}
+   * @param isOpen - Whether the dialog should be opened or closed
+   */
+  setIsGitDialogOpen: (isOpen: boolean) => void;
 }
