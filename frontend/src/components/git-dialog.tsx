@@ -146,7 +146,7 @@ export const GitDialog = () => {
       >
         <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle>Git Graph and Diff</DialogTitle>
-          <div className="flex space-x-2 select-none">
+          <div className="flex space-x-2 select-none mt-2">
             <Badge variant="secondary" className="font-mono">
               <GitGraph /> {formatGitRevision(gitRevisions[0])}..
               {formatGitRevision(gitRevisions[1])}
@@ -216,16 +216,16 @@ export const GitDialog = () => {
               </div>
 
               {/* Right Column */}
-              <div className="w-full p-4 md:w-5/8">
+              <div className="w-full p-2 md:w-5/8">
                 <CommitDetails commit={selectedCommit} />
               </div>
             </div>
           </TabsContent>
           <TabsContent
             value="tab-diff"
-            className="h-full min-h-0 w-full text-sm"
+            className="h-full min-h-0 w-full text-sm pt-4"
           >
-            <div className="flex flex-col h-full w-full min-h-o overflow-y-auto space-y-4">
+            <div className="flex flex-col h-full w-full overflow-y-auto">
               {gitData?.diffs.length ? (
                 gitData.diffs.map((diff, index) => (
                   <DiffViewer key={index} patch={diff.patch} />
