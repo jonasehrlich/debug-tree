@@ -8,14 +8,18 @@ use utoipa::{IntoParams, ToSchema};
 
 pub fn router() -> routing::Router<web::AppState> {
     routing::Router::new()
-        .route("/commit/{revision}", routing::get(get_revision))
+        .route(
+            "/commit/{revision}",
+            routing::get(get_revision).post(checkout_revision),
+        )
         .route("/commits", routing::get(list_commits))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
+        .route("/repository/status", routing::get(get_repository_status))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_revision, list_commits,  list_tags, create_tag, list_branches, create_branch), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -77,6 +81,36 @@ impl ListCommitsResponse {
             .map_err(api::AppError::from)?;
         Ok(ListCommitsResponse { commits, diffs })
     }
+}
+
+#[utoipa::path(
+    post,
+    path = "/commit/{revision}",
+    params(
+        ("revision",
+        description = "The revision of the commit to checkout.\n\n\
+            This can be the short hash, full hash, a tag, or any other \
+            reference such as `HEAD`, a branch name or a tag name", example = "HEAD"),
+    ),
+    summary="Checkout commit for a revision",
+    description = "Checkout a commit by its revision.
+    The revision can be anything accepted by `git rev-parse`. For a branch it will checkout the HEAD of the branch.",
+    responses(
+        (status = http::StatusCode::OK, description = "Revision checked out successfully", body = commit::Commit),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+        (status = http::StatusCode::NOT_FOUND, description = "Revision not found", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn checkout_revision(
+    State(state): State<web::AppState>,
+    Path(commit_id): Path<String>,
+) -> Result<Json<commit::Commit>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+    let commit = repo.checkout_revision(&commit_id)?;
+    Ok(Json(commit))
 }
 
 #[derive(Serialize, ToSchema, Deserialize, IntoParams)]
@@ -303,6 +337,41 @@ async fn create_branch(
         &query.revision,
         force,
     )?))
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct RepositoryStatusResponse {
+    /// The current HEAD commit
+    head: git2_ox::Commit,
+    /// The current branch name, not set if in a detached HEAD state
+    current_branch: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    path = "/repository/status",
+    summary = "Get repository status",
+    description = "Get the current status of the repository, including the current HEAD commit and branch.",
+    responses(
+        (status = http::StatusCode::OK, description = "Repository status", body = RepositoryStatusResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    ))
+]
+async fn get_repository_status(
+    State(state): State<web::AppState>,
+) -> Result<Json<RepositoryStatusResponse>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
+    let head_commit = repo.get_commit_for_revision("HEAD")?;
+    let current_branch = repo.current_branch_name();
+    Ok(Json(RepositoryStatusResponse {
+        head: head_commit,
+        current_branch,
+    }))
 }
 
 fn filter_commit(filter: &str, commit: &git2_ox::Commit) -> bool {

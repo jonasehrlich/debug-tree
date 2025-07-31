@@ -3,13 +3,14 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState } from "@/types/state";
-import { GitBranch, Pin, Tag } from "lucide-react";
+import { ArrowDownToLine, GitBranch, Pin, Tag } from "lucide-react";
 import React from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ActionButton, CopyButton } from "./action-button";
 
 const selector = (s: AppState) => ({
   addGitRevision: s.addGitRevision,
+  checkoutGitRevision: s.checkoutGitRevision,
 });
 
 interface GitRevisionIconProps {
@@ -35,7 +36,9 @@ interface GitRevisionProps {
   revision: GitMetadata;
 }
 export const GitRevision = ({ revision }: GitRevisionProps) => {
-  const { addGitRevision } = useStore(useShallow(selector));
+  const { addGitRevision, checkoutGitRevision } = useStore(
+    useShallow(selector),
+  );
 
   const formattedRev = React.useMemo(() => {
     return formatGitRevision(revision);
@@ -57,6 +60,14 @@ export const GitRevision = ({ revision }: GitRevisionProps) => {
         className="size-6"
       />
       <CopyButton value={formattedRev} />
+      <ActionButton
+        tooltipContent="Checkout revision"
+        icon={<ArrowDownToLine />}
+        onClick={async () => {
+          await checkoutGitRevision(formattedRev);
+        }}
+        className="size-6"
+      />
     </div>
   );
 };

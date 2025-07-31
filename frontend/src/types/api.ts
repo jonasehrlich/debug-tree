@@ -94,7 +94,12 @@ export interface paths {
          */
         get: operations["get_revision"];
         put?: never;
-        post?: never;
+        /**
+         * Checkout commit for a revision
+         * @description Checkout a commit by its revision.
+         *         The revision can be anything accepted by `git rev-parse`. For a branch it will checkout the HEAD of the branch.
+         */
+        post: operations["checkout_revision"];
         delete?: never;
         options?: never;
         head?: never;
@@ -113,6 +118,26 @@ export interface paths {
          * @description List the commits in a range similar to `git log`, the commits are always ordered from newest to oldest in the tree.
          */
         get: operations["list_commits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/git/repository/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get repository status
+         * @description Get the current status of the repository, including the current HEAD commit and branch.
+         */
+        get: operations["get_repository_status"];
         put?: never;
         post?: never;
         delete?: never;
@@ -255,6 +280,12 @@ export interface components {
             edges: unknown[];
             /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
             nodes: unknown[];
+        };
+        RepositoryStatusResponse: {
+            /** @description The current branch name, not set if in a detached HEAD state */
+            currentBranch?: string | null;
+            /** @description The current HEAD commit */
+            head: components["schemas"]["Commit"];
         };
         Signature: {
             email: string;
@@ -573,6 +604,52 @@ export interface operations {
             };
         };
     };
+    checkout_revision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The revision of the commit to checkout.
+                 *
+                 *     This can be the short hash, full hash, a tag, or any other reference such as `HEAD`, a branch name or a tag name
+                 * @example HEAD
+                 */
+                revision: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revision checked out successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commit"];
+                };
+            };
+            /** @description Revision not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
     list_commits: {
         parameters: {
             query?: {
@@ -598,6 +675,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListCommitsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    get_repository_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepositoryStatusResponse"];
                 };
             };
             /** @description Internal server error */

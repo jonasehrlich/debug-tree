@@ -104,6 +104,17 @@ export const fetchCommitForRevision = async (
   return { rev: data.id, summary: data.summary, type: "commit" };
 };
 
+export async function checkoutRevision(revision: string): Promise<void> {
+  const { error } = await client.POST("/api/v1/git/commit/{revision}", {
+    params: { path: { revision } },
+  });
+  if (error) {
+    throw new Error(
+      `Error checking out revision ${revision}: ${error.message}`,
+    );
+  }
+}
+
 export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/commits", {
     params: { query: { filter } },
@@ -203,5 +214,35 @@ export async function createTag(
     rev: data.tag,
     summary: data.commit.summary,
     type: "tag",
+  };
+}
+
+export interface GitStatus {
+  /** current checked out branch/ commit (detached HEAD) */
+  revision: BranchMetadata | CommitMetadata;
+}
+export async function fetchStatus(): Promise<GitStatus> {
+  const { data, error } = await client.GET("/api/v1/git/repository/status", {});
+  if (error) {
+    throw new Error(`Error fetching Git status: ${error.message}`);
+  }
+
+  let revision;
+  if (data.currentBranch) {
+    revision = {
+      rev: data.currentBranch,
+      summary: data.head.summary,
+      type: "branch",
+    } as BranchMetadata;
+  } else {
+    revision = {
+      rev: data.head.id,
+      summary: data.head.summary,
+      type: "commit",
+    } as CommitMetadata;
+  }
+
+  return {
+    revision,
   };
 }
