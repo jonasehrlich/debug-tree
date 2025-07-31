@@ -158,12 +158,8 @@ export const useStore = create<AppState>()(
         set({ gitRevisions: [] });
       },
       async checkoutGitRevision(rev: string) {
-        let prevGitStatus = get().prevGitStatus;
-
         try {
-          if (!prevGitStatus) {
-            prevGitStatus = await fetchStatus();
-          }
+          const prevGitStatus = get().prevGitStatus ?? (await fetchStatus());
           await checkoutRevision(rev);
           const gitStatus = await fetchStatus();
           toast.success(`Checked out revision ${rev}`);
