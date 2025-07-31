@@ -1,4 +1,4 @@
-import type { GitStatus } from "@/client";
+import type { GitMetadata, GitStatus } from "@/client";
 import {
   type Edge,
   type OnConnect,
@@ -55,15 +55,15 @@ export interface AppState {
     | { type: "edit"; data: EditAppNodeData }
     | null;
   /** Array of revisions pinned for a diff. The array can only con */
-  gitRevisions: string[];
+  pinnedGitRevisions: [GitMetadata | null, GitMetadata | null];
   /**
-   * Add a Git revision to the {@link gitRevisions}
+   * Add a Git revision to the {@link pinnedGitRevisions}
    * @description If two revisions are in the array already, the second one is replaced
    * @param rev - Revision to add
    */
-  addGitRevision: (rev: string) => void;
+  addPinnedGitRevision: (rev: GitMetadata) => void;
   /** Clear the Git revisions array */
-  clearGitRevisions: () => void;
+  clearPinnedGitRevisions: () => void;
   /** The current Git status of the repository */
   gitStatus: GitStatus | null;
   /** The Git status of the repository before the checkout*/

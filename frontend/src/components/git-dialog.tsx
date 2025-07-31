@@ -73,8 +73,8 @@ interface GitGraphData {
 }
 
 const selector = (s: AppState) => ({
-  gitRevisions: s.gitRevisions,
-  clearGitRevisions: s.clearGitRevisions,
+  gitRevisions: s.pinnedGitRevisions,
+  clearGitRevisions: s.clearPinnedGitRevisions,
 });
 
 const uiSelector = (s: UiState) => ({
@@ -108,9 +108,12 @@ export const GitDialog = () => {
   }, [theme, systemTheme]);
 
   React.useEffect(() => {
+    if (!isOpen || gitRevisions[0] === null || gitRevisions[1] === null) {
+      return;
+    }
     const commitRange = {
-      baseRev: gitRevisions[0],
-      headRev: gitRevisions[1],
+      baseRev: gitRevisions[0].rev,
+      headRev: gitRevisions[1].rev,
     };
     Promise.all([fetchCommits(commitRange), fetchDiffs(commitRange)])
       .then(([commits, diffs]) => {
@@ -135,6 +138,9 @@ export const GitDialog = () => {
       setSelectedCommit(null);
     }
   }, [isOpen, setSelectedCommit]);
+  if (gitRevisions[0] === null || gitRevisions[1] === null) {
+    return null;
+  }
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="h-[80vh] w-[80vw] min-w-xs sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0 overflow-y-auto">
