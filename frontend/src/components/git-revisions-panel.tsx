@@ -88,7 +88,9 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
               <CardContent>
                 {gitRevisions.map((rev, index) => (
                   <div key={index} className="p-2 border-b">
-                    <span className="font-mono">{rev}</span>
+                    <span className="font-mono block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                      {rev}
+                    </span>
                   </div>
                 ))}
               </CardContent>
