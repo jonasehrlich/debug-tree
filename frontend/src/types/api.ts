@@ -126,6 +126,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/git/diffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List diffs
+         * @description List the diffs in a commit range
+         */
+        get: operations["list_diffs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/git/repository/status": {
         parameters: {
             query?: never;
@@ -266,6 +286,8 @@ export interface components {
             /** @description Array of commits between the base and head commit IDs
              *     in reverse chronological order. */
             commits: components["schemas"]["Commit"][];
+        };
+        ListDiffsResponse: {
             /** @description Array of diffs in this commit range */
             diffs: components["schemas"]["Diff"][];
         };
@@ -653,14 +675,14 @@ export interface operations {
     list_commits: {
         parameters: {
             query?: {
+                /** @description string filter for the commits. Filters commits by their ID or summary. */
+                filter?: string | null;
                 /** @description The base revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the first commit is used. */
                 baseRev?: string | null;
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
                 headRev?: string | null;
-                /** @description string filter for the commits. Filters commits by their ID or summary. */
-                filter?: string | null;
             };
             header?: never;
             path?: never;
@@ -675,6 +697,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListCommitsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    list_diffs: {
+        parameters: {
+            query?: {
+                /** @description The base revision of the range, this can be short hash, full hash, a tag,
+                 *     or any other reference such a branch name. If empty, the first commit is used. */
+                baseRev?: string | null;
+                /** @description The head revision of the range, this can be short hash, full hash, a tag,
+                 *     or any other reference such a branch name. If empty, the current HEAD is used. */
+                headRev?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of diffs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListDiffsResponse"];
                 };
             };
             /** @description Internal server error */

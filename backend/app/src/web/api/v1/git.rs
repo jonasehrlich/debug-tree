@@ -13,13 +13,14 @@ pub fn router() -> routing::Router<web::AppState> {
             routing::get(get_revision).post(checkout_revision),
         )
         .route("/commits", routing::get(list_commits))
+        .route("/diffs", routing::get(list_diffs))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
         .route("/repository/status", routing::get(get_repository_status))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status, list_diffs), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -49,38 +50,6 @@ async fn get_revision(
         .as_ref()
         .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
     Ok(Json(repo.get_commit_for_revision(&commit_id)?))
-}
-
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-struct ListCommitsResponse {
-    /// Array of commits between the base and head commit IDs
-    /// in reverse chronological order.
-    commits: Vec<git2_ox::Commit>,
-    /// Array of diffs in this commit range
-    diffs: Vec<git2_ox::Diff>,
-}
-
-impl ListCommitsResponse {
-    pub fn try_from_commits_and_diffs<I, D>(
-        commits_iter: I,
-        diffs_iter: D,
-    ) -> Result<Self, api::AppError>
-    where
-        I: IntoIterator<Item = Result<git2_ox::Commit, git2_ox::error::Error>>,
-        D: IntoIterator<Item = Result<git2_ox::Diff, git2_ox::error::Error>>,
-    {
-        let commits = commits_iter
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(api::AppError::from)?;
-
-        let diffs = diffs_iter
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(api::AppError::from)?;
-        Ok(ListCommitsResponse { commits, diffs })
-    }
 }
 
 #[utoipa::path(
@@ -115,15 +84,39 @@ async fn checkout_revision(
 
 #[derive(Serialize, ToSchema, Deserialize, IntoParams)]
 #[serde(rename_all = "camelCase")]
-struct CommitRangeQuery {
+struct ListCommitsQuery {
+    /// string filter for the commits. Filters commits by their ID or summary.
+    filter: Option<String>,
+
+    // serde(flatten) does not work here, see https://github.com/juhaku/utoipa/issues/841
     /// The base revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the first commit is used.
     base_rev: Option<String>,
     /// The head revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the current HEAD is used.
     head_rev: Option<String>,
-    /// string filter for the commits. Filters commits by their ID or summary.
-    filter: Option<String>,
+}
+
+#[derive(Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+struct ListCommitsResponse {
+    /// Array of commits between the base and head commit IDs
+    /// in reverse chronological order.
+    commits: Vec<git2_ox::Commit>,
+}
+
+impl ListCommitsResponse {
+    pub fn try_from_commits<I>(commits_iter: I) -> Result<Self, api::AppError>
+    where
+        I: IntoIterator<Item = Result<git2_ox::Commit, git2_ox::error::Error>>,
+    {
+        let commits = commits_iter
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(api::AppError::from)?;
+
+        Ok(ListCommitsResponse { commits })
+    }
 }
 
 #[utoipa::path(
@@ -132,7 +125,7 @@ struct CommitRangeQuery {
     summary = "List commits",
     description = "List the commits in a range similar to `git log`, \
     the commits are always ordered from newest to oldest in the tree.",
-    params(CommitRangeQuery),
+    params(ListCommitsQuery),
     responses(
         (status = http::StatusCode::OK, description = "List of commits", body = ListCommitsResponse),
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
@@ -140,7 +133,7 @@ struct CommitRangeQuery {
 )]
 async fn list_commits(
     State(state): State<web::AppState>,
-    Query(query): Query<CommitRangeQuery>,
+    Query(query): Query<ListCommitsQuery>,
 ) -> Result<Json<ListCommitsResponse>, api::AppError> {
     let guard = state.repo().lock().await;
     let repo = guard
@@ -156,12 +149,64 @@ async fn list_commits(
             Err(_) => true,
         });
 
+    Ok(Json(ListCommitsResponse::try_from_commits(commits)?))
+}
+
+#[derive(Serialize, ToSchema, Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct CommitRangeQuery {
+    /// The base revision of the range, this can be short hash, full hash, a tag,
+    /// or any other reference such a branch name. If empty, the first commit is used.
+    base_rev: Option<String>,
+    /// The head revision of the range, this can be short hash, full hash, a tag,
+    /// or any other reference such a branch name. If empty, the current HEAD is used.
+    head_rev: Option<String>,
+}
+
+#[derive(Serialize, ToSchema, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct ListDiffsResponse {
+    /// Array of diffs in this commit range
+    diffs: Vec<git2_ox::Diff>,
+}
+
+impl ListDiffsResponse {
+    pub fn try_from_diffs<I>(diffs_iter: I) -> Result<Self, api::AppError>
+    where
+        I: IntoIterator<Item = Result<git2_ox::Diff, git2_ox::error::Error>>,
+    {
+        let diffs = diffs_iter
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(api::AppError::from)?;
+        Ok(Self { diffs })
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/diffs",
+    summary = "List diffs",
+    description = "List the diffs in a commit range",
+    params(CommitRangeQuery),
+    responses(
+        (status = http::StatusCode::OK, description = "List of diffs", body = ListDiffsResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn list_diffs(
+    State(state): State<web::AppState>,
+    Query(query): Query<CommitRangeQuery>,
+) -> Result<Json<ListDiffsResponse>, api::AppError> {
+    let guard = state.repo().lock().await;
+    let repo = guard
+        .as_ref()
+        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
+
     let diffs_iter =
         repo.iter_diffs_between_revisions(query.base_rev.as_deref(), query.head_rev.as_deref())?;
 
-    Ok(Json(ListCommitsResponse::try_from_commits_and_diffs(
-        commits, diffs_iter,
-    )?))
+    Ok(Json(ListDiffsResponse::try_from_diffs(diffs_iter)?))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]

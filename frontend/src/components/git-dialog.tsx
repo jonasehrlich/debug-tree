@@ -1,4 +1,4 @@
-import { fetchCommitsAndDiffs } from "@/client";
+import { fetchCommits, fetchDiffs } from "@/client";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
 import type { Commit, Diff } from "@/types/api-types";
@@ -108,18 +108,19 @@ export const GitDialog = () => {
   }, [theme, systemTheme]);
 
   React.useEffect(() => {
-    fetchCommitsAndDiffs({
+    const commitRange = {
       baseRev: gitRevisions[0],
       headRev: gitRevisions[1],
-    })
-      .then((data) => {
+    };
+    Promise.all([fetchCommits(commitRange), fetchDiffs(commitRange)])
+      .then(([commits, diffs]) => {
         setGitData({
-          commits: data.commits,
-          diffs: data.diffs,
+          commits,
+          diffs,
         });
       })
       .catch((error: unknown) => {
-        let message = "";
+        let message = "Unknown Error";
         if (typeof error === "object" && error !== null && "message" in error) {
           message = String((error as { message?: unknown }).message);
         }
