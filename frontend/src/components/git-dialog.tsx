@@ -6,7 +6,6 @@ import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
 import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
-import { useTheme } from "next-themes";
 import React from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
@@ -86,22 +85,6 @@ export const GitDialog = () => {
   const [selectedCommit, setSelectedCommit] = React.useState<Commit | null>(
     null,
   );
-
-  const { theme, systemTheme } = useTheme();
-  const getTheme = (theme: string, systemTheme: string) => {
-    if (theme === "system") {
-      return systemTheme;
-    }
-    return theme;
-  };
-  const [isDarkMode, setIsDarkMode] = React.useState(
-    getTheme(theme ?? "system", systemTheme ?? "light") === "dark",
-  );
-  React.useEffect(() => {
-    setIsDarkMode(
-      getTheme(theme ?? "system", systemTheme ?? "light") === "dark",
-    );
-  }, [theme, systemTheme]);
 
   React.useEffect(() => {
     if (!isOpen || gitRevisions[0] === null || gitRevisions[1] === null) {
