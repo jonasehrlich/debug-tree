@@ -28,7 +28,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
     );
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 border rounded-md p-2">
       <div className="font-semibold items-center flex justify-between">
         <div className="font-mono">
           {commit.id.slice(0, 7)} {commit.summary}
@@ -47,7 +47,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
       <div className="prose prose-markdown max-w-none rounded-md py-2">
         <Markdown children={commit.body} />
       </div>
-      <div className="overflow-hidden text-sm text-muted-foreground font-mono">
+      <div className="overflow-hidden text-xs text-muted-foreground font-mono">
         <p>
           <strong>Date:</strong> {new Date(commit.time).toLocaleString()}
         </p>
@@ -130,12 +130,12 @@ export const GitDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent
-        className="h-[80vh] w-[80vw] min-w-xs sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0 overflow-y-auto"
+        className="w-[80vw] h-[80vh] sm:max-w-[80vw] min-w-md p-0 flex flex-col"
         aria-describedby={undefined}
       >
         <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle>Git Graph and Diff</DialogTitle>
-          <div className="flex space-x-2 select-none mt-2">
+          <div className="flex flex-wrap gap-2 select-none">
             <Badge variant="secondary" className="font-mono">
               <GitGraph /> {formatGitRevision(gitRevisions[0])}..
               {formatGitRevision(gitRevisions[1])}
@@ -151,106 +151,121 @@ export const GitDialog = () => {
           </div>
         </DialogHeader>
 
-        <Tabs
-          defaultValue="tab-graph"
-          className="grid grid-rows-[auto_1fr] min-h-0 px-6 pb-6"
-        >
-          <TabsList>
-            <TabsTrigger value="tab-graph">
-              <GitBranch />
-              Graph
-            </TabsTrigger>
-            <TabsTrigger value="tab-diff">
-              <GitCompareArrows />
-              Diff
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="tab-graph" className="mt-4 min-h-0">
-            <div className="flex h-full flex-col gap-4 md:flex-row">
-              {/* Left Column */}
-              <div className="w-full md:w-3/8">
-                <ScrollArea className="h-full rounded-md border text-sm">
-                  {gitData?.commits.length ? (
-                    <div className="divide-y">
-                      {gitData.commits.map((commit) => (
-                        <div
-                          key={commit.id}
-                          className={cn(
-                            "text-xs p-2 px-4 truncate text-ellipsis cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 select-none cursor-pointer font-mono",
-                            {
-                              "bg-secondary": selectedCommit?.id === commit.id,
-                            },
-                          )}
-                          onClick={() => {
-                            if (
-                              selectedCommit &&
-                              selectedCommit.id == commit.id
-                            ) {
-                              setSelectedCommit(null);
-                            } else {
-                              setSelectedCommit(commit);
-                            }
-                          }}
-                        >
-                          {commit.summary}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center p-2 text-muted-foreground select-none">
-                      No commits to display
-                    </div>
-                  )}
-                </ScrollArea>
-              </div>
-
-              {/* Right Column */}
-              <div className="w-full p-2 md:w-5/8">
-                <CommitDetails commit={selectedCommit} />
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent
-            value="tab-diff"
-            className="h-full min-h-0 w-full text-sm space-y-4"
+        {/*
+          The main content area uses flex-grow to fill available space and min-h-0
+          to prevent its children from overflowing the dialog boundaries.
+        */}
+        <div className="flex-grow px-6 pb-6 min-h-0">
+          <Tabs
+            defaultValue="tab-graph"
+            className="w-full h-full flex flex-col"
           >
-            {/* TODO: this shifts the scroll container down */}
-            <ButtonGroup
-              selectedButton={isInlineDiff ? "inline" : "split"}
-              onChange={(key) => {
-                setIsInlineDiff(key === "inline");
-              }}
-              variant="outline"
-              size="sm"
-              buttons={[
-                {
-                  key: "inline",
-                  label: "Inline View",
-                },
-                {
-                  key: "split",
-                  label: "Split View",
-                },
-              ]}
-            />
-            <div className="flex flex-col h-full w-full overflow-y-auto space-y-4">
-              {gitData?.diffs.length ? (
-                gitData.diffs.map((diff, index) => (
-                  <DiffViewer
-                    key={index}
-                    patch={diff.patch}
-                    oldSource={diff.old?.content ?? ""}
-                    viewType={diffViewType}
-                  />
-                ))
-              ) : (
-                <div className="text-center p-2 text-muted-foreground select-none">
-                  No diffs to display
+            <TabsList className="shrink-0">
+              <TabsTrigger value="tab-graph">
+                <GitBranch />
+                Graph
+              </TabsTrigger>
+              <TabsTrigger value="tab-diff">
+                <GitCompareArrows />
+                Diff
+              </TabsTrigger>
+            </TabsList>
+
+            {/*
+              Each TabsContent panel must also grow and have min-h-0 to ensure
+              its internal scrolling elements behave correctly.
+            */}
+            <TabsContent value="tab-graph" className="flex-grow min-h-0 pt-4">
+              <div className="flex flex-col md:flex-row h-full gap-4">
+                {/* Left Column */}
+                <div className="w-full md:w-3/8 max-h-[150px] md:max-h-full">
+                  <ScrollArea className="h-full rounded-md border text-sm">
+                    {gitData?.commits.length ? (
+                      <div className="divide-y font-mono">
+                        {gitData.commits.map((commit) => (
+                          <div
+                            key={commit.id}
+                            className={cn(
+                              "text-xs p-2 px-4 truncate text-ellipsis cursor-pointer hover:bg-secondary/80",
+                              "dark:hover:bg-secondary/80 select-none cursor-pointer",
+                              {
+                                "bg-secondary":
+                                  selectedCommit?.id === commit.id,
+                              },
+                            )}
+                            onClick={() => {
+                              if (
+                                selectedCommit &&
+                                selectedCommit.id == commit.id
+                              ) {
+                                setSelectedCommit(null);
+                              } else {
+                                setSelectedCommit(commit);
+                              }
+                            }}
+                          >
+                            {commit.summary}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center p-2 text-muted-foreground select-none">
+                        No commits to display
+                      </div>
+                    )}
+                  </ScrollArea>
                 </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+
+                {/* Right Column */}
+                <div className="w-full md:w-5/8 flex-grow overflow-y-auto space-y-4">
+                  <CommitDetails commit={selectedCommit} />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent
+              value="tab-diff"
+              className="flex-grow min-h-0 flex flex-col pt-4"
+            >
+              <div className="shrink-0 flex items-center gap-2 mb-4">
+                <ButtonGroup
+                  selectedButton={isInlineDiff ? "inline" : "split"}
+                  onChange={(key) => {
+                    setIsInlineDiff(key === "inline");
+                  }}
+                  variant="outline"
+                  size="sm"
+                  buttons={[
+                    {
+                      key: "inline",
+                      label: "Inline View",
+                    },
+                    {
+                      key: "split",
+                      label: "Split View",
+                    },
+                  ]}
+                />
+              </div>
+              <div className="flex-grow overflow-y-auto space-y-4">
+                {gitData?.diffs.length ? (
+                  gitData.diffs.map((diff, index) => (
+                    <DiffViewer
+                      key={index}
+                      patch={diff.patch}
+                      oldSource={diff.old?.content ?? ""}
+                      viewType={diffViewType}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center p-2 text-muted-foreground select-none">
+                    No diffs to display
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
