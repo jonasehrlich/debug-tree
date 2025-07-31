@@ -2,9 +2,10 @@ import { fetchCommits, fetchDiffs } from "@/client";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
 import type { Commit, Diff } from "@/types/api-types";
+import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { GitBranch, GitCompareArrows } from "lucide-react";
+import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
 import { useTheme } from "next-themes";
 import React from "react";
 import ReactDiffViewer from "react-diff-viewer-continued";
@@ -12,6 +13,7 @@ import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
+import { Badge } from "./ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -146,7 +148,22 @@ export const GitDialog = () => {
       <DialogContent className="h-[80vh] w-[80vw] min-w-xs sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0 overflow-y-auto">
         <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle>Git</DialogTitle>
-          <DialogDescription>See Git graph and diff below</DialogDescription>
+          <DialogDescription>
+            <div className="flex space-x-2 select-none">
+              <Badge variant="secondary" className="font-mono">
+                <GitGraph /> {formatGitRevision(gitRevisions[0])}..
+                {formatGitRevision(gitRevisions[1])}
+              </Badge>
+              <Badge variant="secondary">
+                <GitCommit />
+                {gitData?.commits.length} commits
+              </Badge>
+              <Badge variant="secondary">
+                <GitCompareArrows />
+                {gitData?.diffs.length} files changed
+              </Badge>
+            </div>
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs
