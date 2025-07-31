@@ -137,7 +137,7 @@ export const GitDialog = () => {
   }, [isOpen, setSelectedCommit]);
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="h-[80vh] w-[80vw] sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0">
+      <DialogContent className="h-[80vh] w-[80vw] min-w-xs sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0 overflow-y-auto">
         <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle>Git</DialogTitle>
           <DialogDescription>See Git graph and diff below</DialogDescription>
