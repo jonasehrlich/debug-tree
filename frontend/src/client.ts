@@ -2,6 +2,7 @@ import log from "loglevel";
 import createClient, { type Middleware } from "openapi-fetch";
 import z from "zod";
 import type { paths } from "./types/api";
+import type { Commit, Diff } from "./types/api-types";
 
 const logger = log.getLogger("api-client");
 
@@ -49,7 +50,7 @@ interface CommonGitMetadata<T extends GitMetaDataType> {
   /** type of the metadata */
   type: T;
 }
-type CommitMetadata = CommonGitMetadata<"commit">;
+export type CommitMetadata = CommonGitMetadata<"commit">;
 type TagMetadata = CommonGitMetadata<"tag">;
 type BranchMetadata = CommonGitMetadata<"branch">;
 export type GitMetadata = CommitMetadata | TagMetadata | BranchMetadata;
@@ -115,16 +116,28 @@ export async function checkoutRevision(revision: string): Promise<void> {
   }
 }
 
-export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
+/**
+ * Get commits over a range or
+ * @param args Filter parameters for the commits to receive
+ * @returns
+ */
+export const fetchCommitsAndDiffs = async (args?: {
+  filter?: string;
+  baseRev?: string;
+  headRev?: string;
+}): Promise<{ commits: Commit[]; diffs: Diff[] }> => {
   const { data, error } = await client.GET("/api/v1/git/commits", {
-    params: { query: { filter } },
+    params: { query: args },
   });
-
   if (error) {
     const errorMessage = `Error fetching Git commits: ${error.message}`;
     throw new Error(errorMessage);
   }
+  return data;
+};
 
+export async function fetchCommits(filter?: string): Promise<CommitMetadata[]> {
+  const data = await fetchCommitsAndDiffs({ filter });
   return data.commits.map((commit) => ({
     rev: commit.id,
     summary: commit.summary,
@@ -132,7 +145,7 @@ export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
   }));
 }
 
-export async function fetchTags(filter?: string): Promise<GitMetadata[]> {
+export async function fetchTags(filter?: string): Promise<TagMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/tags", {
     params: { query: { filter } },
   });
@@ -149,7 +162,9 @@ export async function fetchTags(filter?: string): Promise<GitMetadata[]> {
   }));
 }
 
-export async function fetchBranches(filter?: string): Promise<GitMetadata[]> {
+export async function fetchBranches(
+  filter?: string,
+): Promise<BranchMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/branches", {
     params: { query: { filter } },
   });

@@ -1,4 +1,4 @@
-import { client } from "@/client";
+import { fetchCommitsAndDiffs } from "@/client";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
 import type { Commit, Diff } from "@/types/api-types";
@@ -22,11 +22,7 @@ import {
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
-interface CommitDetailsProps {
-  commit: Commit | null;
-}
-
-const CommitDetails = ({ commit }: CommitDetailsProps) => {
+const CommitDetails = ({ commit }: { commit: Commit | null }) => {
   if (!commit) {
     return (
       <div className="text-muted-foreground text-sm text-center">
@@ -112,37 +108,25 @@ export const GitDialog = () => {
   }, [theme, systemTheme]);
 
   React.useEffect(() => {
-    // This effect can be used to perform any side effects when the panel opens or closes
-    if (isOpen && gitRevisions.length >= 1) {
-      client
-        .GET("/api/v1/git/commits", {
-          params: {
-            query: {
-              baseRev: gitRevisions[0],
-              headRev: gitRevisions[1] ?? null,
-            },
-          },
-        })
-        .then((response) => {
-          setGitData({
-            commits: response.data?.commits ?? [],
-            diffs: response.data?.diffs ?? [],
-          });
-        })
-        .catch((error: unknown) => {
-          let message = "";
-          if (
-            typeof error === "object" &&
-            error !== null &&
-            "message" in error
-          ) {
-            message = String((error as { message?: unknown }).message);
-          }
-          toast.error("Error fetching Git Tree data", {
-            description: message,
-          });
+    fetchCommitsAndDiffs({
+      baseRev: gitRevisions[0],
+      headRev: gitRevisions[1],
+    })
+      .then((data) => {
+        setGitData({
+          commits: data.commits,
+          diffs: data.diffs,
         });
-    }
+      })
+      .catch((error: unknown) => {
+        let message = "";
+        if (typeof error === "object" && error !== null && "message" in error) {
+          message = String((error as { message?: unknown }).message);
+        }
+        toast.error("Error fetching Git Tree data", {
+          description: message,
+        });
+      });
   }, [isOpen, gitRevisions]);
 
   React.useEffect(() => {
