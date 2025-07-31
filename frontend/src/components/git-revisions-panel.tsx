@@ -87,11 +87,11 @@ export const GitRevisionsPanel = () => {
               <CardHeader>
                 <CardTitle>Git Revisions</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="divide-y">
                 {pinnedGitRevisions.map(
                   (rev, index) =>
                     rev && (
-                      <div key={index} className="p-2 border-b">
+                      <div key={index} className="py-2">
                         <span className="font-mono block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                           {formatGitRevision(rev)}
                         </span>
