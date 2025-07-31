@@ -8,11 +8,11 @@ import { formatDistanceToNow } from "date-fns";
 import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
 import { useTheme } from "next-themes";
 import React from "react";
-import ReactDiffViewer from "react-diff-viewer-continued";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
+import { DiffViewer } from "./diff-viewer";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
@@ -228,21 +228,7 @@ export const GitDialog = () => {
             <div className="flex flex-col h-full w-full min-h-o overflow-y-auto space-y-4">
               {gitData?.diffs.length ? (
                 gitData.diffs.map((diff, index) => (
-                  <ReactDiffViewer
-                    leftTitle={diff.old?.path ?? diff.new?.path ?? ""}
-                    rightTitle={diff.new?.path ?? ""}
-                    oldValue={diff.old?.content ?? ""}
-                    newValue={diff.new?.content ?? ""}
-                    useDarkTheme={isDarkMode}
-                    splitView={false}
-                    key={index}
-                    disableWordDiff={true}
-                    styles={{
-                      diffContainer: {
-                        minWidth: "200px",
-                      },
-                    }}
-                  />
+                  <DiffViewer key={index} patch={diff.patch} />
                 ))
               ) : (
                 <div className="text-center p-2 text-muted-foreground select-none">
