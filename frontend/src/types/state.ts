@@ -1,4 +1,4 @@
-import type { GitStatus } from "@/client";
+import type { GitMetadata, GitStatus } from "@/client";
 import {
   type Edge,
   type OnConnect,
@@ -55,15 +55,15 @@ export interface AppState {
     | { type: "edit"; data: EditAppNodeData }
     | null;
   /** Array of revisions pinned for a diff. The array can only con */
-  gitRevisions: string[];
+  pinnedGitRevisions: [GitMetadata | null, GitMetadata | null];
   /**
-   * Add a Git revision to the {@link gitRevisions}
+   * Add a Git revision to the {@link pinnedGitRevisions}
    * @description If two revisions are in the array already, the second one is replaced
    * @param rev - Revision to add
    */
-  addGitRevision: (rev: string) => void;
+  addPinnedGitRevision: (rev: GitMetadata) => void;
   /** Clear the Git revisions array */
-  clearGitRevisions: () => void;
+  clearPinnedGitRevisions: () => void;
   /** The current Git status of the repository */
   gitStatus: GitStatus | null;
   /** The Git status of the repository before the checkout*/
@@ -141,13 +141,6 @@ export interface UiState {
    * @param isVisible - Whether the Minimap should be visible
    */
   setIsMiniMapVisible: (isVisible: boolean) => void;
-  /** Whether to use inline diffs for the diff view */
-  isInlineDiff: boolean;
-  /**
-   * Set {@link isInlineDiff}
-   * @param isInlineDiff - Whether to use an inline diff
-   */
-  setIsInlineDiff: (isInlineDiff: boolean) => void;
   /** Whether the help dialog should be displayed */
   isHelpDialogOpen: boolean;
   /**
@@ -162,4 +155,11 @@ export interface UiState {
    * @param isOpen - Whether the dialog should be opened or closed
    */
   setIsKeybindingsDialogOpen: (isOpen: boolean) => void;
+  /** Whether the Git Dialog should be displayed */
+  isGitDialogOpen: boolean;
+  /**
+   * Set {@link isGitDialogOpen}
+   * @param isOpen - Whether the dialog should be opened or closed
+   */
+  setIsGitDialogOpen: (isOpen: boolean) => void;
 }

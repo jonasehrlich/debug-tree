@@ -2,7 +2,7 @@ import {
   createBranch,
   createTag,
   fetchBranches,
-  fetchCommits,
+  fetchCommitsMetadata,
   fetchTags,
   type GitMetadata,
 } from "@/client";
@@ -72,7 +72,7 @@ export const NodeForm = ({
     value: string,
   ): Promise<GitMetadata[]> => {
     const [revisions, tags] = await Promise.all([
-      fetchCommits(value),
+      fetchCommitsMetadata(value),
       fetchTags(value),
     ]);
     return [...revisions, ...tags];

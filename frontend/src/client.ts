@@ -49,7 +49,7 @@ interface CommonGitMetadata<T extends GitMetaDataType> {
   /** type of the metadata */
   type: T;
 }
-type CommitMetadata = CommonGitMetadata<"commit">;
+export type CommitMetadata = CommonGitMetadata<"commit">;
 type TagMetadata = CommonGitMetadata<"tag">;
 type BranchMetadata = CommonGitMetadata<"branch">;
 export type GitMetadata = CommitMetadata | TagMetadata | BranchMetadata;
@@ -115,24 +115,56 @@ export async function checkoutRevision(revision: string): Promise<void> {
   }
 }
 
-export async function fetchCommits(filter?: string): Promise<GitMetadata[]> {
+/**
+ * Get commits over a range and filter them by commit ID and summary
+ * @param args Filter parameters for the commits to receive
+ * @returns API response
+ */
+export const fetchCommits = async (args?: {
+  filter?: string;
+  baseRev?: string;
+  headRev?: string;
+}) => {
   const { data, error } = await client.GET("/api/v1/git/commits", {
-    params: { query: { filter } },
+    params: { query: args },
   });
-
   if (error) {
     const errorMessage = `Error fetching Git commits: ${error.message}`;
     throw new Error(errorMessage);
   }
+  return data.commits;
+};
 
-  return data.commits.map((commit) => ({
+/**
+ * Get the diffs between two revisions
+ * @param range Range of the revisions
+ * @returns Array of diffs for the files
+ */
+export const fetchDiffs = async (range?: {
+  baseRev?: string;
+  headRev?: string;
+}) => {
+  const { data, error } = await client.GET("/api/v1/git/diffs", {
+    params: { query: range },
+  });
+  if (error) {
+    throw new Error(`Error fetching diffs: ${error.message}`);
+  }
+  return data.diffs;
+};
+
+export async function fetchCommitsMetadata(
+  filter?: string,
+): Promise<CommitMetadata[]> {
+  const data = await fetchCommits({ filter });
+  return data.map((commit) => ({
     rev: commit.id,
     summary: commit.summary,
     type: "commit",
   }));
 }
 
-export async function fetchTags(filter?: string): Promise<GitMetadata[]> {
+export async function fetchTags(filter?: string): Promise<TagMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/tags", {
     params: { query: { filter } },
   });
@@ -149,7 +181,9 @@ export async function fetchTags(filter?: string): Promise<GitMetadata[]> {
   }));
 }
 
-export async function fetchBranches(filter?: string): Promise<GitMetadata[]> {
+export async function fetchBranches(
+  filter?: string,
+): Promise<BranchMetadata[]> {
   const { data, error } = await client.GET("/api/v1/git/branches", {
     params: { query: { filter } },
   });

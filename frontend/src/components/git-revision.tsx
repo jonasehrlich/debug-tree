@@ -9,7 +9,7 @@ import { useShallow } from "zustand/react/shallow";
 import { ActionButton, CopyButton } from "./action-button";
 
 const selector = (s: AppState) => ({
-  addGitRevision: s.addGitRevision,
+  addPinnedGitRevision: s.addPinnedGitRevision,
   checkoutGitRevision: s.checkoutGitRevision,
 });
 
@@ -36,7 +36,7 @@ interface GitRevisionProps {
   revision: GitMetadata;
 }
 export const GitRevision = ({ revision }: GitRevisionProps) => {
-  const { addGitRevision, checkoutGitRevision } = useStore(
+  const { addPinnedGitRevision, checkoutGitRevision } = useStore(
     useShallow(selector),
   );
 
@@ -54,7 +54,7 @@ export const GitRevision = ({ revision }: GitRevisionProps) => {
         tooltipContent="Pin revision"
         icon={<Pin />}
         onClick={() => {
-          addGitRevision(formattedRev);
+          addPinnedGitRevision(revision);
           return true;
         }}
         className="size-6"

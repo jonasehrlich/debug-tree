@@ -94,7 +94,7 @@ const initialState = {
   flows: [],
   hasUnsavedChanges: false,
   dialogNodeData: null,
-  gitRevisions: [],
+  pinnedGitRevisions: [null, null] as [null, null],
   gitStatus: null,
   prevGitStatus: null,
 };
@@ -145,17 +145,17 @@ export const useStore = create<AppState>()(
         }
         set({ dialogNodeData: { type: "pending", data: nodeData } });
       },
-      addGitRevision(rev) {
-        const revs = get().gitRevisions;
-        if (revs.length == 2) {
-          revs[1] = rev;
+      addPinnedGitRevision(rev) {
+        const revs = get().pinnedGitRevisions;
+        if (revs[0] === null) {
+          revs[0] = rev;
         } else {
-          revs.push(rev);
+          revs[1] = rev;
         }
-        set({ gitRevisions: revs });
+        set({ pinnedGitRevisions: revs });
       },
-      clearGitRevisions() {
-        set({ gitRevisions: [] });
+      clearPinnedGitRevisions() {
+        set({ pinnedGitRevisions: [null, null] });
       },
       async checkoutGitRevision(rev: string) {
         try {
@@ -420,10 +420,6 @@ export const useUiStore = create<UiState>()(
       setIsFlowsDialogOpen(isOpen) {
         set({ isFlowsDialogOpen: isOpen });
       },
-      isInlineDiff: false,
-      setIsInlineDiff(isInlineDiff) {
-        set({ isInlineDiff: isInlineDiff });
-      },
       isHelpDialogOpen: false,
       setIsHelpDialogOpen(isOpen) {
         set({ isHelpDialogOpen: isOpen });
@@ -432,8 +428,19 @@ export const useUiStore = create<UiState>()(
       setIsKeybindingsDialogOpen(isOpen) {
         set({ isKeybindingsDialogOpen: isOpen });
       },
+      isGitDialogOpen: false,
+      setIsGitDialogOpen(isOpen) {
+        set({ isGitDialogOpen: isOpen });
+      },
     }),
     {
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(
+            ([key]) => !["isGitDialogOpen", "setIsGitDialogOpen"].includes(key),
+          ),
+        ),
+
       name: "debug-flow-ui-storage",
     },
   ),

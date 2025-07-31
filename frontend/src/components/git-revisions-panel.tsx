@@ -12,31 +12,31 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useStore } from "@/store";
+import { useStore, useUiStore } from "@/store";
 import { formatGitRevision } from "@/types/nodes";
-import type { AppState } from "@/types/state";
+import type { AppState, UiState } from "@/types/state";
 import { Panel } from "@xyflow/react";
 import { GitGraph, X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { GitStatusCard } from "./git-status-card";
 
 const selector = (state: AppState) => ({
-  gitRevisions: state.gitRevisions,
-  clearGitRevisions: state.clearGitRevisions,
+  pinnedGitRevisions: state.pinnedGitRevisions,
+  clearGitRevisions: state.clearPinnedGitRevisions,
   gitStatus: state.gitStatus,
   prevGitStatus: state.prevGitStatus,
   restoreGitStatus: state.restoreGitStatus,
-  hasRevisions: state.gitRevisions.length > 0,
-  displayPanel: state.gitRevisions.length > 0 || state.gitStatus != null,
+  hasRevisions: state.pinnedGitRevisions[0] !== null,
+  displayPanel: state.pinnedGitRevisions[0] !== null || state.gitStatus != null,
 });
 
-interface GitRevisionsPanelProps {
-  openGitGraph: () => void;
-}
+const uiSelector = (s: UiState) => ({
+  setIsGitDialogOpen: s.setIsGitDialogOpen,
+});
 
-export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
+export const GitRevisionsPanel = () => {
   const {
-    gitRevisions,
+    pinnedGitRevisions,
     clearGitRevisions,
     gitStatus,
     prevGitStatus,
@@ -45,7 +45,9 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
     displayPanel,
   } = useStore(useShallow(selector));
 
-  const prevRevison = prevGitStatus
+  const { setIsGitDialogOpen } = useUiStore(useShallow(uiSelector));
+
+  const prevRevision = prevGitStatus
     ? formatGitRevision(prevGitStatus.revision)
     : "previous status";
 
@@ -74,7 +76,7 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    Checkout revision {prevRevison}
+                    Checkout revision {prevRevision}
                   </TooltipContent>
                 </Tooltip>
               )}
@@ -85,14 +87,17 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
               <CardHeader>
                 <CardTitle>Git Revisions</CardTitle>
               </CardHeader>
-              <CardContent>
-                {gitRevisions.map((rev, index) => (
-                  <div key={index} className="p-2 border-b">
-                    <span className="font-mono block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                      {rev}
-                    </span>
-                  </div>
-                ))}
+              <CardContent className="divide-y">
+                {pinnedGitRevisions.map(
+                  (rev, index) =>
+                    rev && (
+                      <div key={index} className="py-2">
+                        <span className="font-mono block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                          {formatGitRevision(rev)}
+                        </span>
+                      </div>
+                    ),
+                )}
               </CardContent>
               <CardFooter className="flex gap-2">
                 <Button
@@ -103,8 +108,13 @@ export const GitRevisionsPanel = ({ openGitGraph }: GitRevisionsPanelProps) => {
                 >
                   <X /> Clear
                 </Button>
-                {gitRevisions.length === 2 && (
-                  <Button onClick={openGitGraph} variant="outline">
+                {pinnedGitRevisions[1] !== null && (
+                  <Button
+                    onClick={() => {
+                      setIsGitDialogOpen(true);
+                    }}
+                    variant="outline"
+                  >
                     <GitGraph />
                     Show Graph
                   </Button>
