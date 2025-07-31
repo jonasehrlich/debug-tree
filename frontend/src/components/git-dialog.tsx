@@ -6,13 +6,12 @@ import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
 import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
-import { useTheme } from "next-themes";
 import React from "react";
-import ReactDiffViewer from "react-diff-viewer-continued";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
+import { DiffViewer } from "./diff-viewer";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
@@ -87,22 +86,6 @@ export const GitDialog = () => {
     null,
   );
 
-  const { theme, systemTheme } = useTheme();
-  const getTheme = (theme: string, systemTheme: string) => {
-    if (theme === "system") {
-      return systemTheme;
-    }
-    return theme;
-  };
-  const [isDarkMode, setIsDarkMode] = React.useState(
-    getTheme(theme ?? "system", systemTheme ?? "light") === "dark",
-  );
-  React.useEffect(() => {
-    setIsDarkMode(
-      getTheme(theme ?? "system", systemTheme ?? "light") === "dark",
-    );
-  }, [theme, systemTheme]);
-
   React.useEffect(() => {
     if (!isOpen || gitRevisions[0] === null || gitRevisions[1] === null) {
       return;
@@ -146,7 +129,7 @@ export const GitDialog = () => {
       >
         <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle>Git Graph and Diff</DialogTitle>
-          <div className="flex space-x-2 select-none">
+          <div className="flex space-x-2 select-none mt-2">
             <Badge variant="secondary" className="font-mono">
               <GitGraph /> {formatGitRevision(gitRevisions[0])}..
               {formatGitRevision(gitRevisions[1])}
@@ -216,33 +199,19 @@ export const GitDialog = () => {
               </div>
 
               {/* Right Column */}
-              <div className="w-full p-4 md:w-5/8">
+              <div className="w-full p-2 md:w-5/8">
                 <CommitDetails commit={selectedCommit} />
               </div>
             </div>
           </TabsContent>
           <TabsContent
             value="tab-diff"
-            className="h-full min-h-0 w-full text-sm"
+            className="h-full min-h-0 w-full text-sm pt-4"
           >
-            <div className="flex flex-col h-full w-full min-h-o overflow-y-auto space-y-4">
+            <div className="flex flex-col h-full w-full overflow-y-auto">
               {gitData?.diffs.length ? (
                 gitData.diffs.map((diff, index) => (
-                  <ReactDiffViewer
-                    leftTitle={diff.old?.path ?? diff.new?.path ?? ""}
-                    rightTitle={diff.new?.path ?? ""}
-                    oldValue={diff.old?.content ?? ""}
-                    newValue={diff.new?.content ?? ""}
-                    useDarkTheme={isDarkMode}
-                    splitView={false}
-                    key={index}
-                    disableWordDiff={true}
-                    styles={{
-                      diffContainer: {
-                        minWidth: "200px",
-                      },
-                    }}
-                  />
+                  <DiffViewer key={index} patch={diff.patch} />
                 ))
               ) : (
                 <div className="text-center p-2 text-muted-foreground select-none">

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "react-diff-view/style/index.css";
+
 @plugin "@tailwindcss/typography";
 @config "../../tailwind.config.js";
 
@@ -132,6 +134,55 @@
   --tw-prose-pre-bg: var(--accent);
   --tw-prose-th-borders: var(--accent);
   --tw-prose-td-borders: var(--accent);
+}
+
+/** Colors for react-diff-view **/
+:root {
+  --diff-font-family: var(--font-mono);
+  --diff-background-color: var(--background);
+  --diff-text-color: var(--foreground);
+  --diff-font-family: var(--font-mono);
+  --diff-selection-background-color: #012044;
+  --diff-selection-text-color: var(--diff-text-color);
+  --diff-gutter-insert-background-color: var(--color-emerald-200);
+  --diff-gutter-insert-text-color: var(--diff-text-color);
+  --diff-gutter-delete-background-color: var(--color-red-200);
+  --diff-gutter-delete-text-color: var(--diff-text-color);
+  --diff-gutter-selected-background-color: var(--color-amber-200);
+  --diff-gutter-selected-text-color: var(--diff-text-color);
+  --diff-code-insert-background-color: var(--color-emerald-100);
+  --diff-code-insert-text-color: var(--diff-text-color);
+  --diff-code-delete-background-color: var(--color-red-100);
+  --diff-code-delete-text-color: var(--diff-text-color);
+  --diff-code-insert-edit-background-color: var(--color-emerald-100);
+  --diff-code-insert-edit-text-color: var(--diff-text-color);
+  --diff-code-delete-edit-background-color: var(--color-red-100);
+  --diff-code-delete-edit-text-color: var(--diff-text-color);
+  --diff-code-selected-background-color: var(--color-amber-100);
+  --diff-code-selected-text-color: var(--diff-text-color);
+  --diff-omit-gutter-line-color: var(--color-blue-200);
+}
+
+.dark {
+  --diff-selection-background-color: #012044;
+  --diff-selection-text-color: var(--diff-text-color);
+  --diff-gutter-insert-background-color: var(--color-emerald-900);
+  --diff-gutter-insert-text-color: var(--diff-text-color);
+  --diff-gutter-delete-background-color: var(--color-red-900);
+  --diff-gutter-delete-text-color: var(--diff-text-color);
+  --diff-gutter-selected-background-color: var(--color-amber-900);
+  --diff-gutter-selected-text-color: var(--diff-text-color);
+  --diff-code-insert-background-color: var(--color-emerald-950);
+  --diff-code-insert-text-color: var(--diff-text-color);
+  --diff-code-delete-background-color: var(--color-red-950);
+  --diff-code-delete-text-color: var(--diff-text-color);
+  --diff-code-insert-edit-background-color: var(--color-emerald-950);
+  --diff-code-insert-edit-text-color: var(--diff-text-color);
+  --diff-code-delete-edit-background-color: var(--color-red-950);
+  --diff-code-delete-edit-text-color: var(--diff-text-color);
+  --diff-code-selected-background-color: var(--color-amber-950);
+  --diff-code-selected-text-color: var(--diff-text-color);
+  --diff-omit-gutter-line-color: var(--color-blue-800);
 }
 
 @layer base {
