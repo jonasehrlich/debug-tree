@@ -7,10 +7,12 @@ import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
 import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
 import React from "react";
+import type { ViewType } from "react-diff-view";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
+import { ButtonGroup } from "./button-group";
 import { DiffViewer } from "./diff-viewer";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -75,11 +77,15 @@ const selector = (s: AppState) => ({
 const uiSelector = (s: UiState) => ({
   isOpen: s.isGitDialogOpen,
   setIsOpen: s.setIsGitDialogOpen,
+  isInlineDiff: s.isInlineDiff,
+  setIsInlineDiff: s.setIsInlineDiff,
+  diffViewType: (s.isInlineDiff ? "unified" : "split") as ViewType,
 });
 
 export const GitDialog = () => {
   const { gitRevisions } = useStore(useShallow(selector));
-  const { isOpen, setIsOpen } = useUiStore(useShallow(uiSelector));
+  const { isOpen, setIsOpen, isInlineDiff, setIsInlineDiff, diffViewType } =
+    useUiStore(useShallow(uiSelector));
 
   const [gitData, setGitData] = React.useState<GitGraphData>();
   const [selectedCommit, setSelectedCommit] = React.useState<Commit | null>(
@@ -206,8 +212,27 @@ export const GitDialog = () => {
           </TabsContent>
           <TabsContent
             value="tab-diff"
-            className="h-full min-h-0 w-full text-sm pt-4"
+            className="h-full min-h-0 w-full text-sm space-y-4"
           >
+            {/* TODO: this shifts the scroll container down */}
+            <ButtonGroup
+              selectedButton={isInlineDiff ? "inline" : "split"}
+              onChange={(key) => {
+                setIsInlineDiff(key === "inline");
+              }}
+              variant="outline"
+              size="sm"
+              buttons={[
+                {
+                  key: "inline",
+                  label: "Inline View",
+                },
+                {
+                  key: "split",
+                  label: "Split View",
+                },
+              ]}
+            />
             <div className="flex flex-col h-full w-full overflow-y-auto space-y-4">
               {gitData?.diffs.length ? (
                 gitData.diffs.map((diff, index) => (
@@ -215,6 +240,7 @@ export const GitDialog = () => {
                     key={index}
                     patch={diff.patch}
                     oldSource={diff.old?.content ?? ""}
+                    viewType={diffViewType}
                   />
                 ))
               ) : (

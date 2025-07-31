@@ -11,6 +11,7 @@ import {
   type DiffProps,
   type FileData,
   type HunkData,
+  type ViewType,
 } from "react-diff-view";
 import { Unfold } from "./unfold";
 
@@ -124,11 +125,13 @@ const DiffFile = React.memo(
 export const DiffViewer = ({
   patch,
   oldSource,
+  viewType,
 }: {
   /** Patch file content */
   patch: string;
   /** Old source file content */
   oldSource: string;
+  viewType: ViewType;
 }) => {
   const files = parseDiff(patch);
 
@@ -143,7 +146,7 @@ export const DiffViewer = ({
           <DiffFile
             file={file}
             oldSource={oldSource}
-            viewType="unified"
+            viewType={viewType}
             className="text-xs"
           />
         </div>
