@@ -14,13 +14,7 @@ import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
 import { Badge } from "./ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
@@ -146,25 +140,26 @@ export const GitDialog = () => {
   }
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="h-[80vh] w-[80vw] min-w-xs sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0 overflow-y-auto">
+      <DialogContent
+        className="h-[80vh] w-[80vw] min-w-xs sm:max-w-none sm:max-h-none grid grid-rows-[auto_1fr] p-0 overflow-y-auto"
+        aria-describedby={undefined}
+      >
         <DialogHeader className="p-6 pb-4 shrink-0">
-          <DialogTitle>Git</DialogTitle>
-          <DialogDescription>
-            <div className="flex space-x-2 select-none">
-              <Badge variant="secondary" className="font-mono">
-                <GitGraph /> {formatGitRevision(gitRevisions[0])}..
-                {formatGitRevision(gitRevisions[1])}
-              </Badge>
-              <Badge variant="secondary">
-                <GitCommit />
-                {gitData?.commits.length} commits
-              </Badge>
-              <Badge variant="secondary">
-                <GitCompareArrows />
-                {gitData?.diffs.length} files changed
-              </Badge>
-            </div>
-          </DialogDescription>
+          <DialogTitle>Git Graph and Diff</DialogTitle>
+          <div className="flex space-x-2 select-none">
+            <Badge variant="secondary" className="font-mono">
+              <GitGraph /> {formatGitRevision(gitRevisions[0])}..
+              {formatGitRevision(gitRevisions[1])}
+            </Badge>
+            <Badge variant="secondary">
+              <GitCommit />
+              {gitData?.commits.length} commits
+            </Badge>
+            <Badge variant="secondary">
+              <GitCompareArrows />
+              {gitData?.diffs.length} files changed
+            </Badge>
+          </div>
         </DialogHeader>
 
         <Tabs
