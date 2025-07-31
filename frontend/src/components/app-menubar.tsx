@@ -15,6 +15,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { keybindings } from "@/keybindings";
+import { capitalize } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
 import { edgeTypes, type EdgeType } from "@/types/edge";
 import type { AppNode } from "@/types/nodes";
@@ -242,7 +243,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
               >
                 {edgeTypes.map((type) => (
                   <MenubarRadioItem key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                    {capitalize(type)}
                   </MenubarRadioItem>
                 ))}
               </MenubarRadioGroup>

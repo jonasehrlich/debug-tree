@@ -40,3 +40,12 @@ export const copyToClipboard = async (text: string) => {
     throw e;
   }
 };
+
+/**
+ * Capitalize the first character of {@link text} and make the others lower case
+ * @param text Text to capitalize
+ * @returns Capitalized text
+ */
+export const capitalize = (text: string) => {
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};

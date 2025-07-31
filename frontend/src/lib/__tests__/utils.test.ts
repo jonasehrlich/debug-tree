@@ -1,4 +1,4 @@
-import { copyToClipboard, getNodeId } from "@/lib/utils";
+import { capitalize, copyToClipboard, getNodeId } from "@/lib/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("getNodeId", () => {
@@ -44,5 +44,20 @@ describe("copyToClipboard", () => {
       .mockRejectedValue(new Error("Clipboard error"));
 
     await expect(copyToClipboard("fail")).rejects.toThrow("Clipboard error");
+  });
+});
+
+describe("capitalize", () => {
+  it("capitalizes", () => {
+    const params = [
+      { input: "hello", expectedOutput: "Hello" },
+      { input: "HELLO", expectedOutput: "Hello" },
+      { input: "123", expectedOutput: "123" },
+      { input: "HELLO WORLD", expectedOutput: "Hello world" },
+    ];
+
+    for (const p of params) {
+      expect(capitalize(p.input)).equals(p.expectedOutput);
+    }
   });
 });
