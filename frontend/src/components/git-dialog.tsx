@@ -140,6 +140,7 @@ export const GitDialog = () => {
       setSelectedCommit(null);
     }
   }, [isOpen, setSelectedCommit]);
+
   if (gitRevisions[0] === null || gitRevisions[1] === null) {
     return null;
   }
@@ -180,37 +181,42 @@ export const GitDialog = () => {
               Diff
             </TabsTrigger>
           </TabsList>
-
           <TabsContent value="tab-graph" className="mt-4 min-h-0">
             <div className="flex h-full flex-col gap-4 md:flex-row">
               {/* Left Column */}
               <div className="w-full md:w-3/8">
-                <ScrollArea className="h-full rounded-md border">
-                  <div className="divide-y">
-                    {gitData?.commits.map((commit) => (
-                      <div
-                        key={commit.id}
-                        className={cn(
-                          "text-xs p-2 px-4 truncate text-ellipsis cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 select-none cursor-pointer font-mono",
-                          {
-                            "bg-secondary": selectedCommit?.id === commit.id,
-                          },
-                        )}
-                        onClick={() => {
-                          if (
-                            selectedCommit &&
-                            selectedCommit.id == commit.id
-                          ) {
-                            setSelectedCommit(null);
-                          } else {
-                            setSelectedCommit(commit);
-                          }
-                        }}
-                      >
-                        {commit.summary}
-                      </div>
-                    ))}
-                  </div>
+                <ScrollArea className="h-full rounded-md border text-sm">
+                  {gitData?.commits.length ? (
+                    <div className="divide-y">
+                      {gitData.commits.map((commit) => (
+                        <div
+                          key={commit.id}
+                          className={cn(
+                            "text-xs p-2 px-4 truncate text-ellipsis cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 select-none cursor-pointer font-mono",
+                            {
+                              "bg-secondary": selectedCommit?.id === commit.id,
+                            },
+                          )}
+                          onClick={() => {
+                            if (
+                              selectedCommit &&
+                              selectedCommit.id == commit.id
+                            ) {
+                              setSelectedCommit(null);
+                            } else {
+                              setSelectedCommit(commit);
+                            }
+                          }}
+                        >
+                          {commit.summary}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center p-2 text-muted-foreground select-none">
+                      No commits to display
+                    </div>
+                  )}
                 </ScrollArea>
               </div>
 
@@ -220,26 +226,34 @@ export const GitDialog = () => {
               </div>
             </div>
           </TabsContent>
-
-          <TabsContent value="tab-diff" className="h-full min-h-0 w-full">
+          <TabsContent
+            value="tab-diff"
+            className="h-full min-h-0 w-full text-sm"
+          >
             <div className="flex flex-col h-full w-full min-h-o overflow-y-auto space-y-4">
-              {gitData?.diffs.map((diff, index) => (
-                <ReactDiffViewer
-                  leftTitle={diff.old?.path ?? diff.new?.path ?? ""}
-                  rightTitle={diff.new?.path ?? ""}
-                  oldValue={diff.old?.content ?? ""}
-                  newValue={diff.new?.content ?? ""}
-                  useDarkTheme={isDarkMode}
-                  splitView={false}
-                  key={index}
-                  disableWordDiff={true}
-                  styles={{
-                    diffContainer: {
-                      minWidth: "200px",
-                    },
-                  }}
-                />
-              ))}
+              {gitData?.diffs.length ? (
+                gitData.diffs.map((diff, index) => (
+                  <ReactDiffViewer
+                    leftTitle={diff.old?.path ?? diff.new?.path ?? ""}
+                    rightTitle={diff.new?.path ?? ""}
+                    oldValue={diff.old?.content ?? ""}
+                    newValue={diff.new?.content ?? ""}
+                    useDarkTheme={isDarkMode}
+                    splitView={false}
+                    key={index}
+                    disableWordDiff={true}
+                    styles={{
+                      diffContainer: {
+                        minWidth: "200px",
+                      },
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="text-center p-2 text-muted-foreground select-none">
+                  No diffs to display
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
