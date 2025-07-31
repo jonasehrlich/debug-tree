@@ -1,6 +1,12 @@
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronsDownUp, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronsDown,
+  ChevronsDownUp,
+  ChevronsUp,
+  ChevronUp,
+} from "lucide-react";
 import React from "react";
 import {
   Decoration,
@@ -13,7 +19,9 @@ import { Tooltip } from "../ui/tooltip";
 const ICON_TYPE_MAPPING = {
   up: <ChevronUp size={18} />,
   down: <ChevronDown size={18} />,
-  none: <ChevronsDownUp size={18} />,
+  allBetween: <ChevronsDownUp size={18} />,
+  upToStart: <ChevronsUp size={18} />,
+  downToEnd: <ChevronsDown size={18} />,
 };
 
 interface UnfoldDecorationProps
@@ -23,7 +31,7 @@ interface UnfoldDecorationProps
   > {
   startLine: number;
   endLine: number;
-  direction: "up" | "down" | "none";
+  direction: "up" | "down" | "allBetween" | "upToStart" | "downToEnd";
   onExpand: (start: number, end: number) => void;
 }
 
@@ -41,7 +49,9 @@ const UnfoldDecoration = ({
   const iconType = ICON_TYPE_MAPPING[direction];
   const lines = endLine - startLine;
   const tooltipText =
-    direction === "none" ? `Expand ${lines} lines` : `Expand ${direction}`;
+    direction === "down" || direction === "up"
+      ? `Expand ${direction}`
+      : `Expand ${lines.toString()} lines`;
   return (
     <Decoration
       gutterClassName="diff-decoration-gutter-unfold"
@@ -70,24 +80,24 @@ const UnfoldDecoration = ({
   );
 };
 
-interface UnfoldHunksPreviousAndCurrent {
+interface UnfoldHunksInFileProps {
   previousHunk: HunkData;
   currentHunk: HunkData;
 }
 
-interface UnfoldHunksPreviousNoCurrent {
+interface UnfoldHunksFileEndProps {
   previousHunk: HunkData;
   currentHunk?: undefined;
 }
-interface UnfoldHunksNoPreviousCurrent {
+interface UnfoldHunksFileStartProps {
   previousHunk?: undefined;
   currentHunk: HunkData;
 }
 
 type UnfoldHunksProps =
-  | UnfoldHunksPreviousAndCurrent
-  | UnfoldHunksPreviousNoCurrent
-  | UnfoldHunksNoPreviousCurrent;
+  | UnfoldHunksInFileProps
+  | UnfoldHunksFileEndProps
+  | UnfoldHunksFileStartProps;
 
 interface UnfoldProps {
   linesCount: number;
@@ -101,6 +111,7 @@ export const Unfold = ({
   onExpand,
 }: UnfoldProps & UnfoldHunksProps) => {
   if (!currentHunk) {
+    // End of file
     const nextStart = previousHunk.oldStart + previousHunk.oldLines;
     const collapsedLines = linesCount - nextStart + 1;
 
@@ -119,7 +130,7 @@ export const Unfold = ({
           />
         )}
         <UnfoldDecoration
-          direction="down"
+          direction="downToEnd"
           startLine={nextStart}
           endLine={linesCount + 1}
           onExpand={onExpand}
@@ -134,6 +145,7 @@ export const Unfold = ({
   );
 
   if (!previousHunk) {
+    // Start of file
     if (!collapsedLines) {
       return null;
     }
@@ -143,7 +155,7 @@ export const Unfold = ({
     return (
       <>
         <UnfoldDecoration
-          direction="up"
+          direction="upToStart"
           startLine={1}
           endLine={currentHunk.oldStart}
           onExpand={onExpand}
@@ -164,9 +176,10 @@ export const Unfold = ({
   const collapsedEnd = currentHunk.oldStart;
 
   if (collapsedLines < 10) {
+    // In the middle but less than 10 lines are folded
     return (
       <UnfoldDecoration
-        direction="none"
+        direction="allBetween"
         startLine={collapsedStart}
         endLine={collapsedEnd}
         onExpand={onExpand}
@@ -183,7 +196,7 @@ export const Unfold = ({
         onExpand={onExpand}
       />
       <UnfoldDecoration
-        direction="none"
+        direction="allBetween"
         startLine={collapsedStart}
         endLine={collapsedEnd}
         onExpand={onExpand}
