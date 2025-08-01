@@ -420,6 +420,10 @@ export const useUiStore = create<UiState>()(
       setIsFlowsDialogOpen(isOpen) {
         set({ isFlowsDialogOpen: isOpen });
       },
+      isInlineDiff: false,
+      setIsInlineDiff(isInlineDiff) {
+        set({ isInlineDiff: isInlineDiff });
+      },
       isHelpDialogOpen: false,
       setIsHelpDialogOpen(isOpen) {
         set({ isHelpDialogOpen: isOpen });

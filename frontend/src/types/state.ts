@@ -141,6 +141,13 @@ export interface UiState {
    * @param isVisible - Whether the Minimap should be visible
    */
   setIsMiniMapVisible: (isVisible: boolean) => void;
+  /** Whether to use inline diffs for the diff view */
+  isInlineDiff: boolean;
+  /**
+   * Set {@link isInlineDiff}
+   * @param isInlineDiff - Whether to use an inline diff
+   */
+  setIsInlineDiff: (isInlineDiff: boolean) => void;
   /** Whether the help dialog should be displayed */
   isHelpDialogOpen: boolean;
   /**
