@@ -47,7 +47,7 @@ impl Repository {
         &self,
         base_rev: Option<&str>,
         head_rev: Option<&str>,
-    ) -> Result<impl IntoIterator<Item = Result<Commit>>> {
+    ) -> Result<impl Iterator<Item = Result<Commit>>> {
         let revwalk = utils::revwalk_for_range(&self.repo, base_rev, head_rev)?;
         Ok(revwalk.map(|oid_result| {
             oid_result
@@ -145,7 +145,7 @@ impl Repository {
     pub fn iter_tags(
         &self,
         filter: Option<&str>,
-    ) -> Result<impl IntoIterator<Item = Result<TaggedCommit>>> {
+    ) -> Result<impl Iterator<Item = Result<TaggedCommit>>> {
         let tag_names: Vec<String> = self
             .repo
             .tag_names(filter.map(utils::to_safe_glob).as_deref())
@@ -197,7 +197,7 @@ impl Repository {
     ///
     /// * `filter` - If `Some(filter)` only branches containing `filter` will be returned, if
     ///   `None` all branches will be returned
-    pub fn iter_branches(&self, filter: Option<&str>) -> Result<impl IntoIterator<Item = Branch>> {
+    pub fn iter_branches(&self, filter: Option<&str>) -> Result<impl Iterator<Item = Branch>> {
         let filter = filter.unwrap_or("");
 
         let local_branches = self

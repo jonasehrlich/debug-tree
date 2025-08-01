@@ -165,7 +165,6 @@ impl Handler<ListBranches> for GitActor {
         let branches = self
             .repository
             .iter_branches(msg.filter.as_deref())?
-            .into_iter()
             .collect();
         Ok(branches)
     }
