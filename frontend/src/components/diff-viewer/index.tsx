@@ -81,23 +81,23 @@ const DiffFile = React.memo(
 
     return (
       <>
-        <div className="flex justify-between items-center top-0 z-10 p-2 font-mono sticky bg-muted select-none shadow-sm text-xs text-muted-foreground">
+        <div className="flex justify-between items-center top-0 z-10 p-2 font-mono sticky bg-card dark:bg-card border select-none shadow-sm text-xs text-muted-foreground">
           <div className="flex items-center space-x-2">
+            <Button
+              className="size-6"
+              variant="ghost"
+              onClick={() => {
+                setIsCollapsed(!isCollapsed);
+              }}
+            >
+              {isCollapsed ? <ChevronDown /> : <ChevronUp />}{" "}
+            </Button>
             <div>
               {file.oldPath !== file.newPath && `${file.oldPath} → `}
               {file.newPath}
             </div>
             <CopyButton value={file.newPath} tooltip={false} />
           </div>
-          <Button
-            className="size-6"
-            variant="ghost"
-            onClick={() => {
-              setIsCollapsed(!isCollapsed);
-            }}
-          >
-            {isCollapsed ? <ChevronDown /> : <ChevronUp />}{" "}
-          </Button>
         </div>
         {!isCollapsed &&
           (renderDiff ? (

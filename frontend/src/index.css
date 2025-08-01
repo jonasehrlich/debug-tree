@@ -139,7 +139,7 @@
 /** Colors for react-diff-view **/
 :root {
   --diff-font-family: var(--font-mono);
-  --diff-background-color: var(--background);
+  --diff-background-color: var(--card);
   --diff-text-color: var(--foreground);
   --diff-font-family: var(--font-mono);
   --diff-selection-background-color: #012044;
