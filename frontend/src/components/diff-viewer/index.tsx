@@ -1,5 +1,7 @@
 import { CopyButton } from "@/components/action-button";
+import { GitStatChart } from "@/components/git-stat";
 import { Button } from "@/components/ui/button";
+import { type ChangeType } from "gitdiff-parser";
 import { ChevronDown, ChevronUp, RefreshCcw } from "lucide-react";
 import React from "react";
 import {
@@ -15,6 +17,9 @@ import {
 } from "react-diff-view";
 import { Unfold } from "./unfold";
 
+// Normal changes are unchanged lines
+type GitStat = Record<ChangeType, number>;
+
 const DiffFile = React.memo(
   ({
     file,
@@ -24,14 +29,23 @@ const DiffFile = React.memo(
     DiffProps,
     "hunks" | "diffType"
   >) => {
-    const numChanges = React.useMemo<number>(
+    const gitStats = React.useMemo<GitStat>(
       () =>
-        file.hunks.reduce((numChanges, hunk) => {
-          numChanges += hunk.changes.length;
-          return numChanges;
-        }, 0),
+        file.hunks.reduce(
+          (stat, hunk) => {
+            stat = hunk.changes.reduce((stat, change) => {
+              stat[change.type] += 1;
+              return stat;
+            }, stat);
+            return stat;
+          },
+          { insert: 0, delete: 0, normal: 0 },
+        ),
       [file],
     );
+    const numChanges = React.useMemo<number>(() => {
+      return gitStats.insert + gitStats.delete;
+    }, [gitStats]);
     const [renderDiff, setRenderDiff] = React.useState(numChanges < 1000);
     const [isCollapsed, setIsCollapsed] = React.useState(false);
     const [hunks, expandRange] = useSourceExpansion(file.hunks, oldSource);
@@ -81,7 +95,7 @@ const DiffFile = React.memo(
 
     return (
       <>
-        <div className="flex justify-between items-center top-0 z-10 p-2 font-mono sticky bg-card dark:bg-card border select-none shadow-sm text-xs text-muted-foreground">
+        <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card border select-none shadow-sm text-xs text-muted-foreground">
           <div className="flex items-center space-x-2">
             <Button
               className="size-6"
@@ -90,13 +104,20 @@ const DiffFile = React.memo(
                 setIsCollapsed(!isCollapsed);
               }}
             >
-              {isCollapsed ? <ChevronDown /> : <ChevronUp />}{" "}
+              {isCollapsed ? <ChevronDown /> : <ChevronUp />}
             </Button>
-            <div>
+            <div className="font-mono">
               {file.oldPath !== file.newPath && `${file.oldPath} → `}
               {file.newPath}
             </div>
             <CopyButton value={file.newPath} tooltip={false} />
+          </div>
+          <div>
+            <GitStatChart
+              insertedLines={gitStats.insert}
+              deletedLines={gitStats.delete}
+              oldSourceNumLines={numOldLines}
+            />
           </div>
         </div>
         {!isCollapsed &&
