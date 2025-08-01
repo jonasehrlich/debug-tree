@@ -8,8 +8,8 @@ import { formatDistanceToNow } from "date-fns";
 import { FileDiff, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
-import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { notify } from "../lib/notify";
 import { CopyButton } from "./action-button";
 import { DiffViewer, SimpleInlineDiffViewer } from "./diff-viewer";
 import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
@@ -121,13 +121,7 @@ export const GitDialog = () => {
         });
       })
       .catch((error: unknown) => {
-        let message = "Unknown Error";
-        if (typeof error === "object" && error !== null && "message" in error) {
-          message = String((error as { message?: unknown }).message);
-        }
-        toast.error("Error fetching Git Tree data", {
-          description: message,
-        });
+        notify.error(error);
       });
   }, [isOpen, gitRevisions]);
 

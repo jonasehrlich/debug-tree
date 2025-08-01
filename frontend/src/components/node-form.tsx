@@ -11,8 +11,8 @@ import { AppNodeSchema, formatGitRevision } from "@/types/nodes";
 import log from "loglevel";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
+import { notify } from "../lib/notify";
 import { AsyncCombobox } from "./async-combobox";
 import { CreateGitRevisionInput } from "./create-git-rev";
 import { GitRevisionIcon } from "./git-revision";
@@ -105,9 +105,9 @@ export const NodeForm = ({
         // tag
         rev = await createTag(name, baseRev);
       }
-      toast.success(`Created ${type} ${name} successfully`);
+      notify.success(`Created ${type} ${name} successfully`);
     } catch (error) {
-      toast.error((error as Error).message);
+      notify.error(error);
     }
 
     return rev;
