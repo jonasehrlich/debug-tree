@@ -1,177 +1,128 @@
-import { CopyButton } from "@/components/action-button";
-import { GitStatChart } from "@/components/git-stat";
+import { ButtonGroup } from "@/components/button-group";
 import { Button } from "@/components/ui/button";
-import { type ChangeType } from "gitdiff-parser";
-import { ChevronDown, ChevronUp, RefreshCcw } from "lucide-react";
+import { useUiStore } from "@/store";
+import type { Diff as ApiDiff } from "@/types/api-types";
+import { type UiState } from "@/types/state";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import React from "react";
-import {
-  Decoration,
-  Diff,
-  Hunk,
-  parseDiff,
-  useSourceExpansion,
-  type DiffProps,
-  type FileData,
-  type HunkData,
-  type ViewType,
-} from "react-diff-view";
-import { Unfold } from "./unfold";
+import { parseDiff, type FileData, type ViewType } from "react-diff-view";
+import { useShallow } from "zustand/react/shallow";
+import { DiffFile } from "./file";
+import { FileTree } from "./file-tree";
+const uiSelector = (s: UiState) => ({
+  isInlineDiff: s.isInlineDiff,
+  setIsInlineDiff: s.setIsInlineDiff,
+  diffViewType: (s.isInlineDiff ? "unified" : "split") as ViewType,
+});
 
-// Normal changes are unchanged lines
-type GitStat = Record<ChangeType, number>;
+type Path = string;
+type Content = string;
 
-const DiffFile = React.memo(
-  ({
-    file,
-    oldSource,
-    ...diffProps
-  }: { file: FileData; oldSource: string } & Omit<
-    DiffProps,
-    "hunks" | "diffType"
-  >) => {
-    const gitStats = React.useMemo<GitStat>(
-      () =>
-        file.hunks.reduce(
-          (stat, hunk) => {
-            stat = hunk.changes.reduce((stat, change) => {
-              stat[change.type] += 1;
-              return stat;
-            }, stat);
-            return stat;
-          },
-          { insert: 0, delete: 0, normal: 0 },
-        ),
-      [file],
-    );
-    const numChanges = React.useMemo<number>(() => {
-      return gitStats.insert + gitStats.delete;
-    }, [gitStats]);
-    const [renderDiff, setRenderDiff] = React.useState(numChanges < 1000);
-    const [isCollapsed, setIsCollapsed] = React.useState(false);
-    const [hunks, expandRange] = useSourceExpansion(file.hunks, oldSource);
-    const numOldLines = oldSource ? oldSource.split("\n").length : 0;
+export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
+  const { isInlineDiff, setIsInlineDiff, diffViewType } = useUiStore(
+    useShallow(uiSelector),
+  );
 
-    const renderHunk = (
-      children: React.ReactElement<{ hunk: HunkData }>[],
-      hunk: HunkData,
-      i: number,
-      hunks: HunkData[],
-    ) => {
-      const previousElement = children[children.length - 1] as
-        | React.ReactElement<{ hunk: HunkData }>
-        | undefined;
-      const decorationElement = oldSource ? (
-        <Unfold
-          key={`decoration-${hunk.content}`}
-          previousHunk={previousElement?.props.hunk}
-          currentHunk={hunk}
-          linesCount={numOldLines}
-          onExpand={expandRange}
-        />
-      ) : (
-        <Decoration key={`decoration-${hunk.content}`}>
-          {hunk.content}
-        </Decoration>
-      );
-      children.push(decorationElement);
+  const [isFileTreeOpen, setIsFileTreeOpen] = React.useState(true);
 
-      const hunkElement = <Hunk key={`hunk-${hunk.content}`} hunk={hunk} />;
-      children.push(hunkElement);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const diffFileRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
 
-      if (i === hunks.length - 1 && oldSource) {
-        const unfoldTailElement = (
-          <Unfold
-            key="decoration-tail"
-            previousHunk={hunk}
-            linesCount={numOldLines}
-            onExpand={expandRange}
-          />
-        );
-        children.push(unfoldTailElement);
-      }
+  const scrollToTarget = (path: string) => {
+    const target = diffFileRefs.current[path];
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
-      return children;
-    };
-
+  if (!diffs || diffs.length === 0) {
+    // TODO check invalid diffs
     return (
-      <>
-        <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card border select-none shadow-sm text-xs text-muted-foreground">
-          <div className="flex items-center space-x-2">
-            <Button
-              className="size-6"
-              variant="ghost"
-              onClick={() => {
-                setIsCollapsed(!isCollapsed);
-              }}
-            >
-              {isCollapsed ? <ChevronDown /> : <ChevronUp />}
-            </Button>
-            <div className="font-mono">
-              {file.oldPath !== file.newPath && `${file.oldPath} → `}
-              {file.newPath}
-            </div>
-            <CopyButton value={file.newPath} tooltip={false} />
-          </div>
-          <div>
-            <GitStatChart
-              insertedLines={gitStats.insert}
-              deletedLines={gitStats.delete}
-              oldSourceNumLines={numOldLines}
-            />
-          </div>
-        </div>
-        {!isCollapsed &&
-          (renderDiff ? (
-            <Diff diffType={file.type} hunks={hunks} {...diffProps}>
-              {(hunks) => hunks.reduce(renderHunk, [])}
-            </Diff>
-          ) : (
-            <div className="p-4 flex justify-center">
-              <Button
-                onClick={() => {
-                  setRenderDiff(true);
-                }}
-                variant="secondary"
-              >
-                <RefreshCcw />
-                Load Diff
-              </Button>
-            </div>
-          ))}
-      </>
+      <div className="text-center p-2 text-muted-foreground select-none">
+        No diffs to display
+      </div>
     );
-  },
-);
-
-export const DiffViewer = ({
-  patch,
-  oldSource,
-  viewType,
-}: {
-  /** Patch file content */
-  patch: string;
-  /** Old source file content */
-  oldSource: string;
-  viewType: ViewType;
-}) => {
-  const files = parseDiff(patch);
-
-  if (!files.length) {
-    return <div>No diff available</div>;
   }
+  const { files, oldSources, paths } = diffs.reduce<{
+    files: FileData[];
+    oldSources: Record<Path, Content>;
+    paths: Path[];
+  }>(
+    (acc, diff) => {
+      acc.files = acc.files.concat(parseDiff(diff.patch));
+      const oldPath = diff.old?.path;
+      const oldContent = diff.old?.content;
+      if (oldPath && oldContent) {
+        acc.oldSources[oldPath] = oldContent;
+      }
+      const path = diff.new?.path;
+      if (path) {
+        acc.paths.push(path);
+      }
+      return acc;
+    },
+    { files: [], oldSources: {}, paths: [] },
+  );
 
   return (
-    <div>
-      {files.map((file, idx) => (
-        <div key={idx} className="border">
-          <DiffFile
-            file={file}
-            oldSource={oldSource}
-            viewType={viewType}
-            className="text-xs"
-          />
+    <div className="flex-grow min-h-0 flex flex-col space-x-4">
+      {/* Control elements for the diff */}
+      <div className="shrink-0 flex items-center gap-2 mb-4">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => {
+            setIsFileTreeOpen(!isFileTreeOpen);
+          }}
+        >
+          {isFileTreeOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+        </Button>
+
+        <ButtonGroup
+          selectedButton={isInlineDiff ? "inline" : "split"}
+          onChange={(key) => {
+            setIsInlineDiff(key === "inline");
+          }}
+          variant="outline"
+          buttons={[
+            {
+              key: "inline",
+              label: "Inline View",
+            },
+            {
+              key: "split",
+              label: "Split View",
+            },
+          ]}
+        />
+      </div>
+
+      <div className="flex flex-grow rounded-md overflow-hidden space-x-4">
+        <FileTree
+          isOpen={isFileTreeOpen}
+          paths={paths}
+          onFileClick={(p) => {
+            scrollToTarget(p);
+          }}
+        />
+        <div ref={containerRef} className="flex-grow overflow-y-auto space-y-4">
+          {files.map((file, idx) => (
+            <div
+              key={idx}
+              ref={(el) => {
+                diffFileRefs.current[file.newPath] = el;
+              }}
+            >
+              <DiffFile
+                file={file}
+                oldSource={oldSources[file.oldPath] ?? undefined}
+                viewType={diffViewType}
+                className="text-xs"
+              />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 };
