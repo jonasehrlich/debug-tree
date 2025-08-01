@@ -1,5 +1,3 @@
-use std::hash::Hash;
-
 mod common;
 
 #[test]
@@ -53,20 +51,13 @@ fn test_get_commit_for_revision_bad_revision() {
     let (_, commit_id) = t.create_and_commit_random_file();
     let bad_commit_id = shift_chars_forward(&commit_id);
 
-    assert_eq!(
-        t.repo().get_commit_for_revision(&bad_commit_id).is_err(),
-        true
-    );
-    assert_eq!(
+    assert!(t.repo().get_commit_for_revision(&bad_commit_id).is_err());
+    assert!(
         t.repo()
             .get_commit_for_revision(&bad_commit_id[0..7])
-            .is_err(),
-        true
+            .is_err()
     );
-    assert_eq!(
-        t.repo().get_commit_for_revision("branch-foo").is_err(),
-        true
-    );
+    assert!(t.repo().get_commit_for_revision("branch-foo").is_err());
 }
 
 #[test]
@@ -271,7 +262,7 @@ fn test_iter_branches() {
         .into_iter()
         .map(|b| b.name().to_string());
     let expected_branch_names: HashSet<String> =
-        HashSet::from_iter(vec!["bar", "baz"].iter().map(|s| s.to_string()));
+        HashSet::from_iter(["bar", "baz"].iter().map(|s| s.to_string()));
     assert_eq!(
         HashSet::from_iter(filtered_branch_names),
         expected_branch_names

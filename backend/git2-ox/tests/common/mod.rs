@@ -52,7 +52,7 @@ impl TempRepository {
                 Some("HEAD"),
                 &signature,
                 &signature,
-                &format!("Add {}", file_name),
+                &format!("Add {file_name}"),
                 &tree,
                 &parents,
             )

@@ -1,13 +1,12 @@
-use crate::flow;
+use crate::{actors, flow};
 use axum::routing;
 #[cfg(not(debug_assertions))]
 use axum::{http, response::IntoResponse};
 #[cfg(debug_assertions)]
 use axum_reverse_proxy::ReverseProxy;
+use hannibal::prelude::*;
 #[cfg(not(debug_assertions))]
 use mime_guess::from_path;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use utoipa::OpenApi;
 
 #[cfg(not(debug_assertions))]
@@ -34,40 +33,30 @@ pub struct ApiDoc;
 #[derive(Clone)]
 struct AppState {
     flows_dir: flow::FlowsDir,
-    repo: Arc<Mutex<Option<git2_ox::Repository>>>,
+    git_actor: actors::git::GitActorAddr,
 }
 
 impl AppState {
-    pub fn new(flows_dir: flow::FlowsDir) -> Self {
-        let repo = match flows_dir.path().parent() {
-            Some(p) => match git2_ox::Repository::try_open(p) {
-                Ok(repo) => Some(repo),
-                Err(_) => {
-                    log::warn!("Repository not found in '{}'", p.display());
-                    None
-                }
-            },
-            None => {
-                log::warn!(
-                    "Could not get parent director of flows directory '{}'",
-                    flows_dir.path().display()
-                );
-                None
-            }
-        };
+    pub fn try_new(flows_dir: flow::FlowsDir) -> Result<Self, Box<dyn std::error::Error>> {
+        let repo_dir = flows_dir
+            .path()
+            .parent()
+            .ok_or("Could not get git repository (parent directory of flows directory)")?;
 
-        AppState {
+        let git_actor = crate::actors::git::GitActor::try_from_path(repo_dir)?.spawn();
+
+        Ok(Self {
             flows_dir,
-            repo: Arc::new(Mutex::new(repo)),
-        }
+            git_actor,
+        })
     }
 
     pub fn flows_dir(&self) -> &flow::FlowsDir {
         &self.flows_dir
     }
 
-    pub fn repo(&self) -> &Arc<Mutex<Option<git2_ox::Repository>>> {
-        &self.repo
+    pub fn git_actor(&self) -> &actors::git::GitActorAddr {
+        &self.git_actor
     }
 }
 
@@ -77,7 +66,7 @@ pub async fn serve(
     frontend_proxy_port: u16,
     flows_dir: crate::flow::FlowsDir,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let app_state = AppState::new(flows_dir);
+    let app_state = AppState::try_new(flows_dir)?;
 
     let rapidoc_path = "/api-docs";
     let app = routing::Router::new()

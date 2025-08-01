@@ -1,4 +1,4 @@
-use crate::{web, web::api};
+use crate::{actors, web, web::api};
 
 use axum::extract::{Path, Query, State};
 use axum::{Json, routing};
@@ -45,11 +45,14 @@ async fn get_revision(
     State(state): State<web::AppState>,
     Path(commit_id): Path<String>,
 ) -> Result<Json<commit::Commit>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-    Ok(Json(repo.get_commit_for_revision(&commit_id)?))
+    let actor = state.git_actor();
+    let msg = actors::git::GetRevision {
+        revision: commit_id,
+    };
+    let commit = actor.call(msg).await??;
+
+    // .map_err(api::AppError::from)?;
+    Ok(Json(commit))
 }
 
 #[utoipa::path(
@@ -74,11 +77,11 @@ async fn checkout_revision(
     State(state): State<web::AppState>,
     Path(commit_id): Path<String>,
 ) -> Result<Json<commit::Commit>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-    let commit = repo.checkout_revision(&commit_id)?;
+    let actor = state.git_actor();
+    let msg = actors::git::CheckoutRevision {
+        revision: commit_id,
+    };
+    let commit = actor.call(msg).await??;
     Ok(Json(commit))
 }
 
@@ -105,20 +108,6 @@ struct ListCommitsResponse {
     commits: Vec<git2_ox::Commit>,
 }
 
-impl ListCommitsResponse {
-    pub fn try_from_commits<I>(commits_iter: I) -> Result<Self, api::AppError>
-    where
-        I: IntoIterator<Item = Result<git2_ox::Commit, git2_ox::error::Error>>,
-    {
-        let commits = commits_iter
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(api::AppError::from)?;
-
-        Ok(ListCommitsResponse { commits })
-    }
-}
-
 #[utoipa::path(
     get,
     path = "/commits",
@@ -135,21 +124,14 @@ async fn list_commits(
     State(state): State<web::AppState>,
     Query(query): Query<ListCommitsQuery>,
 ) -> Result<Json<ListCommitsResponse>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-
-    let filter = query.filter.unwrap_or("".to_owned());
-    let commits = repo
-        .iter_commits(query.base_rev.as_deref(), query.head_rev.as_deref())?
-        .into_iter()
-        .filter(|commit_result| match commit_result {
-            Ok(commit) => filter_commit(&filter, commit),
-            Err(_) => true,
-        });
-
-    Ok(Json(ListCommitsResponse::try_from_commits(commits)?))
+    let actor = state.git_actor();
+    let msg = actors::git::ListCommits {
+        base_rev: query.base_rev,
+        head_rev: query.head_rev,
+        filter: query.filter,
+    };
+    let commits = actor.call(msg).await??;
+    Ok(Json(ListCommitsResponse { commits }))
 }
 
 #[derive(Serialize, ToSchema, Deserialize, IntoParams)]
@@ -170,19 +152,6 @@ struct ListDiffsResponse {
     diffs: Vec<git2_ox::Diff>,
 }
 
-impl ListDiffsResponse {
-    pub fn try_from_diffs<I>(diffs_iter: I) -> Result<Self, api::AppError>
-    where
-        I: IntoIterator<Item = Result<git2_ox::Diff, git2_ox::error::Error>>,
-    {
-        let diffs = diffs_iter
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(api::AppError::from)?;
-        Ok(Self { diffs })
-    }
-}
-
 #[utoipa::path(
     get,
     path = "/diffs",
@@ -198,15 +167,13 @@ async fn list_diffs(
     State(state): State<web::AppState>,
     Query(query): Query<CommitRangeQuery>,
 ) -> Result<Json<ListDiffsResponse>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-
-    let diffs_iter =
-        repo.iter_diffs_between_revisions(query.base_rev.as_deref(), query.head_rev.as_deref())?;
-
-    Ok(Json(ListDiffsResponse::try_from_diffs(diffs_iter)?))
+    let actor = state.git_actor();
+    let msg = actors::git::ListDiffs {
+        base_rev: query.base_rev,
+        head_rev: query.head_rev,
+    };
+    let diffs = actor.call(msg).await??;
+    Ok(Json(ListDiffsResponse { diffs }))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -219,19 +186,6 @@ struct ListTagsQuery {
 #[derive(ToSchema, Serialize)]
 struct ListTagsResponse {
     tags: Vec<git2_ox::TaggedCommit>,
-}
-impl ListTagsResponse {
-    fn try_from_tagged_commits<T>(iter: T) -> Result<Self, api::AppError>
-    where
-        T: IntoIterator<Item = Result<git2_ox::TaggedCommit, git2_ox::error::Error>>,
-    {
-        Ok(ListTagsResponse {
-            tags: iter
-                .into_iter()
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(api::AppError::from)?,
-        })
-    }
 }
 
 #[utoipa::path(
@@ -249,14 +203,12 @@ async fn list_tags(
     State(state): State<web::AppState>,
     Query(query): Query<ListTagsQuery>,
 ) -> Result<Json<ListTagsResponse>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-
-    Ok(Json(ListTagsResponse::try_from_tagged_commits(
-        repo.iter_tags(query.filter.as_deref())?,
-    )?))
+    let actor = state.git_actor();
+    let msg = actors::git::ListTags {
+        filter: query.filter,
+    };
+    let tags = actor.call(msg).await??;
+    Ok(Json(ListTagsResponse { tags }))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -284,16 +236,14 @@ async fn create_tag(
     State(state): State<web::AppState>,
     Query(query): Query<CreateTagQuery>,
 ) -> Result<Json<git2_ox::TaggedCommit>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-    let force = false;
-    Ok(Json(repo.create_lightweight_tag(
-        &query.name,
-        query.revision.as_str(),
-        force,
-    )?))
+    let actor = state.git_actor();
+    let msg = actors::git::CreateTag {
+        name: query.name,
+        revision: query.revision,
+        force: false,
+    };
+    let tag = actor.call(msg).await??;
+    Ok(Json(tag))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -301,17 +251,6 @@ async fn create_tag(
 struct ListBranchesResponse {
     /// Found branches
     branches: Vec<git2_ox::Branch>,
-}
-
-impl<I> From<I> for ListBranchesResponse
-where
-    I: IntoIterator<Item = git2_ox::Branch>,
-{
-    fn from(iter: I) -> Self {
-        ListBranchesResponse {
-            branches: iter.into_iter().collect(),
-        }
-    }
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -337,14 +276,12 @@ async fn list_branches(
     State(state): State<web::AppState>,
     Query(query): Query<ListBranchesQuery>,
 ) -> Result<Json<ListBranchesResponse>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-
-    Ok(Json(ListBranchesResponse::from(
-        repo.iter_branches(query.filter.as_deref())?,
-    )))
+    let actor = state.git_actor();
+    let msg = actors::git::ListBranches {
+        filter: query.filter,
+    };
+    let branches = actor.call(msg).await??;
+    Ok(Json(ListBranchesResponse { branches }))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
@@ -372,16 +309,14 @@ async fn create_branch(
     State(state): State<web::AppState>,
     Query(query): Query<CreateBranchQuery>,
 ) -> Result<Json<git2_ox::Branch>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-    let force = false;
-    Ok(Json(repo.create_branch(
-        &query.name,
-        &query.revision,
-        force,
-    )?))
+    let actor = state.git_actor();
+    let msg = actors::git::CreateBranch {
+        name: query.name,
+        revision: query.revision,
+        force: false,
+    };
+    let branch = actor.call(msg).await??;
+    Ok(Json(branch))
 }
 
 #[derive(Serialize, ToSchema)]
@@ -406,28 +341,11 @@ struct RepositoryStatusResponse {
 async fn get_repository_status(
     State(state): State<web::AppState>,
 ) -> Result<Json<RepositoryStatusResponse>, api::AppError> {
-    let guard = state.repo().lock().await;
-    let repo = guard
-        .as_ref()
-        .ok_or_else(|| api::AppError::InternalServerError("Repository not found".to_string()))?;
-
-    let head_commit = repo.get_commit_for_revision("HEAD")?;
-    let current_branch = repo.current_branch_name();
+    let actor = state.git_actor();
+    let msg = actors::git::GetRepositoryStatus;
+    let status = actor.call(msg).await??;
     Ok(Json(RepositoryStatusResponse {
-        head: head_commit,
-        current_branch,
+        head: status.head,
+        current_branch: status.current_branch,
     }))
-}
-
-fn filter_commit(filter: &str, commit: &git2_ox::Commit) -> bool {
-    let id_matches = commit
-        .id()
-        .to_string()
-        .to_lowercase()
-        .contains(&filter.to_lowercase());
-    let summary_matches = commit
-        .summary()
-        .to_lowercase()
-        .contains(&filter.to_lowercase());
-    id_matches || summary_matches
 }
