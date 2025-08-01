@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getNodeId } from "@/lib/utils";
+import { capitalize, getNodeId } from "@/lib/utils";
 import { useStore } from "@/store";
 import { AppNodeSchema } from "@/types/nodes";
 import type { AppState } from "@/types/state";
@@ -122,10 +122,7 @@ export const CreateNodeDialog = () => {
       <DialogContent className="md:max-w-[800px]" showCloseButton={closable}>
         <DialogHeader>
           <DialogTitle>
-            New{" "}
-            {pendingNode.type.charAt(0).toUpperCase() +
-              pendingNode.type.replace("Node", "").slice(1)}{" "}
-            Node
+            New {capitalize(pendingNode.type.replace("Node", ""))} Node
           </DialogTitle>
           <DialogDescription>Create a new node</DialogDescription>
         </DialogHeader>

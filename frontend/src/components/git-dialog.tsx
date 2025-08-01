@@ -208,10 +208,14 @@ export const GitDialog = () => {
             value="tab-diff"
             className="h-full min-h-0 w-full text-sm pt-4"
           >
-            <div className="flex flex-col h-full w-full overflow-y-auto">
+            <div className="flex flex-col h-full w-full overflow-y-auto space-y-4">
               {gitData?.diffs.length ? (
                 gitData.diffs.map((diff, index) => (
-                  <DiffViewer key={index} patch={diff.patch} />
+                  <DiffViewer
+                    key={index}
+                    patch={diff.patch}
+                    oldSource={diff.old?.content ?? ""}
+                  />
                 ))
               ) : (
                 <div className="text-center p-2 text-muted-foreground select-none">

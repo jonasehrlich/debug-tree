@@ -17,8 +17,8 @@ interface ActionButtonProps extends Omit<ButtonProps, "onClick" | "value"> {
    * @returns Whether it was successful. For async functions a resolving promise is interpreted as success
    */
   onClick: () => boolean | Promise<unknown>;
-  /** Content of the tooltip */
-  tooltipContent: string;
+  /** Content of the tooltip, if not defined, no tooltip will be displayed */
+  tooltipContent?: string;
   /** Icon to show */
   icon: React.ReactNode;
   /** Text to show in the button  */
@@ -64,22 +64,26 @@ export const ActionButton = ({
     });
   }, [onClick]);
 
+  const button = (
+    <Button
+      data-slot="action-button"
+      {...props}
+      className={props.className}
+      variant={variant}
+      onClick={handleClick}
+      disabled={props.disabled ?? isSuccess}
+    >
+      <span className="sr-only">{tooltipContent}</span>
+      {isSuccess ? <Check data-testid="check-icon" /> : icon}
+      {text}
+    </Button>
+  );
+  if (!tooltipContent) {
+    return button;
+  }
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          data-slot="action-button"
-          {...props}
-          className={props.className}
-          variant={variant}
-          onClick={handleClick}
-          disabled={props.disabled ?? isSuccess}
-        >
-          <span className="sr-only">{tooltipContent}</span>
-          {isSuccess ? <Check data-testid="check-icon" /> : icon}
-          {text}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
       <TooltipContent>{tooltipContent}</TooltipContent>
     </Tooltip>
   );
@@ -88,13 +92,15 @@ export const ActionButton = ({
 interface CopyButtonProps {
   /** Value to copy onClick */
   value: string;
+  /** Whether to show a tooltip */
+  tooltip?: boolean;
 }
 
-export const CopyButton = ({ value }: CopyButtonProps) => {
+export const CopyButton = ({ value, tooltip = true }: CopyButtonProps) => {
   return (
     <ActionButton
       className="size-6"
-      tooltipContent="Copy to clipboard"
+      tooltipContent={tooltip ? "Copy to clipboard" : undefined}
       icon={<Copy />}
       onClick={() => {
         return copyToClipboard(value);
