@@ -161,8 +161,10 @@ export const DiffFile = React.memo(
               </Diff>
             )
           ) : (
-            <div className="p-4 flex justify-center">
+            <div className="flex flex-col justify-center items-center space-y-4 p-4 text-sm text-muted-foreground">
+              <div>This diff is large, load it manually.</div>
               <Button
+                size="sm"
                 onClick={() => {
                   setRenderDiff(true);
                 }}
