@@ -43,10 +43,9 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       </div>
     );
   }
-  const { files, oldSources, paths } = diffs.reduce<{
+  const { files, oldSources } = diffs.reduce<{
     files: FileData[];
     oldSources: Record<Path, Content>;
-    paths: Path[];
   }>(
     (acc, diff) => {
       acc.files = acc.files.concat(parseDiff(diff.patch));
@@ -55,14 +54,15 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       if (oldPath && oldContent) {
         acc.oldSources[oldPath] = oldContent;
       }
-      const path = diff.new?.path;
-      if (path) {
-        acc.paths.push(path);
-      }
       return acc;
     },
-    { files: [], oldSources: {}, paths: [] },
+    { files: [], oldSources: {} },
   );
+
+  const paths = files.map((f) => ({
+    name: f.newPath !== "/dev/null" ? f.newPath : f.oldPath,
+    type: f.type,
+  }));
 
   return (
     <div className="flex-grow min-h-0 flex flex-col space-x-4">

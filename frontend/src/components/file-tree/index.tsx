@@ -1,18 +1,20 @@
 import React from "react";
 import { Input } from "../ui/input";
 import { FileDisplay, TreeDisplay } from "./display";
-import type { FileTreeProps } from "./types";
+import type { File, FileTreeProps } from "./types";
 import { groupPaths, optimizeFileTree } from "./utils";
 
 export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
   const [filter, setFilter] = React.useState<string>("");
-  const [filteredPaths, setFilteredPaths] = React.useState<string[]>(paths);
+  const [filteredPaths, setFilteredPaths] = React.useState<File[]>(paths);
 
   React.useEffect(() => {
     const lowerCaseFilter = filter.toLowerCase();
     if (lowerCaseFilter) {
       setFilteredPaths(
-        paths.filter((path) => path.toLowerCase().includes(lowerCaseFilter)),
+        paths.filter((path) =>
+          path.name.toLowerCase().includes(lowerCaseFilter),
+        ),
       );
     } else {
       setFilteredPaths(paths);
@@ -69,11 +71,12 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
                   basePath={dirName}
                 />
               ))}
-            {groupedAndOptimizedTree.files.sort().map((fileName, idx) => (
+            {groupedAndOptimizedTree.files.sort().map((file, idx) => (
               <FileDisplay
                 key={idx}
                 basePath=""
-                fileName={fileName}
+                fileName={file.name}
+                type={file.type}
                 onFileClick={onFileClick}
                 level={0}
               />

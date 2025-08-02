@@ -1,11 +1,24 @@
+export type FileType =
+  | "add"
+  | "delete"
+  | "modify"
+  | "rename"
+  | "copy"
+  | "unknown";
+
+export interface File {
+  name: string;
+  type: FileType;
+}
+
 export interface FileTreeData {
   children?: Record<string, FileTreeData>;
-  files?: string[];
+  files?: File[];
 }
 
 export interface FileTreeProps {
   isOpen: boolean;
-  paths: string[];
+  paths: File[];
   onFileClick: (filePath: string) => void;
 }
 
@@ -19,6 +32,7 @@ export interface FileTreeDisplayProps {
 
 export interface FileDisplayProps {
   fileName: string;
+  type: FileType;
   onFileClick: (filePath: string) => void;
   basePath: string;
   level: number;
