@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
 import React, { useState } from "react";
 import type { FileDisplayProps, FileTreeDisplayProps } from "./types";
 
-export const FileTreeDisplay = ({
+export const TreeDisplay = ({
   tree,
   onFileClick,
   basePath,
@@ -56,7 +56,7 @@ export const FileTreeDisplay = ({
         isOpen && (
           <ul className="" key={basePath}>
             {directories.map((dirName) => (
-              <FileTreeDisplay
+              <TreeDisplay
                 level={level + 1}
                 key={dirName}
                 tree={tree.children?.[dirName]}

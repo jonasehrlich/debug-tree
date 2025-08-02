@@ -1,6 +1,6 @@
 import React from "react";
-import { Input } from "../../ui/input";
-import { FileDisplay, FileTreeDisplay } from "./display";
+import { Input } from "../ui/input";
+import { FileDisplay, TreeDisplay } from "./display";
 import type { FileTreeProps } from "./types";
 import { groupPaths, optimizeFileTree } from "./utils";
 
@@ -60,7 +60,7 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
             {Object.keys(groupedAndOptimizedTree.children)
               .sort()
               .map((dirName) => (
-                <FileTreeDisplay
+                <TreeDisplay
                   key={dirName}
                   level={0}
                   tree={groupedAndOptimizedTree.children[dirName]}

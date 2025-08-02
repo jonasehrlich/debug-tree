@@ -7,8 +7,8 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import React from "react";
 import { parseDiff, type FileData, type ViewType } from "react-diff-view";
 import { useShallow } from "zustand/react/shallow";
+import { FileTree } from "../file-tree";
 import { DiffFile } from "./file";
-import { FileTree } from "./file-tree";
 const uiSelector = (s: UiState) => ({
   isInlineDiff: s.isInlineDiff,
   setIsInlineDiff: s.setIsInlineDiff,
