@@ -1,17 +1,17 @@
-import type { FileTreeData } from "./types";
+import type { File, FileTreeData } from "./types";
 
-export const groupPaths = (paths: string[]): FileTreeData => {
+export const groupPaths = (files: File[]): FileTreeData => {
   const tree: FileTreeData = {};
 
-  paths.forEach((path) => {
-    const parts = path.split("/").filter((part) => part !== "");
+  files.forEach((file) => {
+    const parts = file.name.split("/").filter((part) => part !== "");
 
     let currentLevel: FileTreeData = tree;
     parts.forEach((part, index) => {
       if (index === parts.length - 1) {
         // It's a file
         currentLevel.files ??= [];
-        currentLevel.files.push(part);
+        currentLevel.files.push({ name: part, type: file.type });
       } else {
         // It's a directory
         currentLevel.children ??= {};
