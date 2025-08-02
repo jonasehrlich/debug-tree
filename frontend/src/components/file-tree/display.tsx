@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import type { FileDisplayProps, FileTreeDisplayProps } from "./types";
 
 export const TreeDisplay = ({
+  name,
   tree,
   onFileClick,
   basePath,
@@ -47,7 +48,7 @@ export const TreeDisplay = ({
             </span>
             <Folder size={16} className="fill-current" />
           </div>
-          {basePath}
+          {name}
         </div>
       }
 
@@ -59,6 +60,7 @@ export const TreeDisplay = ({
               <TreeDisplay
                 level={level + 1}
                 key={dirName}
+                name={dirName}
                 tree={tree.children?.[dirName]}
                 onFileClick={onFileClick}
                 basePath={`${basePath}/${dirName}`}

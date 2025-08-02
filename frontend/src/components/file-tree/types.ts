@@ -10,6 +10,7 @@ export interface FileTreeProps {
 }
 
 export interface FileTreeDisplayProps {
+  name: string;
   tree?: FileTreeData;
   onFileClick: (filePath: string) => void;
   basePath: string;

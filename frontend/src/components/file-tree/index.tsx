@@ -44,7 +44,7 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
           onChange={handleFilterChange}
         />
       </div>
-      <div className="flex overflow-auto text-nowrap select-none">
+      <div className="flex overflow-auto text-nowrap select-none py-1">
         {Object.keys(groupedAndOptimizedTree.children).length === 0 && (
           <div className="text-muted-foreground p-4 text-sm">
             {filter ? (
@@ -62,6 +62,7 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
               .map((dirName) => (
                 <TreeDisplay
                   key={dirName}
+                  name={dirName}
                   level={0}
                   tree={groupedAndOptimizedTree.children[dirName]}
                   onFileClick={onFileClick}

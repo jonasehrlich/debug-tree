@@ -45,6 +45,9 @@ describe("optimizeGroupedTree", () => {
                 introduction: {
                   files: ["index.md"],
                 },
+                dev: {
+                  files: ["index.md"],
+                },
               },
             },
           },
@@ -80,8 +83,15 @@ describe("optimizeGroupedTree", () => {
         "public/assets/images": {
           files: ["logo.png"],
         },
-        "docs/gettingStarted/introduction": {
-          files: ["index.md"],
+        "docs/gettingStarted": {
+          children: {
+            introduction: {
+              files: ["index.md"],
+            },
+            dev: {
+              files: ["index.md"],
+            },
+          },
         },
         config: {
           files: ["config.json"],
