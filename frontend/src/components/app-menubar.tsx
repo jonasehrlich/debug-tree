@@ -28,8 +28,8 @@ import {
 } from "@xyflow/react";
 import { Workflow } from "lucide-react";
 import { useTheme } from "next-themes";
-import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { notify } from "../lib/notify";
 
 interface AppMenubarProps {
   /// Ref to the reactflow component
@@ -155,7 +155,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
           <MenubarItem
             onSelect={() => {
               saveCurrentFlow().then(closeCurrentFlow, () => {
-                toast.error("Flow was not closed due to save error");
+                notify.error("Flow was not closed due to save error");
               });
             }}
           >
