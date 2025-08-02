@@ -18,6 +18,7 @@ import type { AppState, UiState } from "@/types/state";
 import { Panel } from "@xyflow/react";
 import { GitGraph, X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
+import { CopyButton } from "./action-button";
 import { GitStatusCard } from "./git-status-card";
 
 const selector = (state: AppState) => ({
@@ -91,10 +92,11 @@ export const GitRevisionsPanel = () => {
                 {pinnedGitRevisions.map(
                   (rev, index) =>
                     rev && (
-                      <div key={index} className="py-2">
+                      <div key={index} className="py-2 flex justify-between">
                         <span className="font-mono block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                           {formatGitRevision(rev)}
                         </span>
+                        <CopyButton value={rev.rev} tooltip={false} />
                       </div>
                     ),
                 )}
