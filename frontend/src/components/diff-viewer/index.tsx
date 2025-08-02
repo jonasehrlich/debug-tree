@@ -112,12 +112,12 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
               ref={(el) => {
                 diffFileRefs.current[file.newPath] = el;
               }}
+              className="border rounded-md overflow-hidden divide-y text-xs"
             >
               <DiffFile
                 file={file}
                 oldSource={oldSources[file.oldPath] ?? undefined}
                 viewType={diffViewType}
-                className="text-xs"
               />
             </div>
           ))}

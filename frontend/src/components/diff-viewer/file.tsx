@@ -1,5 +1,5 @@
 import { CopyButton } from "@/components/action-button";
-import { GitStatChart } from "@/components/git-stat";
+import { GitStatsChart } from "@/components/git-stats";
 import { Button } from "@/components/ui/button";
 import { type ChangeType } from "gitdiff-parser";
 import { ChevronDown, ChevronUp, RefreshCcw } from "lucide-react";
@@ -92,7 +92,7 @@ export const DiffFile = React.memo(
 
     return (
       <>
-        <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card border select-none shadow-sm text-xs text-muted-foreground">
+        <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card select-none shadow-sm text-xs text-muted-foreground">
           <div className="flex items-center space-x-2">
             <Button
               className="size-6"
@@ -109,19 +109,28 @@ export const DiffFile = React.memo(
             </div>
             <CopyButton value={file.newPath} tooltip={false} />
           </div>
-          <div>
-            <GitStatChart
-              insertedLines={gitStats.insert}
-              deletedLines={gitStats.delete}
-              oldSourceNumLines={numOldLines}
-            />
-          </div>
+          {file.type !== "rename" && (
+            // No need to display the Git stats for a file that was renamed
+            <div>
+              <GitStatsChart
+                insertedLines={gitStats.insert}
+                deletedLines={gitStats.delete}
+                oldSourceNumLines={numOldLines}
+              />
+            </div>
+          )}
         </div>
         {!isCollapsed &&
           (renderDiff ? (
-            <Diff diffType={file.type} hunks={hunks} {...diffProps}>
-              {(hunks) => hunks.reduce(renderHunk, [])}
-            </Diff>
+            file.type === "rename" ? (
+              <div className="p-4 flex justify-center text-muted-foreground text-sm">
+                File was renamed without changes
+              </div>
+            ) : (
+              <Diff diffType={file.type} hunks={hunks} {...diffProps}>
+                {(hunks) => hunks.reduce(renderHunk, [])}
+              </Diff>
+            )
           ) : (
             <div className="p-4 flex justify-center">
               <Button

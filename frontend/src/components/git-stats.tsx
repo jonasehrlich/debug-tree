@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-interface GitStatProps {
+interface GitStatsProps {
   /** Number of inserted lines */
   insertedLines: number;
   /** Number of deleted lines */
@@ -15,12 +15,12 @@ interface GitStatProps {
 /**
  * Color inserted and deleted lines to show a Git stat
  */
-export const GitStat = ({
+export const GitStats = ({
   insertedLines,
   deletedLines,
   insertedProps,
   deletedProps,
-}: GitStatProps) => {
+}: GitStatsProps) => {
   return (
     <>
       {insertedLines !== 0 && (
@@ -40,7 +40,7 @@ export const GitStat = ({
   );
 };
 
-interface GitStatChartProps {
+interface GitStatsChartProps {
   /** Number of total lines in the old version of the file */
   oldSourceNumLines: number;
 }
@@ -48,15 +48,15 @@ interface GitStatChartProps {
 const numSegments = 5 as const;
 
 /**
- * Displays a {@link GitStat} with a chart showing the amount of inserted and deleted compared to
+ * Displays a {@link GitStats} with a chart showing the amount of inserted and deleted compared to
  * a total quantity.
  */
-export const GitStatChart = React.memo(
+export const GitStatsChart = React.memo(
   ({
     insertedLines,
     deletedLines,
     oldSourceNumLines,
-  }: GitStatChartProps & GitStatProps) => {
+  }: GitStatsChartProps & GitStatsProps) => {
     // Prevent division by zero and handle the case with no lines.
     const hasLines = oldSourceNumLines > 0;
 
@@ -84,7 +84,7 @@ export const GitStatChart = React.memo(
 
     return (
       <div className="flex space-x-1 items-center">
-        <GitStat insertedLines={insertedLines} deletedLines={deletedLines} />
+        <GitStats insertedLines={insertedLines} deletedLines={deletedLines} />
         <div className="flex w-full gap-1" role="img">
           {segments.map((colorClass, index) => (
             <div
