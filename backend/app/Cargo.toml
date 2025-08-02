@@ -26,3 +26,4 @@ utoipa = { version = "^5.3.1", features = ["axum_extras", "chrono"] }
 utoipa-axum = { version = "^0.2.0" }
 utoipa-rapidoc = { version = "^6.0.0", features = ["axum"] }
 chrono = { version = "^0.4.41", features = ["serde"] }
+hannibal = "^0.12"

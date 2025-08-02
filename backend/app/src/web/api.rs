@@ -64,6 +64,12 @@ impl From<git2_ox::error::Error> for AppError {
     }
 }
 
+impl From<hannibal::error::ActorError> for AppError {
+    fn from(error: hannibal::error::ActorError) -> Self {
+        AppError::InternalServerError(error.to_string())
+    }
+}
+
 #[derive(Serialize, Debug, ToSchema)]
 #[serde(rename_all = "camelCase")]
 /// Basic serializable API status response
