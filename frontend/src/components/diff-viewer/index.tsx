@@ -9,6 +9,7 @@ import { parseDiff, type FileData, type ViewType } from "react-diff-view";
 import { useShallow } from "zustand/react/shallow";
 import { FileTree } from "../file-tree";
 import { DiffFile } from "./file";
+
 const uiSelector = (s: UiState) => ({
   isInlineDiff: s.isInlineDiff,
   setIsInlineDiff: s.setIsInlineDiff,
@@ -17,6 +18,10 @@ const uiSelector = (s: UiState) => ({
 
 type Path = string;
 type Content = string;
+
+const pathFromFileData = (file: FileData) => {
+  return file.type === "delete" ? file.oldPath : file.newPath;
+};
 
 export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
   const { isInlineDiff, setIsInlineDiff, diffViewType } = useUiStore(
@@ -60,7 +65,7 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
   );
 
   const paths = files.map((f) => ({
-    name: f.newPath !== "/dev/null" ? f.newPath : f.oldPath,
+    name: pathFromFileData(f),
     type: f.type,
   }));
 
@@ -114,7 +119,7 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
             <DiffFile
               key={idx}
               ref={(el) => {
-                diffFileRefs.current[file.newPath] = el;
+                diffFileRefs.current[pathFromFileData(file)] = el;
               }}
               file={file}
               oldSource={oldSources[file.oldPath] ?? undefined}

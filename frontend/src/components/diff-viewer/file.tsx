@@ -18,6 +18,22 @@ import { Unfold } from "./unfold";
 // Normal changes are unchanged lines
 type GitStats = Record<ChangeType, number> & { oldSourceNumLines: number };
 
+const formatDiffFilePaths = (file: FileData) => {
+  if (file.newPath === file.oldPath) {
+    // File was modified without rename
+    return file.oldPath;
+  }
+  if (file.type === "add") {
+    // File was created
+    return file.newPath;
+  }
+  if (file.type === "delete") {
+    // File was deleted
+    return file.oldPath;
+  }
+  return `${file.oldPath} → ${file.newPath}`;
+};
+
 const DiffFileHeader = ({
   file,
   stats,
@@ -41,10 +57,7 @@ const DiffFileHeader = ({
         >
           {isDiffOpen ? <ChevronUp /> : <ChevronDown />}
         </Button>
-        <div className="font-mono">
-          {file.oldPath !== file.newPath && `${file.oldPath} → `}
-          {file.newPath}
-        </div>
+        <div className="font-mono">{formatDiffFilePaths(file)}</div>
         <CopyButton value={file.newPath} tooltip={false} />
       </div>
       {file.type !== "rename" && (

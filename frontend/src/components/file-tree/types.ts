@@ -30,9 +30,16 @@ export interface FileTreeDisplayProps {
 }
 
 export interface FileDisplayProps {
+  /** Name of the file */
   fileName: string;
+  /** Type of the file */
   type: FileType;
+  /**
+   * Callback when a file is clicked
+   * @param filePath Path to the file that was clicked
+   */
   onFileClick: (filePath: string) => void;
   basePath: string;
+  /** Level of the displayed component in the tree */
   level: number;
 }
