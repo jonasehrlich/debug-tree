@@ -1,6 +1,8 @@
 import { describe } from "vitest";
-import type { FileTreeData } from "../types";
+import type { File, FileTreeData } from "../types";
 import { optimizeFileTree } from "../utils";
+
+const f = (n: string): File => ({ name: n, type: "unknown" });
 
 describe("optimizeGroupedTree", () => {
   it("groups directories with only one child", () => {
@@ -11,17 +13,17 @@ describe("optimizeGroupedTree", () => {
             foo: {
               children: {
                 bar: {
-                  files: ["main.ts", "utils.ts"],
+                  files: [f("main.ts"), f("utils.ts")],
                 },
               },
             },
             components: {
               children: {
                 Button: {
-                  files: ["Button.tsx", "Button.module.css"],
+                  files: [f("Button.tsx"), f("Button.module.css")],
                 },
                 Icon: {
-                  files: ["Icon.tsx"],
+                  files: [f("Icon.tsx")],
                 },
               },
             },
@@ -32,7 +34,7 @@ describe("optimizeGroupedTree", () => {
             assets: {
               children: {
                 images: {
-                  files: ["logo.png"],
+                  files: [f("logo.png")],
                 },
               },
             },
@@ -43,17 +45,20 @@ describe("optimizeGroupedTree", () => {
             gettingStarted: {
               children: {
                 introduction: {
-                  files: ["index.md"],
+                  files: [f("index.md")],
+                },
+                dev: {
+                  files: [f("index.md")],
                 },
               },
             },
           },
         },
         config: {
-          files: ["config.json"],
+          files: [f("config.json")],
         },
       },
-      files: ["README.md"],
+      files: [f("README.md")],
     };
 
     const optimizedTree = optimizeFileTree(groupedTree);
@@ -63,31 +68,38 @@ describe("optimizeGroupedTree", () => {
         src: {
           children: {
             "foo/bar": {
-              files: ["main.ts", "utils.ts"],
+              files: [f("main.ts"), f("utils.ts")],
             },
             components: {
               children: {
                 Button: {
-                  files: ["Button.tsx", "Button.module.css"],
+                  files: [f("Button.tsx"), f("Button.module.css")],
                 },
                 Icon: {
-                  files: ["Icon.tsx"],
+                  files: [f("Icon.tsx")],
                 },
               },
             },
           },
         },
         "public/assets/images": {
-          files: ["logo.png"],
+          files: [f("logo.png")],
         },
-        "docs/gettingStarted/introduction": {
-          files: ["index.md"],
+        "docs/gettingStarted": {
+          children: {
+            introduction: {
+              files: [f("index.md")],
+            },
+            dev: {
+              files: [f("index.md")],
+            },
+          },
         },
         config: {
-          files: ["config.json"],
+          files: [f("config.json")],
         },
       },
-      files: ["README.md"],
+      files: [f("README.md")],
     };
 
     expect(optimizedTree).toEqual(expectedOptimizedTree);

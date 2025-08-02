@@ -112,12 +112,19 @@ impl Repository {
             None => None,
         };
 
-        let diff = self
+        let mut diff = self
             .repo
             .diff_tree_to_tree(base_tree.as_ref(), Some(&tree), None)
             .map_err(|e| {
                 Error::from_ctx_and_error(format!("Failed to diff tree {base_rev:?} to {head}"), e)
             })?;
+
+        // Enable rename detection with DiffFindOptions
+        let mut find_opts = git2::DiffFindOptions::new();
+        find_opts.renames(true);
+        // Transform the diff, marking file renames, copies, etc.
+        diff.find_similar(Some(&mut find_opts))
+            .map_err(|e| Error::from_ctx_and_error("Failed to find similar files in diff", e))?;
 
         let num_deltas = diff.deltas().len();
 
