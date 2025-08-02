@@ -105,7 +105,10 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
             scrollDiffIntoView(path);
           }}
         />
-        <div ref={containerRef} className="flex-grow overflow-y-auto space-y-4">
+        <div
+          ref={containerRef}
+          className="flex-grow overflow-y-auto space-y-4 rounded-md"
+        >
           {files.map((file, idx) => (
             <DiffFile
               key={idx}
