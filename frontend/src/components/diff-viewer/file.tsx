@@ -16,37 +16,85 @@ import {
 import { Unfold } from "./unfold";
 
 // Normal changes are unchanged lines
-type GitStat = Record<ChangeType, number>;
+type GitStats = Record<ChangeType, number> & { oldSourceNumLines: number };
+
+const DiffFileHeader = ({
+  file,
+  stats,
+  isDiffOpen,
+  setIsDiffOpen,
+}: {
+  file: FileData;
+  stats: GitStats;
+  isDiffOpen: boolean;
+  setIsDiffOpen: (c: boolean) => void;
+}) => {
+  return (
+    <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card select-none shadow-sm text-xs text-muted-foreground">
+      <div className="flex items-center space-x-2">
+        <Button
+          className="size-6"
+          variant="ghost"
+          onClick={() => {
+            setIsDiffOpen(!isDiffOpen);
+          }}
+        >
+          {isDiffOpen ? <ChevronUp /> : <ChevronDown />}
+        </Button>
+        <div className="font-mono">
+          {file.oldPath !== file.newPath && `${file.oldPath} → `}
+          {file.newPath}
+        </div>
+        <CopyButton value={file.newPath} tooltip={false} />
+      </div>
+      {file.type !== "rename" && (
+        // No need to display the Git stats for a file that was renamed
+        <div>
+          <GitStatsChart
+            insertedLines={stats.insert}
+            deletedLines={stats.delete}
+            oldSourceNumLines={stats.oldSourceNumLines}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const DiffFile = React.memo(
   ({
+    ref,
     file,
     oldSource,
     ...diffProps
-  }: { file: FileData; oldSource: string } & Omit<
-    DiffProps,
-    "hunks" | "diffType"
-  >) => {
-    const gitStats = React.useMemo<GitStat>(
-      () =>
-        file.hunks.reduce(
-          (stat, hunk) => {
-            stat = hunk.changes.reduce((stat, change) => {
-              stat[change.type] += 1;
-              return stat;
-            }, stat);
-            return stat;
-          },
-          { insert: 0, delete: 0, normal: 0 },
-        ),
-      [file],
-    );
+  }: {
+    ref?: React.Ref<HTMLDivElement>;
+    file: FileData;
+    oldSource: string;
+  } & Omit<DiffProps, "hunks" | "diffType">) => {
+    const gitStats = React.useMemo<GitStats>(() => {
+      const numOldLines = oldSource ? oldSource.split("\n").length : 0;
+      const s = {
+        insert: 0,
+        delete: 0,
+        normal: 0,
+        oldSourceNumLines: numOldLines,
+      };
+      return file.hunks.reduce((stat, hunk) => {
+        stat = hunk.changes.reduce((stat, change) => {
+          stat[change.type] += 1;
+          return stat;
+        }, stat);
+        return stat;
+      }, s);
+    }, [file, oldSource]);
+
     const numChanges = React.useMemo<number>(() => {
       return gitStats.insert + gitStats.delete;
     }, [gitStats]);
     const [renderDiff, setRenderDiff] = React.useState(numChanges < 1000);
-    const [isCollapsed, setIsCollapsed] = React.useState(false);
+    const [isDiffOpen, setIsDiffOpen] = React.useState(true);
     const [hunks, expandRange] = useSourceExpansion(file.hunks, oldSource);
-    const numOldLines = oldSource ? oldSource.split("\n").length : 0;
 
     const renderHunk = (
       children: React.ReactElement<{ hunk: HunkData }>[],
@@ -62,7 +110,7 @@ export const DiffFile = React.memo(
           key={`decoration-${hunk.content}`}
           previousHunk={previousElement?.props.hunk}
           currentHunk={hunk}
-          linesCount={numOldLines}
+          linesCount={gitStats.oldSourceNumLines}
           onExpand={expandRange}
         />
       ) : (
@@ -80,7 +128,7 @@ export const DiffFile = React.memo(
           <Unfold
             key="decoration-tail"
             previousHunk={hunk}
-            linesCount={numOldLines}
+            linesCount={gitStats.oldSourceNumLines}
             onExpand={expandRange}
           />
         );
@@ -91,36 +139,17 @@ export const DiffFile = React.memo(
     };
 
     return (
-      <>
-        <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card select-none shadow-sm text-xs text-muted-foreground">
-          <div className="flex items-center space-x-2">
-            <Button
-              className="size-6"
-              variant="ghost"
-              onClick={() => {
-                setIsCollapsed(!isCollapsed);
-              }}
-            >
-              {isCollapsed ? <ChevronDown /> : <ChevronUp />}
-            </Button>
-            <div className="font-mono">
-              {file.oldPath !== file.newPath && `${file.oldPath} → `}
-              {file.newPath}
-            </div>
-            <CopyButton value={file.newPath} tooltip={false} />
-          </div>
-          {file.type !== "rename" && (
-            // No need to display the Git stats for a file that was renamed
-            <div>
-              <GitStatsChart
-                insertedLines={gitStats.insert}
-                deletedLines={gitStats.delete}
-                oldSourceNumLines={numOldLines}
-              />
-            </div>
-          )}
-        </div>
-        {!isCollapsed &&
+      <div
+        ref={ref}
+        className="border rounded-md overflow-hidden divide-y text-xs"
+      >
+        <DiffFileHeader
+          file={file}
+          isDiffOpen={isDiffOpen}
+          setIsDiffOpen={setIsDiffOpen}
+          stats={gitStats}
+        />
+        {isDiffOpen &&
           (renderDiff ? (
             file.type === "rename" ? (
               <div className="p-4 flex justify-center text-muted-foreground text-sm">
@@ -144,7 +173,7 @@ export const DiffFile = React.memo(
               </Button>
             </div>
           ))}
-      </>
+      </div>
     );
   },
 );

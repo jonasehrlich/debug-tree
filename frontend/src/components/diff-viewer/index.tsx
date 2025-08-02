@@ -28,7 +28,7 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const diffFileRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
 
-  const scrollToTarget = (path: string) => {
+  const scrollDiffIntoView = (path: string) => {
     const target = diffFileRefs.current[path];
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -101,25 +101,21 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
         <FileTree
           isOpen={isFileTreeOpen}
           paths={paths}
-          onFileClick={(p) => {
-            scrollToTarget(p);
+          onFileClick={(path) => {
+            scrollDiffIntoView(path);
           }}
         />
         <div ref={containerRef} className="flex-grow overflow-y-auto space-y-4">
           {files.map((file, idx) => (
-            <div
+            <DiffFile
               key={idx}
               ref={(el) => {
                 diffFileRefs.current[file.newPath] = el;
               }}
-              className="border rounded-md overflow-hidden divide-y text-xs"
-            >
-              <DiffFile
-                file={file}
-                oldSource={oldSources[file.oldPath] ?? undefined}
-                viewType={diffViewType}
-              />
-            </div>
+              file={file}
+              oldSource={oldSources[file.oldPath] ?? undefined}
+              viewType={diffViewType}
+            />
           ))}
         </div>
       </div>
