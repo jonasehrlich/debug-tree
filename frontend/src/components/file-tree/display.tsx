@@ -73,19 +73,20 @@ export const TreeDisplay = ({
       {
         /* Children of the current node if open */
         isOpen && (
-          <ul className="" key={basePath}>
-            {directories.map((dirName) => (
+          <ul key={basePath}>
+            {directories.map((dirName, idx) => (
               <TreeDisplay
+                key={idx}
                 level={level + 1}
-                key={dirName}
                 name={dirName}
                 tree={tree.children?.[dirName]}
                 onFileClick={onFileClick}
                 basePath={`${basePath}/${dirName}`}
               />
             ))}
-            {files.map((file) => (
+            {files.map((file, idx) => (
               <FileDisplay
+                key={idx}
                 fileName={file.name}
                 type={file.type}
                 level={level + 1}
@@ -123,7 +124,6 @@ export const FileDisplay = ({
   );
   return (
     <li
-      key={fileName}
       className="py-1 rounded-md hover:bg-muted pr-2"
       onClick={() => {
         onFileClick(`${basePath ? basePath + "/" : ""}${fileName}`);
