@@ -4,7 +4,7 @@ import { FileDisplay, TreeDisplay } from "./display";
 import type { File, FileTreeProps } from "./types";
 import { groupPaths, optimizeFileTree } from "./utils";
 
-export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
+export const FileTree = ({ paths, onFileClick }: FileTreeProps) => {
   const [filter, setFilter] = React.useState("");
   const [filteredPaths, setFilteredPaths] = React.useState<File[]>(paths);
 
@@ -28,9 +28,6 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
     return { children: t.children ?? {}, files: t.files ?? [] };
   }, [filteredPaths]);
 
-  if (!isOpen) {
-    return <></>;
-  }
   return (
     <div className="flex flex-col shrink-0 border rounded-md w-2xs sm:w-xs lg:w-sm ">
       <div className="border-b p-2">

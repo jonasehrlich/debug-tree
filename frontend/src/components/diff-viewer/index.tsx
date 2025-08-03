@@ -98,13 +98,14 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       </div>
 
       <div className="flex flex-grow rounded-md overflow-hidden space-x-4">
-        <FileTree
-          isOpen={isFileTreeOpen}
-          paths={paths}
-          onFileClick={(path) => {
-            scrollDiffIntoView(path);
-          }}
-        />
+        {isFileTreeOpen && (
+          <FileTree
+            paths={paths}
+            onFileClick={(path) => {
+              scrollDiffIntoView(path);
+            }}
+          />
+        )}
         <div
           ref={containerRef}
           className="flex-grow overflow-y-auto space-y-4 rounded-md"

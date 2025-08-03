@@ -17,7 +17,6 @@ export interface FileTreeData {
 }
 
 export interface FileTreeProps {
-  isOpen: boolean;
   paths: File[];
   onFileClick: (filePath: string) => void;
 }
