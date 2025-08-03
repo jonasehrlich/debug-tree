@@ -92,15 +92,11 @@ impl Repository {
         Commit::try_for_revision(&self.repo, rev)
     }
 
-    /// Returns an iterator over diffs between two revisions `base_rev` and `head_rev`
-    ///
-    /// * `base_rev` - Base revision to use as a tree, uses initial commit if set to `None`
-    /// * `head_rev` - Head revision until which to diff. Using current `HEAD` if set to `None`
-    pub fn iter_diffs_between_revisions(
+    fn git2_diff_for_revisions(
         &self,
         base_rev: Option<&str>,
         head_rev: Option<&str>,
-    ) -> Result<impl Iterator<Item = Result<Diff>>> {
+    ) -> Result<git2::Diff> {
         let head = head_rev.unwrap_or("HEAD");
         let tree = utils::get_tree_for_revision(&self.repo, head)?;
 
@@ -122,28 +118,15 @@ impl Repository {
         // Enable rename detection with DiffFindOptions
         let mut find_opts = git2::DiffFindOptions::new();
         find_opts.renames(true);
-        // Transform the diff, marking file renames, copies, etc.
+        // Transform a diff marking file renames, copies, etc.
         diff.find_similar(Some(&mut find_opts))
             .map_err(|e| Error::from_ctx_and_error("Failed to find similar files in diff", e))?;
+        Ok(diff)
+    }
 
-        let num_deltas = diff.deltas().len();
-
-        Ok((0..num_deltas).filter_map(move |delta_idx| {
-            // `diff` is owned by this function and must not be moved into the closure.
-            // Using `move` only for delta_idx, not for diff.
-            match git2::Patch::from_diff(&diff, delta_idx) {
-                Err(e) => Some(Err(Error::from_ctx_and_error("Failed to create patch", e))),
-                Ok(Some(mut patch)) => Some(Ok(Diff::from_repo_and_patch(&self.repo, &mut patch))),
-                Ok(None) => {
-                    if let Some(delta) = diff.get_delta(delta_idx) {
-                        Some(Ok(Diff::binary_from_repo_and_delta(&self.repo, &delta)))
-                    } else {
-                        log::error!("Failed to get delta for idx {delta_idx}");
-                        None
-                    }
-                }
-            }
-        }))
+    pub fn diff(&self, base_rev: Option<&str>, head_rev: Option<&str>) -> Result<Diff> {
+        let diff = self.git2_diff_for_revisions(base_rev, head_rev)?;
+        Diff::try_from_repo_and_diff(self.repo(), &diff)
     }
 
     /// Returns an iterator over tags in the repository which names contain `filter`

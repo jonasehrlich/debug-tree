@@ -16,14 +16,11 @@ const uiSelector = (s: UiState) => ({
   diffViewType: (s.isInlineDiff ? "unified" : "split") as ViewType,
 });
 
-type Path = string;
-type Content = string;
-
 const pathFromFileData = (file: FileData) => {
   return file.type === "delete" ? file.oldPath : file.newPath;
 };
 
-export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
+export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
   const { isInlineDiff, setIsInlineDiff, diffViewType } = useUiStore(
     useShallow(uiSelector),
   );
@@ -40,7 +37,7 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
     }
   };
 
-  if (!diffs || diffs.length === 0) {
+  if (!diff || diff.stats.filesChanged === 0) {
     // TODO check invalid diffs
     return (
       <div className="text-center p-2 text-muted-foreground select-none">
@@ -48,22 +45,8 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       </div>
     );
   }
-  const { files, oldSources } = diffs.reduce<{
-    files: FileData[];
-    oldSources: Record<Path, Content>;
-  }>(
-    (acc, diff) => {
-      acc.files = acc.files.concat(parseDiff(diff.patch));
-      const oldPath = diff.old?.path;
-      const oldContent = diff.old?.content;
-      if (oldPath && oldContent) {
-        acc.oldSources[oldPath] = oldContent;
-      }
-      return acc;
-    },
-    { files: [], oldSources: {} },
-  );
 
+  const files = parseDiff(diff.patch);
   const paths = files.map((f) => ({
     name: pathFromFileData(f),
     type: f.type,
@@ -122,7 +105,7 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
                 diffFileRefs.current[pathFromFileData(file)] = el;
               }}
               file={file}
-              oldSource={oldSources[file.oldPath] ?? undefined}
+              oldSource={diff.oldSources[file.oldPath] ?? undefined}
               viewType={diffViewType}
             />
           ))}

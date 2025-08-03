@@ -64,7 +64,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
 
 interface GitGraphData {
   commits: Commit[];
-  diffs: Diff[];
+  diff: Diff;
 }
 
 const selector = (s: AppState) => ({
@@ -95,10 +95,10 @@ export const GitDialog = () => {
       headRev: gitRevisions[1].rev,
     };
     Promise.all([fetchCommits(commitRange), fetchDiffs(commitRange)])
-      .then(([commits, diffs]) => {
+      .then(([commits, diff]) => {
         setGitData({
           commits,
-          diffs,
+          diff,
         });
       })
       .catch((error: unknown) => {
@@ -140,7 +140,7 @@ export const GitDialog = () => {
             </Badge>
             <Badge variant="secondary">
               <GitCompareArrows />
-              {gitData?.diffs.length} files changed
+              {gitData?.diff.stats.filesChanged} files changed
             </Badge>
           </div>
         </DialogHeader>
@@ -221,7 +221,7 @@ export const GitDialog = () => {
               value="tab-diff"
               className="flex-grow min-h-0 flex flex-col pt-4"
             >
-              <DiffViewer diffs={gitData?.diffs} />
+              <DiffViewer diff={gitData?.diff} />
             </TabsContent>
           </Tabs>
         </div>

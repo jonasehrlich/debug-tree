@@ -13,14 +13,14 @@ pub fn router() -> routing::Router<web::AppState> {
             routing::get(get_revision).post(checkout_revision),
         )
         .route("/commits", routing::get(list_commits))
-        .route("/diffs", routing::get(list_diffs))
+        .route("/diff", routing::get(get_diff))
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
         .route("/repository/status", routing::get(get_repository_status))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status, list_diffs), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status, get_diff), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -149,12 +149,12 @@ struct CommitRangeQuery {
 #[serde(rename_all = "camelCase")]
 struct ListDiffsResponse {
     /// Array of diffs in this commit range
-    diffs: Vec<git2_ox::Diff>,
+    diff: git2_ox::Diff,
 }
 
 #[utoipa::path(
     get,
-    path = "/diffs",
+    path = "/diff",
     summary = "List diffs",
     description = "List the diffs in a commit range",
     params(CommitRangeQuery),
@@ -163,17 +163,17 @@ struct ListDiffsResponse {
         (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
     )
 )]
-async fn list_diffs(
+async fn get_diff(
     State(state): State<web::AppState>,
     Query(query): Query<CommitRangeQuery>,
 ) -> Result<Json<ListDiffsResponse>, api::AppError> {
     let actor = state.git_actor();
-    let msg = actors::git::ListDiffs {
+    let msg = actors::git::GetDiff {
         base_rev: query.base_rev,
         head_rev: query.head_rev,
     };
-    let diffs = actor.call(msg).await??;
-    Ok(Json(ListDiffsResponse { diffs }))
+    let diff = actor.call(msg).await??;
+    Ok(Json(ListDiffsResponse { diff }))
 }
 
 #[derive(ToSchema, Serialize, Deserialize, IntoParams)]
