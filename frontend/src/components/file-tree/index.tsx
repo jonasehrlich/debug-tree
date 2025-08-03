@@ -1,11 +1,11 @@
 import React from "react";
-import { Input } from "../ui/input";
+import { SearchInput } from "../icon-input";
 import { FileDisplay, TreeDisplay } from "./display";
 import type { File, FileTreeProps } from "./types";
 import { groupPaths, optimizeFileTree } from "./utils";
 
 export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
-  const [filter, setFilter] = React.useState<string>("");
+  const [filter, setFilter] = React.useState("");
   const [filteredPaths, setFilteredPaths] = React.useState<File[]>(paths);
 
   React.useEffect(() => {
@@ -28,22 +28,20 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
     return { children: t.children ?? {}, files: t.files ?? [] };
   }, [filteredPaths]);
 
-  const handleFilterChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilter(e.target.value);
-    },
-    [],
-  );
   if (!isOpen) {
     return <></>;
   }
   return (
     <div className="flex flex-col shrink-0 border rounded-md w-2xs sm:w-xs lg:w-sm ">
       <div className="border-b p-2">
-        <Input
+        <SearchInput
+          value={filter}
           autoComplete="false"
-          placeholder="Filter paths"
-          onChange={handleFilterChange}
+          placeholder="Filter files..."
+          onChange={(e) => {
+            setFilter(e.target.value);
+          }}
+          clearable
         />
       </div>
       <div className="flex overflow-auto text-nowrap select-none py-1">
