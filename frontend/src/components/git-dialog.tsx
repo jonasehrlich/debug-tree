@@ -5,12 +5,13 @@ import type { Commit, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
+import { GitCommitVertical, GitCompareArrows, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
+import { BadgeGroup } from "./badge-group";
 import { DiffViewer } from "./diff-viewer";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -134,14 +135,40 @@ export const GitDialog = () => {
               <GitGraph /> {formatGitRevision(gitRevisions[0])}..
               {formatGitRevision(gitRevisions[1])}
             </Badge>
-            <Badge variant="secondary">
-              <GitCommit />
-              {gitData?.commits.length} commits
-            </Badge>
-            <Badge variant="secondary">
-              <GitCompareArrows />
-              {gitData?.diff.stats.filesChanged} files changed
-            </Badge>
+            {gitData && (
+              <>
+                <Badge variant="secondary">
+                  <GitCommitVertical />
+                  {gitData.commits.length} commits
+                </Badge>
+                <BadgeGroup
+                  variant="secondary"
+                  segments={[
+                    { children: <GitCompareArrows />, variant: "secondary" },
+                    ...(gitData.diff.stats.insertions !== 0
+                      ? [
+                          {
+                            children: `+${gitData.diff.stats.insertions.toString()}`,
+                            className: "bg-emerald-200 dark:bg-emerald-900",
+                          },
+                        ]
+                      : []),
+                    ...(gitData.diff.stats.deletions !== 0
+                      ? [
+                          {
+                            children: `-${gitData.diff.stats.deletions.toString()}`,
+                            className: "bg-red-200 dark:bg-red-900",
+                          },
+                        ]
+                      : []),
+
+                    {
+                      children: `${gitData.diff.stats.filesChanged.toString()} files changed`,
+                    },
+                  ]}
+                />
+              </>
+            )}
           </div>
         </DialogHeader>
 
@@ -156,7 +183,7 @@ export const GitDialog = () => {
           >
             <TabsList className="shrink-0">
               <TabsTrigger value="tab-graph">
-                <GitBranch />
+                <GitGraph />
                 Graph
               </TabsTrigger>
               <TabsTrigger value="tab-diff">
