@@ -5,7 +5,7 @@ import type { Commit, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { GitCommitVertical, GitCompareArrows, GitGraph } from "lucide-react";
+import { GitCompareArrows, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
@@ -137,10 +137,6 @@ export const GitDialog = () => {
             </Badge>
             {gitData && (
               <>
-                <Badge variant="secondary">
-                  <GitCommitVertical />
-                  {gitData.commits.length} commits
-                </Badge>
                 <BadgeGroup
                   variant="secondary"
                   segments={[
@@ -161,10 +157,6 @@ export const GitDialog = () => {
                           },
                         ]
                       : []),
-
-                    {
-                      children: `${gitData.diff.stats.filesChanged.toString()} files changed`,
-                    },
                   ]}
                 />
               </>
@@ -184,11 +176,15 @@ export const GitDialog = () => {
             <TabsList className="shrink-0">
               <TabsTrigger value="tab-graph">
                 <GitGraph />
-                Graph
+                Commits
+                <Badge variant="secondary">{gitData?.commits.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="tab-diff">
                 <GitCompareArrows />
                 Diff
+                <Badge variant="secondary">
+                  {gitData?.diff.stats.filesChanged}
+                </Badge>
               </TabsTrigger>
             </TabsList>
 
