@@ -58,7 +58,6 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
       <div className="shrink-0 flex items-center gap-2 mb-4">
         <Button
           variant="outline"
-          size="icon"
           onClick={() => {
             setIsFileTreeOpen(!isFileTreeOpen);
           }}
