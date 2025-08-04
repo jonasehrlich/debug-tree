@@ -5,15 +5,15 @@ import type { Commit, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { FileDiff, GitCompareArrows, GitGraph } from "lucide-react";
+import { FileDiff, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
-import { BadgeGroup } from "./badge-group";
 import { DiffViewer } from "./diff-viewer";
 import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
+import { GitStatsChart } from "./git-stats";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
@@ -136,32 +136,6 @@ export const GitDialog = () => {
               <GitGraph /> {formatGitRevision(gitRevisions[0])}..
               {formatGitRevision(gitRevisions[1])}
             </Badge>
-            {gitData && (
-              <>
-                <BadgeGroup
-                  variant="secondary"
-                  segments={[
-                    { children: <GitCompareArrows />, variant: "secondary" },
-                    ...(gitData.diff.stats.insertions !== 0
-                      ? [
-                          {
-                            children: `+${gitData.diff.stats.insertions.toString()}`,
-                            className: "bg-emerald-200 dark:bg-emerald-900",
-                          },
-                        ]
-                      : []),
-                    ...(gitData.diff.stats.deletions !== 0
-                      ? [
-                          {
-                            children: `-${gitData.diff.stats.deletions.toString()}`,
-                            className: "bg-red-200 dark:bg-red-900",
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              </>
-            )}
           </div>
         </DialogHeader>
 
@@ -174,21 +148,32 @@ export const GitDialog = () => {
             defaultValue="tab-graph"
             className="w-full h-full flex flex-col"
           >
-            <GhTabsList className="shrink-0">
-              <GhTabsTrigger value="tab-graph">
-                <GitGraph />
-                Commits
-                <Badge variant="secondary" className="text-inherit">
-                  {gitData?.commits.length}
-                </Badge>
-              </GhTabsTrigger>
-              <GhTabsTrigger value="tab-diff">
-                <FileDiff />
-                Files changed
-                <Badge variant="secondary" className="text-inherit">
-                  {gitData?.diff.stats.filesChanged}
-                </Badge>
-              </GhTabsTrigger>
+            <GhTabsList className="shrink-0 justify-between">
+              <div>
+                <GhTabsTrigger value="tab-graph">
+                  <GitGraph />
+                  Commits
+                  <Badge variant="secondary" className="text-inherit">
+                    {gitData?.commits.length}
+                  </Badge>
+                </GhTabsTrigger>
+                <GhTabsTrigger value="tab-diff">
+                  <FileDiff />
+                  Files changed
+                  <Badge variant="secondary" className="text-inherit">
+                    {gitData?.diff.stats.filesChanged}
+                  </Badge>
+                </GhTabsTrigger>
+              </div>
+              {gitData && (
+                <div className="py-2 text-sm">
+                  <GitStatsChart
+                    insertedLines={gitData.diff.stats.insertions}
+                    deletedLines={gitData.diff.stats.deletions}
+                    oldSourceNumLines={gitData.diff.stats.totalOldNumLines}
+                  />
+                </div>
+              )}
             </GhTabsList>
 
             {/*

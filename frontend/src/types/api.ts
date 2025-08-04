@@ -255,6 +255,8 @@ export interface components {
             filesChanged: number;
             /** @description Number of insertions */
             insertions: number;
+            /** @description Number of lines in the old versions of all affected files */
+            totalOldNumLines: number;
         };
         FlowData: {
             /** @description Name of the debug flow */

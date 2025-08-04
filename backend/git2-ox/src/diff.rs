@@ -15,14 +15,20 @@ pub(crate) struct DiffStats {
     insertions: usize,
     /// Number of deletions
     deletions: usize,
+    /// Number of lines in the old versions of all affected files
+    total_old_num_lines: usize,
 }
 
-impl From<git2::DiffStats> for DiffStats {
-    fn from(stats: git2::DiffStats) -> Self {
+impl DiffStats {
+    fn from_stats_and_total_old_num_lines(
+        stats: &git2::DiffStats,
+        total_old_num_lines: usize,
+    ) -> Self {
         Self {
             files_changed: stats.files_changed(),
             insertions: stats.insertions(),
             deletions: stats.deletions(),
+            total_old_num_lines,
         }
     }
 }
@@ -48,7 +54,7 @@ pub struct Diff {
 impl Diff {
     pub fn try_from_repo_and_diff(repo: &git2::Repository, diff: &git2::Diff) -> Result<Self> {
         let mut patch_output = String::new();
-
+        let mut total_num_lines: usize = 0;
         let mut old_files: hash_map::HashMap<Path, FileContent> = hash_map::HashMap::new();
         // Collect old file contents from each delta
         diff.foreach(
@@ -63,7 +69,9 @@ impl Diff {
 
                     if let Ok(blob) = repo.find_blob(oid) {
                         if let Ok(content) = std::str::from_utf8(blob.content()) {
-                            old_files.insert(path, content.to_string());
+                            let text = content.to_string();
+                            total_num_lines += text.lines().count();
+                            old_files.insert(path, text);
                         } else {
                             old_files.insert(path, "<binary or invalid utf8>".to_string());
                         }
@@ -98,10 +106,12 @@ impl Diff {
 
         Ok(Self {
             patch: patch_output,
-            stats: diff
-                .stats()
-                .map_err(|e| error::Error::from_ctx_and_error("Error getting diff stats", e))?
-                .into(),
+            stats: DiffStats::from_stats_and_total_old_num_lines(
+                &diff
+                    .stats()
+                    .map_err(|e| error::Error::from_ctx_and_error("Error getting diff stats", e))?,
+                total_num_lines,
+            ),
             old_sources: old_files,
         })
     }
