@@ -11,7 +11,7 @@ import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
-import { DiffViewer } from "./diff-viewer";
+import { DiffViewer, SimpleInlineDiffViewer } from "./diff-viewer";
 import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
 import { GitStatsChart } from "./git-stats";
 import { Badge } from "./ui/badge";
@@ -20,6 +20,22 @@ import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent } from "./ui/tabs";
 
 const CommitDetails = ({ commit }: { commit: Commit | null }) => {
+  const [diff, setDiff] = React.useState<Diff | null>(null);
+
+  React.useEffect(() => {
+    if (!commit) {
+      setDiff(null);
+      return;
+    }
+    fetchDiffs({ baseRev: `${commit.id}^`, headRev: commit.id })
+      .then((data) => {
+        setDiff(data);
+      })
+      .catch(() => {
+        toast.error(`Error fetching Diff for commit ${commit.id.slice(0, 7)}`);
+      });
+  }, [commit]);
+
   if (!commit) {
     return (
       <div className="text-muted-foreground text-sm text-center">
@@ -28,7 +44,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
     );
   }
   return (
-    <div className="space-y-2 border rounded-md p-2">
+    <div className="flex-grow flex-col space-y-4 overflow-y-auto">
       <div className="font-semibold items-center flex justify-between">
         <div className="font-mono">
           {commit.id.slice(0, 7)} {commit.summary}
@@ -37,14 +53,14 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
           <CopyButton value={commit.id} />
         </div>
       </div>
-      <div className="text-xs font-italic text-muted-foreground italic">
+      <div className="flex text-xs font-italic text-muted-foreground italic">
         committed{" "}
         {formatDistanceToNow(commit.time, {
           addSuffix: true,
         })}
       </div>
 
-      <div className="prose prose-markdown max-w-none rounded-md py-2">
+      <div className="prose prose-markdown max-w-none rounded-md">
         <Markdown children={commit.body} />
       </div>
       <div className="overflow-hidden text-xs text-muted-foreground font-mono">
@@ -60,6 +76,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
           {commit.author.email && <span> {commit.committer.email}</span>}
         </p>
       </div>
+      <SimpleInlineDiffViewer diff={diff ?? undefined} />
     </div>
   );
 };
@@ -222,7 +239,7 @@ export const GitDialog = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="w-full md:w-5/8 flex-grow overflow-y-auto space-y-4">
+                <div className="w-full md:w-5/8 space-y-2 border flex-col flex-grow min-h-0 flex rounded-md p-2 overflow-hidden">
                   <CommitDetails commit={selectedCommit} />
                 </div>
               </div>

@@ -113,3 +113,31 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
     </div>
   );
 };
+
+/**
+ * Simple diff viewer component only supporting inline diff view
+ */
+export const SimpleInlineDiffViewer = ({ diff }: { diff?: ApiDiff }) => {
+  if (!diff || diff.stats.filesChanged === 0) {
+    return (
+      <div className="text-center p-2 text-muted-foreground select-none">
+        No diffs to display
+      </div>
+    );
+  }
+  const files = parseDiff(diff.patch);
+  return (
+    <div className="flex-grow min-h-0 flex flex-col space-x-4 rounded-md overflow-hidden">
+      <div className="flex-grow overflow-y-auto space-y-4 rounded-md">
+        {files.map((file, idx) => (
+          <DiffFile
+            key={idx}
+            file={file}
+            oldSource={diff.oldSources[file.oldPath] ?? undefined}
+            viewType="unified"
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
