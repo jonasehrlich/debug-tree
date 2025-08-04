@@ -5,7 +5,7 @@ import type { Commit, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { GitCompareArrows, GitGraph } from "lucide-react";
+import { FileDiff, GitCompareArrows, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
@@ -13,10 +13,11 @@ import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
 import { BadgeGroup } from "./badge-group";
 import { DiffViewer } from "./diff-viewer";
+import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsContent } from "./ui/tabs";
 
 const CommitDetails = ({ commit }: { commit: Commit | null }) => {
   if (!commit) {
@@ -173,20 +174,22 @@ export const GitDialog = () => {
             defaultValue="tab-graph"
             className="w-full h-full flex flex-col"
           >
-            <TabsList className="shrink-0">
-              <TabsTrigger value="tab-graph">
+            <GhTabsList className="shrink-0">
+              <GhTabsTrigger value="tab-graph">
                 <GitGraph />
                 Commits
-                <Badge variant="secondary">{gitData?.commits.length}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="tab-diff">
-                <GitCompareArrows />
-                Diff
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="text-inherit">
+                  {gitData?.commits.length}
+                </Badge>
+              </GhTabsTrigger>
+              <GhTabsTrigger value="tab-diff">
+                <FileDiff />
+                Files changed
+                <Badge variant="secondary" className="text-inherit">
                   {gitData?.diff.stats.filesChanged}
                 </Badge>
-              </TabsTrigger>
-            </TabsList>
+              </GhTabsTrigger>
+            </GhTabsList>
 
             {/*
               Each TabsContent panel must also grow and have min-h-0 to ensure
