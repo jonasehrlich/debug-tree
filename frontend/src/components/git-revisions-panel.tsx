@@ -16,7 +16,7 @@ import { useStore, useUiStore } from "@/store";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { Panel } from "@xyflow/react";
-import { GitGraph, X } from "lucide-react";
+import { GitGraph, RotateCcw, X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
 import { GitStatusCard } from "./git-status-card";
@@ -55,7 +55,7 @@ export const GitRevisionsPanel = () => {
   return (
     displayPanel && (
       <TooltipProvider>
-        <Panel position="bottom-left">
+        <Panel position="bottom-left" className="space-y-4">
           {gitStatus && (
             <GitStatusCard
               status={gitStatus}
@@ -73,6 +73,7 @@ export const GitRevisionsPanel = () => {
                       variant="destructive"
                       className="max-w-[150px] truncate"
                     >
+                      <RotateCcw />
                       Restore
                     </Button>
                   </TooltipTrigger>
@@ -84,11 +85,11 @@ export const GitRevisionsPanel = () => {
             />
           )}
           {hasRevisions && (
-            <Card className="w-80">
+            <Card className="w-80 gap-4">
               <CardHeader>
                 <CardTitle>Git Revisions</CardTitle>
               </CardHeader>
-              <CardContent className="divide-y">
+              <CardContent className="divide-y text-sm">
                 {pinnedGitRevisions.map(
                   (rev, index) =>
                     rev && (

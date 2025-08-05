@@ -245,11 +245,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
                       {flow.name}{" "}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="cursor-pointer"
-                          >
+                          <Button variant="ghost" className="cursor-pointer">
                             <Trash className="text-red-500" />
                           </Button>
                         </AlertDialogTrigger>
@@ -285,7 +281,6 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
             {/* --- SECTION ONE FOOTER --- */}
             <div className="pt-4 mt-4 flex justify-end gap-2">
               <Button
-                size="sm"
                 type="submit"
                 disabled={selectedFlow === null}
                 onClick={onLoadFlowClick}

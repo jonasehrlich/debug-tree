@@ -24,13 +24,16 @@ export const GitStats = ({
   return (
     <>
       {insertedLines !== 0 && (
-        <span className="text-emerald-600 font-semibold" {...insertedProps}>
+        <span
+          className="text-emerald-600 font-semibold select-none"
+          {...insertedProps}
+        >
           +{insertedLines}
         </span>
       )}
       {deletedLines !== 0 && (
         <span
-          className="text-red-600 dark:text-red-800 font-semibold"
+          className="text-red-600 dark:text-red-800 font-semibold select-none"
           {...deletedProps}
         >
           -{deletedLines}
@@ -56,7 +59,8 @@ export const GitStatsChart = React.memo(
     insertedLines,
     deletedLines,
     oldSourceNumLines,
-  }: GitStatsChartProps & GitStatsProps) => {
+    ...props
+  }: GitStatsChartProps & GitStatsProps & React.ComponentProps<"div">) => {
     // Prevent division by zero and handle the case with no lines.
     const hasLines = oldSourceNumLines > 0;
 
@@ -83,7 +87,10 @@ export const GitStatsChart = React.memo(
     });
 
     return (
-      <div className="flex space-x-1 items-center">
+      <div
+        {...props}
+        className={cn("flex space-x-1 items-center", props.className)}
+      >
         <GitStats insertedLines={insertedLines} deletedLines={deletedLines} />
         <div className="flex w-full gap-1" role="img">
           {segments.map((colorClass, index) => (

@@ -90,26 +90,20 @@ impl Handler<ListCommits> for GitActor {
     }
 }
 
-#[message(response = Result<Vec<git2_ox::Diff>, git2_ox::error::Error>)]
-pub struct ListDiffs {
+#[message(response = Result<git2_ox::Diff, git2_ox::error::Error>)]
+pub struct GetDiff {
     pub base_rev: Option<String>,
     pub head_rev: Option<String>,
 }
 
-impl Handler<ListDiffs> for GitActor {
+impl Handler<GetDiff> for GitActor {
     async fn handle(
         &mut self,
         _ctx: &mut Context<Self>,
-        msg: ListDiffs,
-    ) -> Result<Vec<git2_ox::Diff>, git2_ox::error::Error> {
-        let diffs_iter = self
-            .repository
-            .iter_diffs_between_revisions(msg.base_rev.as_deref(), msg.head_rev.as_deref())?;
-        let mut diffs = Vec::new();
-        for diff_result in diffs_iter {
-            diffs.push(diff_result?);
-        }
-        Ok(diffs)
+        msg: GetDiff,
+    ) -> Result<git2_ox::Diff, git2_ox::error::Error> {
+        self.repository
+            .diff(msg.base_rev.as_deref(), msg.head_rev.as_deref())
     }
 }
 

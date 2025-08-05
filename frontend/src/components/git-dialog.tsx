@@ -5,19 +5,37 @@ import type { Commit, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { GitBranch, GitCommit, GitCompareArrows, GitGraph } from "lucide-react";
+import { FileDiff, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { CopyButton } from "./action-button";
-import { DiffViewer } from "./diff-viewer";
+import { DiffViewer, SimpleInlineDiffViewer } from "./diff-viewer";
+import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
+import { GitStatsChart } from "./git-stats";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Tabs, TabsContent } from "./ui/tabs";
 
 const CommitDetails = ({ commit }: { commit: Commit | null }) => {
+  const [diff, setDiff] = React.useState<Diff | null>(null);
+
+  React.useEffect(() => {
+    if (!commit) {
+      setDiff(null);
+      return;
+    }
+    fetchDiffs({ baseRev: `${commit.id}^`, headRev: commit.id })
+      .then((data) => {
+        setDiff(data);
+      })
+      .catch(() => {
+        toast.error(`Error fetching Diff for commit ${commit.id.slice(0, 7)}`);
+      });
+  }, [commit]);
+
   if (!commit) {
     return (
       <div className="text-muted-foreground text-sm text-center">
@@ -26,7 +44,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
     );
   }
   return (
-    <div className="space-y-2 border rounded-md p-2">
+    <div className="flex-grow flex-col space-y-4 overflow-y-auto">
       <div className="font-semibold items-center flex justify-between">
         <div className="font-mono">
           {commit.id.slice(0, 7)} {commit.summary}
@@ -35,14 +53,14 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
           <CopyButton value={commit.id} />
         </div>
       </div>
-      <div className="text-xs font-italic text-muted-foreground italic">
+      <div className="flex text-xs font-italic text-muted-foreground italic">
         committed{" "}
         {formatDistanceToNow(commit.time, {
           addSuffix: true,
         })}
       </div>
 
-      <div className="prose prose-markdown max-w-none rounded-md py-2">
+      <div className="prose prose-markdown max-w-none rounded-md">
         <Markdown children={commit.body} />
       </div>
       <div className="overflow-hidden text-xs text-muted-foreground font-mono">
@@ -58,13 +76,14 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
           {commit.author.email && <span> {commit.committer.email}</span>}
         </p>
       </div>
+      <SimpleInlineDiffViewer diff={diff ?? undefined} />
     </div>
   );
 };
 
 interface GitGraphData {
   commits: Commit[];
-  diffs: Diff[];
+  diff: Diff;
 }
 
 const selector = (s: AppState) => ({
@@ -95,10 +114,10 @@ export const GitDialog = () => {
       headRev: gitRevisions[1].rev,
     };
     Promise.all([fetchCommits(commitRange), fetchDiffs(commitRange)])
-      .then(([commits, diffs]) => {
+      .then(([commits, diff]) => {
         setGitData({
           commits,
-          diffs,
+          diff,
         });
       })
       .catch((error: unknown) => {
@@ -134,14 +153,6 @@ export const GitDialog = () => {
               <GitGraph /> {formatGitRevision(gitRevisions[0])}..
               {formatGitRevision(gitRevisions[1])}
             </Badge>
-            <Badge variant="secondary">
-              <GitCommit />
-              {gitData?.commits.length} commits
-            </Badge>
-            <Badge variant="secondary">
-              <GitCompareArrows />
-              {gitData?.diffs.length} files changed
-            </Badge>
           </div>
         </DialogHeader>
 
@@ -154,16 +165,33 @@ export const GitDialog = () => {
             defaultValue="tab-graph"
             className="w-full h-full flex flex-col"
           >
-            <TabsList className="shrink-0">
-              <TabsTrigger value="tab-graph">
-                <GitBranch />
-                Graph
-              </TabsTrigger>
-              <TabsTrigger value="tab-diff">
-                <GitCompareArrows />
-                Diff
-              </TabsTrigger>
-            </TabsList>
+            <GhTabsList className="shrink-0 justify-between">
+              <div>
+                <GhTabsTrigger value="tab-graph">
+                  <GitGraph />
+                  Commits
+                  <Badge variant="secondary" className="text-inherit">
+                    {gitData?.commits.length}
+                  </Badge>
+                </GhTabsTrigger>
+                <GhTabsTrigger value="tab-diff">
+                  <FileDiff />
+                  Files changed
+                  <Badge variant="secondary" className="text-inherit">
+                    {gitData?.diff.stats.filesChanged}
+                  </Badge>
+                </GhTabsTrigger>
+              </div>
+              {gitData && (
+                <div className="py-2 text-sm">
+                  <GitStatsChart
+                    insertedLines={gitData.diff.stats.insertions}
+                    deletedLines={gitData.diff.stats.deletions}
+                    oldSourceNumLines={gitData.diff.stats.totalOldNumLines}
+                  />
+                </div>
+              )}
+            </GhTabsList>
 
             {/*
               Each TabsContent panel must also grow and have min-h-0 to ensure
@@ -211,7 +239,7 @@ export const GitDialog = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="w-full md:w-5/8 flex-grow overflow-y-auto space-y-4">
+                <div className="w-full md:w-5/8 space-y-2 border flex-col flex-grow min-h-0 flex rounded-md p-2 overflow-hidden">
                   <CommitDetails commit={selectedCommit} />
                 </div>
               </div>
@@ -221,7 +249,7 @@ export const GitDialog = () => {
               value="tab-diff"
               className="flex-grow min-h-0 flex flex-col pt-4"
             >
-              <DiffViewer diffs={gitData?.diffs} />
+              <DiffViewer diff={gitData?.diff} />
             </TabsContent>
           </Tabs>
         </div>
