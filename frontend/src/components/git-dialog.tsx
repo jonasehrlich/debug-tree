@@ -5,7 +5,7 @@ import type { CommitWithReferences, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { FileDiff, GitCommitVertical, GitGraph } from "lucide-react";
+import { FileDiff, GitCommitVertical, GitGraph, Info } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { useShallow } from "zustand/react/shallow";
@@ -16,7 +16,9 @@ import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
 import { GitReferenceBadge } from "./git-reference-badge";
 import { GitStatsChart } from "./git-stats";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent } from "./ui/tabs";
 
@@ -50,8 +52,32 @@ const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
         <div className="font-mono">
           {commit.id.slice(0, 7)} {commit.summary}
         </div>
-        <div>
-          <CopyButton value={commit.id} />
+        <div className="flex">
+          <CopyButton value={commit.id} tooltip="Copy Commit ID" />
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Button variant="ghost" className="size-6">
+                <Info />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="text-xs font-mono">
+              <p>
+                <strong>Date:</strong> {new Date(commit.time).toLocaleString()}
+              </p>
+              <p>
+                <strong>Author:</strong> {commit.author.name}{" "}
+                {commit.author.email && (
+                  <span>&lt;{commit.author.email}&gt;</span>
+                )}
+              </p>
+              <p>
+                <strong>Committer:</strong> {commit.committer.name}{" "}
+                {commit.author.email && (
+                  <span>&lt;{commit.committer.email}&gt;</span>
+                )}
+              </p>
+            </HoverCardContent>
+          </HoverCard>
         </div>
       </div>
       <div className="flex text-xs font-italic text-muted-foreground italic">
@@ -73,19 +99,7 @@ const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
           <Markdown children={commit.body} />
         </div>
       )}
-      <div className="overflow-hidden text-xs text-muted-foreground font-mono">
-        <p>
-          <strong>Date:</strong> {new Date(commit.time).toLocaleString()}
-        </p>
-        <p>
-          <strong>Author:</strong> {commit.author.name}{" "}
-          {commit.author.email && <span> {commit.author.email}</span>}
-        </p>
-        <p>
-          <strong>Committer:</strong> {commit.committer.name}{" "}
-          {commit.author.email && <span> {commit.committer.email}</span>}
-        </p>
-      </div>
+      <div className="overflow-hidden text-xs text-muted-foreground font-mono"></div>
       <SimpleInlineDiffViewer diff={diff ?? undefined} />
     </div>
   );
@@ -186,7 +200,7 @@ export const GitDialog = () => {
                 </GhTabsTrigger>
               </div>
               {gitData && (
-                <div className="py-2 text-sm">
+                <div className="py-2 text-xs">
                   <GitStatsChart
                     insertedLines={gitData.diff.stats.insertions}
                     deletedLines={gitData.diff.stats.deletions}
@@ -233,7 +247,7 @@ export const GitDialog = () => {
                             <div className="flex flex-col gap-1">
                               <div className="flex flex-wrap gap-1">
                                 {commit.summary}
-                                <div className="text-2xs flex text-muted-foreground">
+                                <div className="text-xs flex text-muted-foreground">
                                   {formatDistanceToNow(commit.time, {
                                     addSuffix: true,
                                   })}
