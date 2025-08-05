@@ -95,11 +95,8 @@ impl Diff {
                 // the content is already fully formatted and should not be prefixed.
                 _ => {}
             }
-            if let Ok(text) = str::from_utf8(line.content()) {
-                patch_output.push_str(text);
-            } else {
-                patch_output.push_str("<invalid utf8>");
-            }
+
+            patch_output.push_str(str::from_utf8(line.content()).unwrap_or("<invalid utf8>"));
             true
         })
         .map_err(|e| error::Error::from_ctx_and_error("Error creating patch", e))?;

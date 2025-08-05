@@ -134,8 +134,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List diffs
-         * @description List the diffs in a commit range
+         * Get diff
+         * @description Get the diff of a commit range. The diff consists of the patch describing the differences between the two revisions, similar to the output of `git diff rev1..rev2`, the stats of this diff similar to `git diff --stat` and a map of old source file contents, these can be used to expand diffs on the client side.
          */
         get: operations["get_diff"];
         put?: never;
@@ -292,7 +292,7 @@ export interface components {
             commits: components["schemas"]["Commit"][];
         };
         ListDiffsResponse: {
-            /** @description Array of diffs in this commit range */
+            /** @description Diff between base and head revision */
             diff: components["schemas"]["Diff"];
         };
         ListFlowsResponse: {

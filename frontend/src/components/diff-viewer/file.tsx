@@ -19,8 +19,8 @@ import { Unfold } from "./unfold";
 type GitStats = Record<ChangeType, number> & { oldSourceNumLines: number };
 
 const formatDiffFilePaths = (file: FileData) => {
-  if (file.newPath === file.oldPath) {
-    // File was modified without rename
+  const modified = file.newPath === file.oldPath;
+  if (modified) {
     return file.oldPath;
   }
   if (file.type === "add") {
