@@ -1,11 +1,11 @@
 import { fetchCommits, fetchDiffs } from "@/client";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
-import type { Commit, Diff } from "@/types/api-types";
+import type { CommitWithReferences, Diff } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
 import { formatDistanceToNow } from "date-fns";
-import { FileDiff, GitGraph } from "lucide-react";
+import { FileDiff, GitCommitVertical, GitGraph } from "lucide-react";
 import React from "react";
 import Markdown from "react-markdown";
 import { useShallow } from "zustand/react/shallow";
@@ -13,13 +13,14 @@ import { notify } from "../lib/notify";
 import { CopyButton } from "./action-button";
 import { DiffViewer, SimpleInlineDiffViewer } from "./diff-viewer";
 import { GhTabsList, GhTabsTrigger } from "./gh-tabs";
+import { GitReferenceBadge } from "./git-reference-badge";
 import { GitStatsChart } from "./git-stats";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
 import { Tabs, TabsContent } from "./ui/tabs";
 
-const CommitDetails = ({ commit }: { commit: Commit | null }) => {
+const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
   const [diff, setDiff] = React.useState<Diff | null>(null);
 
   React.useEffect(() => {
@@ -44,7 +45,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
     );
   }
   return (
-    <div className="flex-grow flex-col space-y-4 overflow-y-auto">
+    <div className="flex-grow flex-col space-y-2 overflow-y-auto">
       <div className="font-semibold items-center flex justify-between">
         <div className="font-mono">
           {commit.id.slice(0, 7)} {commit.summary}
@@ -59,10 +60,19 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
           addSuffix: true,
         })}
       </div>
+      {commit.references.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {commit.references.map((ref, idx) => (
+            <GitReferenceBadge key={idx} reference={ref} />
+          ))}
+        </div>
+      )}
 
-      <div className="prose prose-markdown max-w-none rounded-md">
-        <Markdown children={commit.body} />
-      </div>
+      {commit.body && (
+        <div className="prose prose-markdown max-w-none rounded-md">
+          <Markdown children={commit.body} />
+        </div>
+      )}
       <div className="overflow-hidden text-xs text-muted-foreground font-mono">
         <p>
           <strong>Date:</strong> {new Date(commit.time).toLocaleString()}
@@ -82,7 +92,7 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
 };
 
 interface GitGraphData {
-  commits: Commit[];
+  commits: CommitWithReferences[];
   diff: Diff;
 }
 
@@ -101,9 +111,8 @@ export const GitDialog = () => {
   const { isOpen, setIsOpen } = useUiStore(useShallow(uiSelector));
 
   const [gitData, setGitData] = React.useState<GitGraphData>();
-  const [selectedCommit, setSelectedCommit] = React.useState<Commit | null>(
-    null,
-  );
+  const [selectedCommit, setSelectedCommit] =
+    React.useState<CommitWithReferences | null>(null);
 
   React.useEffect(() => {
     if (!isOpen || gitRevisions[0] === null || gitRevisions[1] === null) {
@@ -197,12 +206,12 @@ export const GitDialog = () => {
                 <div className="w-full md:w-3/8 max-h-[150px] md:max-h-full">
                   <ScrollArea className="h-full rounded-md border text-sm">
                     {gitData?.commits.length ? (
-                      <div className="divide-y font-mono">
+                      <div className="divide-y">
                         {gitData.commits.map((commit) => (
                           <div
                             key={commit.id}
                             className={cn(
-                              "text-xs p-2 px-4 truncate text-ellipsis cursor-pointer hover:bg-secondary/80",
+                              "text-xs flex py-1 px-2 items-center cursor-pointer hover:bg-secondary/80",
                               "dark:hover:bg-secondary/80 select-none cursor-pointer",
                               {
                                 "bg-secondary":
@@ -220,7 +229,27 @@ export const GitDialog = () => {
                               }
                             }}
                           >
-                            {commit.summary}
+                            <GitCommitVertical className="shrink-0 " />
+                            <div className="flex flex-col gap-1">
+                              <div className="flex flex-wrap gap-1">
+                                {commit.summary}
+                                <div className="text-2xs flex text-muted-foreground">
+                                  {formatDistanceToNow(commit.time, {
+                                    addSuffix: true,
+                                  })}
+                                </div>
+                              </div>
+                              {commit.references.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {commit.references.map((ref, idx) => (
+                                    <GitReferenceBadge
+                                      key={idx}
+                                      reference={ref}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
