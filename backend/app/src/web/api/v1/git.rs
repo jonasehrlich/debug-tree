@@ -148,15 +148,18 @@ struct CommitRangeQuery {
 #[derive(Serialize, ToSchema, IntoParams)]
 #[serde(rename_all = "camelCase")]
 struct ListDiffsResponse {
-    /// Array of diffs in this commit range
+    /// Diff between base and head revision
     diff: git2_ox::Diff,
 }
 
 #[utoipa::path(
     get,
     path = "/diff",
-    summary = "List diffs",
-    description = "List the diffs in a commit range",
+    summary = "Get diff",
+    description = "Get the diff of a commit range. The diff consists of the patch describing the \
+    differences between the two revisions, similar to the output of `git diff rev1..rev2`, the stats \
+    of this diff similar to `git diff --stat` and a map of old source file contents, these can be used \
+    to expand diffs on the client side.",
     params(CommitRangeQuery),
     responses(
         (status = http::StatusCode::OK, description = "List of diffs", body = ListDiffsResponse),
