@@ -40,4 +40,8 @@ impl Error {
             _ => Error::Generic(ErrorCtx::new(ctx, e)),
         }
     }
+
+    pub(crate) fn from_ctx(ctx: impl Into<String>) -> Self {
+        Error::from_ctx_and_error(ctx, git2::Error::from_str("Unknown"))
+    }
 }
