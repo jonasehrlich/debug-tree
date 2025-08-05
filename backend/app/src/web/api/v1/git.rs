@@ -44,7 +44,7 @@ pub(super) struct ApiDoc;
 async fn get_revision(
     State(state): State<web::AppState>,
     Path(commit_id): Path<String>,
-) -> Result<Json<commit::Commit>, api::AppError> {
+) -> Result<Json<commit::CommitWithReferences>, api::AppError> {
     let actor = state.git_actor();
     let msg = actors::git::GetRevision {
         revision: commit_id,
@@ -76,7 +76,7 @@ async fn get_revision(
 async fn checkout_revision(
     State(state): State<web::AppState>,
     Path(commit_id): Path<String>,
-) -> Result<Json<commit::Commit>, api::AppError> {
+) -> Result<Json<commit::CommitWithReferences>, api::AppError> {
     let actor = state.git_actor();
     let msg = actors::git::CheckoutRevision {
         revision: commit_id,
@@ -105,7 +105,7 @@ struct ListCommitsQuery {
 struct ListCommitsResponse {
     /// Array of commits between the base and head commit IDs
     /// in reverse chronological order.
-    commits: Vec<git2_ox::Commit>,
+    commits: Vec<git2_ox::CommitWithReferences>,
 }
 
 #[utoipa::path(
@@ -326,7 +326,7 @@ async fn create_branch(
 #[serde(rename_all = "camelCase")]
 struct RepositoryStatusResponse {
     /// The current HEAD commit
-    head: git2_ox::Commit,
+    head: git2_ox::CommitWithReferences,
     /// The current branch name, not set if in a detached HEAD state
     current_branch: Option<String>,
 }

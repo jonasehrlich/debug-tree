@@ -1,5 +1,6 @@
+use crate::commit::CommitWithReferences;
 use crate::error::Error;
-use crate::{Branch, Commit, Diff, Result, TaggedCommit, utils};
+use crate::{Branch, Diff, Result, TaggedCommit, utils};
 use std::path::Path;
 
 pub struct Repository {
@@ -47,12 +48,15 @@ impl Repository {
         &self,
         base_rev: Option<&str>,
         head_rev: Option<&str>,
-    ) -> Result<impl Iterator<Item = Result<Commit>>> {
+    ) -> Result<impl Iterator<Item = Result<CommitWithReferences>>> {
         let revwalk = utils::revwalk_for_range(&self.repo, base_rev, head_rev)?;
-        Ok(revwalk.map(|oid_result| {
+        let ref_map = utils::get_references_map(&self.repo)?;
+        Ok(revwalk.map(move |oid_result| {
             oid_result
                 .map_err(|e| Error::from_ctx_and_error("Failed to get oid object", e))
-                .and_then(|oid| Commit::try_for_oid(&self.repo, oid))
+                .and_then(|oid| {
+                    CommitWithReferences::try_from_oid_and_ref_map(&self.repo, oid, &ref_map)
+                })
         }))
     }
 
@@ -60,15 +64,19 @@ impl Repository {
     ///
     /// * `rev` - Revision to get the commit for. This can be the short hash, full hash, a tag, or any other
     ///   reference such as `HEAD`, a branch name or a tag name
-    pub fn get_commit_for_revision(&self, rev: &str) -> Result<Commit> {
-        Commit::try_for_revision(&self.repo, rev)
+    pub fn get_commit_for_revision(&self, rev: &str) -> Result<CommitWithReferences> {
+        CommitWithReferences::try_from_revision_and_ref_map(
+            &self.repo,
+            rev,
+            &utils::get_references_map(&self.repo)?,
+        )
     }
 
     /// Checkout a revision
     ///
     /// * `rev` - Revision to checkout. This can be the short hash, full hash, a tag, or any other
     ///   reference such as `HEAD`, a branch name or a tag name
-    pub fn checkout_revision(&self, rev: &str) -> Result<Commit> {
+    pub fn checkout_revision(&self, rev: &str) -> Result<CommitWithReferences> {
         let (object, reference) = self.repo.revparse_ext(rev).map_err(|e| {
             Error::from_ctx_and_error(format!("Failed to parse revision '{rev}'"), e)
         })?;
@@ -86,10 +94,13 @@ impl Repository {
         .map_err(|e| {
             Error::from_ctx_and_error(format!("Failed to set head to revision '{rev}'"), e)
         })?;
+
+        let ref_map = utils::get_references_map(&self.repo)?;
+
         // self.repo
         //     .set_head(obj.Ok
         //     .map_err(|e| Error::from_ctx_and_error(format!("Failed to set head to {rev}"), e))?;
-        Commit::try_for_revision(&self.repo, rev)
+        CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
     }
 
     fn git2_diff_for_revisions(
