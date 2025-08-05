@@ -17,7 +17,10 @@ impl GitActor {
         Ok(Self { repository })
     }
 
-    fn filter_commit(filter: &str, commit: &git2_ox::Commit) -> bool {
+    fn filter_commit<CommitLikeT>(filter: &str, commit: &CommitLikeT) -> bool
+    where
+        CommitLikeT: git2_ox::CommitLike,
+    {
         let id_matches = commit
             .id()
             .to_string()
@@ -31,7 +34,7 @@ impl GitActor {
     }
 }
 
-#[message(response = Result<git2_ox::Commit, git2_ox::error::Error>)]
+#[message(response = Result<git2_ox::CommitWithReferences, git2_ox::error::Error>)]
 pub struct GetRevision {
     pub revision: String,
 }
@@ -41,12 +44,12 @@ impl Handler<GetRevision> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         msg: GetRevision,
-    ) -> Result<git2_ox::Commit, git2_ox::error::Error> {
+    ) -> Result<git2_ox::CommitWithReferences, git2_ox::error::Error> {
         self.repository.get_commit_for_revision(&msg.revision)
     }
 }
 
-#[message(response = Result<git2_ox::Commit, git2_ox::error::Error>)]
+#[message(response = Result<git2_ox::CommitWithReferences, git2_ox::error::Error>)]
 pub struct CheckoutRevision {
     pub revision: String,
 }
@@ -56,12 +59,12 @@ impl Handler<CheckoutRevision> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         msg: CheckoutRevision,
-    ) -> Result<git2_ox::Commit, git2_ox::error::Error> {
+    ) -> Result<git2_ox::CommitWithReferences, git2_ox::error::Error> {
         self.repository.checkout_revision(&msg.revision)
     }
 }
 
-#[message(response = Result<Vec<git2_ox::Commit>, git2_ox::error::Error>)]
+#[message(response = Result<Vec<git2_ox::CommitWithReferences>, git2_ox::error::Error>)]
 pub struct ListCommits {
     pub base_rev: Option<String>,
     pub head_rev: Option<String>,
@@ -73,7 +76,7 @@ impl Handler<ListCommits> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         msg: ListCommits,
-    ) -> Result<Vec<git2_ox::Commit>, git2_ox::error::Error> {
+    ) -> Result<Vec<git2_ox::CommitWithReferences>, git2_ox::error::Error> {
         let commits_iter = self
             .repository
             .iter_commits(msg.base_rev.as_deref(), msg.head_rev.as_deref())?;
@@ -184,7 +187,7 @@ impl Handler<CreateBranch> for GitActor {
 
 #[derive(Debug, Clone)]
 pub struct RepositoryStatus {
-    pub head: git2_ox::Commit,
+    pub head: git2_ox::CommitWithReferences,
     pub current_branch: Option<String>,
 }
 

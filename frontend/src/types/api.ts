@@ -232,6 +232,10 @@ export interface components {
             /** Format: date-time */
             time: string;
         };
+        CommitWithReferences: components["schemas"]["Commit"] & {
+            /** @description References pointing to the commit */
+            references: components["schemas"]["ReferenceMetadata"][];
+        };
         CreateFlowRequest: {
             name: string;
         };
@@ -289,7 +293,7 @@ export interface components {
         ListCommitsResponse: {
             /** @description Array of commits between the base and head commit IDs
              *     in reverse chronological order. */
-            commits: components["schemas"]["Commit"][];
+            commits: components["schemas"]["CommitWithReferences"][];
         };
         ListDiffsResponse: {
             /** @description Diff between base and head revision */
@@ -307,11 +311,17 @@ export interface components {
             /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
             nodes: unknown[];
         };
+        /** @enum {string} */
+        ReferenceKind: "tag" | "branch" | "note" | "remotebranch";
+        ReferenceMetadata: {
+            kind: components["schemas"]["ReferenceKind"];
+            name: string;
+        };
         RepositoryStatusResponse: {
             /** @description The current branch name, not set if in a detached HEAD state */
             currentBranch?: string | null;
             /** @description The current HEAD commit */
-            head: components["schemas"]["Commit"];
+            head: components["schemas"]["CommitWithReferences"];
         };
         Signature: {
             email: string;
