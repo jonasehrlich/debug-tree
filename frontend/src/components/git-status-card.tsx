@@ -20,7 +20,7 @@ export function GitStatusCard({ status, footer }: GitStatusCardProps) {
   const isDetached = !isBranchMetadata(revision);
 
   return (
-    <Card className="w-80 gap-4">
+    <Card className="w-80">
       <CardHeader className="flex flex-row justify-between items-center">
         <CardTitle>Git Status</CardTitle>
         <Badge variant="default">
@@ -34,13 +34,13 @@ export function GitStatusCard({ status, footer }: GitStatusCardProps) {
           )}
         </Badge>
       </CardHeader>
-      <CardContent className="space-y-1 text-sm">
+      <CardContent className="space-y-1">
         <div>
-          <div className="truncate font-medium font-mono max-w-full overflow-hidden whitespace-nowrap">
+          <div className="truncate font-semibold text-sm max-w-full overflow-hidden whitespace-nowrap">
             {formatGitRevision(revision)}
           </div>
         </div>
-        <div className="text-muted-foreground">{revision.summary}</div>
+        <div className="text-muted-foreground text-sm">{revision.summary}</div>
       </CardContent>
       {footer && (
         <CardFooter className="flex gap-2">{footer(status)}</CardFooter>

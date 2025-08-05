@@ -144,13 +144,13 @@ export const fetchDiffs = async (range?: {
   baseRev?: string;
   headRev?: string;
 }) => {
-  const { data, error } = await client.GET("/api/v1/git/diff", {
+  const { data, error } = await client.GET("/api/v1/git/diffs", {
     params: { query: range },
   });
   if (error) {
     throw new Error(`Error fetching diffs: ${error.message}`);
   }
-  return data.diff;
+  return data.diffs;
 };
 
 export async function fetchCommitsMetadata(

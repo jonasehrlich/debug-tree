@@ -83,6 +83,7 @@ export const CreateGitRevisionInput: React.FC<Props> = ({
           />
           <Button
             type="button"
+            size="sm"
             onClick={() => {
               handleSubmit()
                 .then()
@@ -94,7 +95,7 @@ export const CreateGitRevisionInput: React.FC<Props> = ({
           >
             Create
           </Button>
-          <Button type="button" variant="outline" onClick={cancel}>
+          <Button type="button" size="sm" variant="outline" onClick={cancel}>
             Cancel
           </Button>
         </div>

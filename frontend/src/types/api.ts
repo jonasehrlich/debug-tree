@@ -126,7 +126,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/git/diff": {
+    "/api/v1/git/diffs": {
         parameters: {
             query?: never;
             header?: never;
@@ -137,7 +137,7 @@ export interface paths {
          * List diffs
          * @description List the diffs in a commit range
          */
-        get: operations["get_diff"];
+        get: operations["list_diffs"];
         put?: never;
         post?: never;
         delete?: never;
@@ -239,25 +239,21 @@ export interface components {
             flow: components["schemas"]["FlowMetadata"];
         };
         Diff: {
-            /** @description Map of old source paths to the old content */
-            oldSources: {
-                [key: string]: components["schemas"]["String"];
-            };
+            /** @description Kind of the diff */
+            kind: components["schemas"]["DiffKind"];
+            new?: null | components["schemas"]["DiffFile"];
+            old?: null | components["schemas"]["DiffFile"];
             /** @description Patch between old and new */
             patch: string;
-            /** @description Stats of the diff */
-            stats: components["schemas"]["DiffStats"];
         };
-        DiffStats: {
-            /** @description Number of deletions */
-            deletions: number;
-            /** @description Number of files changed */
-            filesChanged: number;
-            /** @description Number of insertions */
-            insertions: number;
-            /** @description Number of lines in the old versions of all affected files */
-            totalOldNumLines: number;
+        DiffFile: {
+            /** @description Content of the diff file */
+            content?: string | null;
+            /** @description Path to the diff file */
+            path?: string | null;
         };
+        /** @enum {string} */
+        DiffKind: "binary" | "text";
         FlowData: {
             /** @description Name of the debug flow */
             name: string;
@@ -293,7 +289,7 @@ export interface components {
         };
         ListDiffsResponse: {
             /** @description Array of diffs in this commit range */
-            diff: components["schemas"]["Diff"];
+            diffs: components["schemas"]["Diff"][];
         };
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];
@@ -317,7 +313,6 @@ export interface components {
             email: string;
             name: string;
         };
-        String: string;
         TaggedCommit: {
             /** @description Commit the tag is on */
             commit: components["schemas"]["Commit"];
@@ -715,7 +710,7 @@ export interface operations {
             };
         };
     };
-    get_diff: {
+    list_diffs: {
         parameters: {
             query?: {
                 /** @description The base revision of the range, this can be short hash, full hash, a tag,

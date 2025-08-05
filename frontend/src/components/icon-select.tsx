@@ -21,6 +21,7 @@ export const IconSelect = <T extends string>({
     <Select onValueChange={onSelectChange} value={selectedIcon}>
       <SelectTriggerIcon
         variant="ghost"
+        size="sm"
         // That it fits with a NodeHeaderAction
         className="size-6 p-1"
         aria-label={ariaLabel ?? "Change Icon"}
