@@ -1,8 +1,20 @@
-import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  File,
+  FileDiff,
+  FileInput,
+  FileMinus,
+  FilePlus,
+  FileStack,
+  Folder,
+  FolderOpen,
+} from "lucide-react";
 import React, { useState } from "react";
-import type { FileDisplayProps, FileTreeDisplayProps } from "./types";
+import type { FileDisplayProps, FileTreeDisplayProps, FileType } from "./types";
 
-export const FileTreeDisplay = ({
+export const TreeDisplay = ({
+  name,
   tree,
   onFileClick,
   basePath,
@@ -39,34 +51,44 @@ export const FileTreeDisplay = ({
           onClick={toggleOpen}
         >
           <div
-            className="flex gap-1 shrink-0 text-muted-foreground/50  "
+            className="flex gap-1 shrink-0 stroke-zinc-400"
             style={levelDependentStyles}
           >
-            <span>
-              {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </span>
-            <Folder size={16} className="fill-current" />
+            {isOpen ? (
+              <>
+                <ChevronDown size={16} className="stroke-zinc-400" />
+                <FolderOpen size={16} className="stroke-zinc-400" />
+              </>
+            ) : (
+              <>
+                <ChevronRight size={16} className="stroke-zinc-400" />
+                <Folder size={16} className="stroke-zinc-400" />
+              </>
+            )}
           </div>
-          {basePath}
+          {name}
         </div>
       }
 
       {
         /* Children of the current node if open */
         isOpen && (
-          <ul className="" key={basePath}>
-            {directories.map((dirName) => (
-              <FileTreeDisplay
+          <ul key={basePath}>
+            {directories.map((dirName, idx) => (
+              <TreeDisplay
+                key={idx}
                 level={level + 1}
-                key={dirName}
+                name={dirName}
                 tree={tree.children?.[dirName]}
                 onFileClick={onFileClick}
                 basePath={`${basePath}/${dirName}`}
               />
             ))}
-            {files.map((fileName) => (
+            {files.map((file, idx) => (
               <FileDisplay
-                fileName={fileName}
+                key={idx}
+                fileName={file.name}
+                type={file.type}
                 level={level + 1}
                 basePath={basePath}
                 onFileClick={onFileClick}
@@ -79,11 +101,21 @@ export const FileTreeDisplay = ({
   );
 };
 
+const FILE_ICON_MAP: Record<FileType, React.ReactElement> = {
+  add: <FilePlus size={16} className="shrink-0 stroke-emerald-600" />,
+  copy: <FileStack size={16} className="shrink-0 stroke-amber-400" />,
+  delete: <FileMinus size={16} className="shrink-0 text-red-600" />,
+  modify: <FileDiff size={16} className="shrink-0 stroke-zinc-400" />,
+  rename: <FileInput size={16} className="shrink-0 stroke-amber-400" />,
+  unknown: <File size={16} className="shrink-0 stroke-zinc-400" />,
+} as const;
+
 export const FileDisplay = ({
   fileName,
   basePath,
   onFileClick,
   level,
+  type,
 }: FileDisplayProps) => {
   // Manually calculate the left padding for the files
   const levelDependentStyles = React.useMemo(
@@ -92,21 +124,14 @@ export const FileDisplay = ({
   );
   return (
     <li
-      key={fileName}
       className="py-1 rounded-md hover:bg-muted pr-2"
       onClick={() => {
         onFileClick(`${basePath ? basePath + "/" : ""}${fileName}`);
       }}
     >
-      <div className="flex items-center gap-1  " style={levelDependentStyles}>
-        <File
-          size={16}
-          className="stroke-muted-foreground/60 stroke-muted-foreground shrink-0"
-        />
-        {
-          // TODO: add metadata to the file for edit / create / delete
-          fileName
-        }
+      <div className="flex items-center gap-1" style={levelDependentStyles}>
+        {FILE_ICON_MAP[type]}
+        {fileName}
       </div>
     </li>
   );

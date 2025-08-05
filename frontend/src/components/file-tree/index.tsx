@@ -1,18 +1,20 @@
 import React from "react";
-import { Input } from "../../ui/input";
-import { FileDisplay, FileTreeDisplay } from "./display";
-import type { FileTreeProps } from "./types";
+import { SearchInput } from "../icon-input";
+import { FileDisplay, TreeDisplay } from "./display";
+import type { File, FileTreeProps } from "./types";
 import { groupPaths, optimizeFileTree } from "./utils";
 
-export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
-  const [filter, setFilter] = React.useState<string>("");
-  const [filteredPaths, setFilteredPaths] = React.useState<string[]>(paths);
+export const FileTree = ({ paths, onFileClick }: FileTreeProps) => {
+  const [filter, setFilter] = React.useState("");
+  const [filteredPaths, setFilteredPaths] = React.useState<File[]>(paths);
 
   React.useEffect(() => {
     const lowerCaseFilter = filter.toLowerCase();
     if (lowerCaseFilter) {
       setFilteredPaths(
-        paths.filter((path) => path.toLowerCase().includes(lowerCaseFilter)),
+        paths.filter((path) =>
+          path.name.toLowerCase().includes(lowerCaseFilter),
+        ),
       );
     } else {
       setFilteredPaths(paths);
@@ -26,25 +28,20 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
     return { children: t.children ?? {}, files: t.files ?? [] };
   }, [filteredPaths]);
 
-  const handleFilterChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFilter(e.target.value);
-    },
-    [],
-  );
-  if (!isOpen) {
-    return <></>;
-  }
   return (
     <div className="flex flex-col shrink-0 border rounded-md w-2xs sm:w-xs lg:w-sm ">
       <div className="border-b p-2">
-        <Input
+        <SearchInput
+          value={filter}
           autoComplete="false"
-          placeholder="Filter paths"
-          onChange={handleFilterChange}
+          placeholder="Filter files..."
+          onChange={(e) => {
+            setFilter(e.target.value);
+          }}
+          clearable
         />
       </div>
-      <div className="flex overflow-auto text-nowrap select-none">
+      <div className="flex overflow-auto text-nowrap select-none py-1">
         {Object.keys(groupedAndOptimizedTree.children).length === 0 && (
           <div className="text-muted-foreground p-4 text-sm">
             {filter ? (
@@ -60,19 +57,21 @@ export const FileTree = ({ isOpen, paths, onFileClick }: FileTreeProps) => {
             {Object.keys(groupedAndOptimizedTree.children)
               .sort()
               .map((dirName) => (
-                <FileTreeDisplay
+                <TreeDisplay
                   key={dirName}
+                  name={dirName}
                   level={0}
                   tree={groupedAndOptimizedTree.children[dirName]}
                   onFileClick={onFileClick}
                   basePath={dirName}
                 />
               ))}
-            {groupedAndOptimizedTree.files.sort().map((fileName, idx) => (
+            {groupedAndOptimizedTree.files.sort().map((file, idx) => (
               <FileDisplay
                 key={idx}
                 basePath=""
-                fileName={fileName}
+                fileName={file.name}
+                type={file.type}
                 onFileClick={onFileClick}
                 level={0}
               />

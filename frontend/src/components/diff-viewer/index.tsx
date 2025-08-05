@@ -7,8 +7,9 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import React from "react";
 import { parseDiff, type FileData, type ViewType } from "react-diff-view";
 import { useShallow } from "zustand/react/shallow";
+import { FileTree } from "../file-tree";
 import { DiffFile } from "./file";
-import { FileTree } from "./file-tree";
+
 const uiSelector = (s: UiState) => ({
   isInlineDiff: s.isInlineDiff,
   setIsInlineDiff: s.setIsInlineDiff,
@@ -17,6 +18,10 @@ const uiSelector = (s: UiState) => ({
 
 type Path = string;
 type Content = string;
+
+const pathFromFileData = (file: FileData) => {
+  return file.type === "delete" ? file.oldPath : file.newPath;
+};
 
 export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
   const { isInlineDiff, setIsInlineDiff, diffViewType } = useUiStore(
@@ -28,7 +33,7 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const diffFileRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
 
-  const scrollToTarget = (path: string) => {
+  const scrollDiffIntoView = (path: string) => {
     const target = diffFileRefs.current[path];
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -43,10 +48,9 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       </div>
     );
   }
-  const { files, oldSources, paths } = diffs.reduce<{
+  const { files, oldSources } = diffs.reduce<{
     files: FileData[];
     oldSources: Record<Path, Content>;
-    paths: Path[];
   }>(
     (acc, diff) => {
       acc.files = acc.files.concat(parseDiff(diff.patch));
@@ -55,14 +59,15 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       if (oldPath && oldContent) {
         acc.oldSources[oldPath] = oldContent;
       }
-      const path = diff.new?.path;
-      if (path) {
-        acc.paths.push(path);
-      }
       return acc;
     },
-    { files: [], oldSources: {}, paths: [] },
+    { files: [], oldSources: {} },
   );
+
+  const paths = files.map((f) => ({
+    name: pathFromFileData(f),
+    type: f.type,
+  }));
 
   return (
     <div className="flex-grow min-h-0 flex flex-col space-x-4">
@@ -98,28 +103,28 @@ export const DiffViewer = ({ diffs }: { diffs?: ApiDiff[] }) => {
       </div>
 
       <div className="flex flex-grow rounded-md overflow-hidden space-x-4">
-        <FileTree
-          isOpen={isFileTreeOpen}
-          paths={paths}
-          onFileClick={(p) => {
-            scrollToTarget(p);
-          }}
-        />
-        <div ref={containerRef} className="flex-grow overflow-y-auto space-y-4">
+        {isFileTreeOpen && (
+          <FileTree
+            paths={paths}
+            onFileClick={(path) => {
+              scrollDiffIntoView(path);
+            }}
+          />
+        )}
+        <div
+          ref={containerRef}
+          className="flex-grow overflow-y-auto space-y-4 rounded-md"
+        >
           {files.map((file, idx) => (
-            <div
+            <DiffFile
               key={idx}
               ref={(el) => {
-                diffFileRefs.current[file.newPath] = el;
+                diffFileRefs.current[pathFromFileData(file)] = el;
               }}
-            >
-              <DiffFile
-                file={file}
-                oldSource={oldSources[file.oldPath] ?? undefined}
-                viewType={diffViewType}
-                className="text-xs"
-              />
-            </div>
+              file={file}
+              oldSource={oldSources[file.oldPath] ?? undefined}
+              viewType={diffViewType}
+            />
           ))}
         </div>
       </div>
