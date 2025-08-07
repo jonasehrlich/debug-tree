@@ -30,4 +30,9 @@ features:
       dark: /Git-Icon-White.svg
     title: Git repository integration
     details: Integrates progress tracking with your local Git repository
+  - icon:
+      light: /markdown-icon-light.svg
+      dark: /markdown-icon-dark.svg
+    title: Markdown support
+    details: Node descriptions can be written in Markdown
 ---
