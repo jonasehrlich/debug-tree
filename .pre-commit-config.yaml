@@ -32,5 +32,5 @@ repos:
         name: check frontend API types
         entry: npm run api:create
         language: system
-        files: ^src/web/api/.*\.rs$
+        files: ^backend/app/src/web/api/.*\.rs$
         pass_filenames: false
