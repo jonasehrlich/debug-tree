@@ -2,7 +2,7 @@ use crate::{actors, web, web::api};
 
 use axum::extract::{Path, Query, State};
 use axum::{Json, routing};
-use git2_ox::commit;
+use git2_ox::{ReferenceKind, ReferenceKindFilter, ResolvedReference, commit};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -17,10 +17,19 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
         .route("/repository/status", routing::get(get_repository_status))
+        .route("/references", routing::get(list_references))
 }
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch, get_repository_status, get_diff), tags((name = "Git Repository", description="Git Repository related endpoints")) )]
+#[openapi(
+    paths(
+        get_revision, checkout_revision, list_commits,  list_tags, create_tag, list_branches, create_branch,
+        get_repository_status, get_diff, list_references
+    ),
+    tags(
+        (name = "Git Repository", description="Git Repository related endpoints")
+    )
+)]
 pub(super) struct ApiDoc;
 
 #[utoipa::path(
@@ -351,4 +360,62 @@ async fn get_repository_status(
         head: status.head,
         current_branch: status.current_branch,
     }))
+}
+
+#[derive(Deserialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct ListReferencesQuery {
+    /// String filter against with the reference name
+    #[param(nullable = false)]
+    filter: Option<String>,
+    // Ideally, we would use ReferenceKindFilter with serde(flatten) here,
+    // but IntoParams does not does not respect it,
+    // see https://github.com/juhaku/utoipa/issues/841
+    /// Reference kinds to include, mutually exclusive with `exclude`
+    #[param(min_items = 1, nullable = false)]
+    include: Option<Vec<ReferenceKind>>,
+    /// Reference kinds to exclude, mutually exclusive with `include`
+    #[param(min_items = 1, nullable = false)]
+    exclude: Option<Vec<ReferenceKind>>,
+}
+
+#[derive(ToSchema, Serialize, IntoParams)]
+#[serde(rename_all = "camelCase")]
+struct ListReferencesResponse {
+    /// Array of references
+    references: Vec<ResolvedReference>,
+}
+
+/// List references in the repository
+#[utoipa::path(
+    get,
+    path = "/references",
+    summary = "List references",
+    description = "List all references in the repository, optionally filtered by a glob pattern and type.",
+    params(ListReferencesQuery),
+    responses(
+        (status = http::StatusCode::OK, description = "List of references", body = ListReferencesResponse),
+        (status = http::StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error", body = api::ApiStatusDetailResponse),
+    )
+)]
+async fn list_references(
+    State(state): State<web::AppState>,
+    axum_extra::extract::Query(query): axum_extra::extract::Query<ListReferencesQuery>,
+) -> Result<Json<ListReferencesResponse>, api::AppError> {
+    let filter_kinds = match (query.include, query.exclude) {
+        (Some(_), Some(_)) => Err(api::AppError::BadRequest(
+            "Include and exclude filters are mutually exclusive".to_string(),
+        )),
+        (Some(include), None) => Ok(Some(ReferenceKindFilter::include(include))),
+        (None, Some(exclude)) => Ok(Some(ReferenceKindFilter::exclude(exclude))),
+        (None, None) => Ok(None),
+    }?;
+
+    let actor = state.git_actor();
+    let msg = actors::git::ListReferences {
+        filter: query.filter,
+        filter_kinds,
+    };
+    let references = actor.call(msg).await??;
+    Ok(Json(ListReferencesResponse { references }))
 }

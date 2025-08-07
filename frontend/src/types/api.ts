@@ -146,6 +146,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/git/references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List references
+         * @description List all references in the repository, optionally filtered by a glob pattern and type.
+         */
+        get: operations["list_references"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/git/repository/status": {
         parameters: {
             query?: never;
@@ -302,6 +322,10 @@ export interface components {
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];
         };
+        ListReferencesResponse: {
+            /** @description Array of references */
+            references: components["schemas"]["ResolvedReference"][];
+        };
         ListTagsResponse: {
             tags: components["schemas"]["TaggedCommit"][];
         };
@@ -322,6 +346,9 @@ export interface components {
             currentBranch?: string | null;
             /** @description The current HEAD commit */
             head: components["schemas"]["CommitWithReferences"];
+        };
+        ResolvedReference: components["schemas"]["ReferenceMetadata"] & {
+            target: components["schemas"]["Commit"];
         };
         Signature: {
             email: string;
@@ -748,6 +775,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListDiffsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    list_references: {
+        parameters: {
+            query?: {
+                /** @description String filter against with the reference name */
+                filter?: string;
+                /** @description Reference kinds to include, mutually exclusive with `exclude` */
+                include?: components["schemas"]["ReferenceKind"][];
+                /** @description Reference kinds to exclude, mutually exclusive with `include` */
+                exclude?: components["schemas"]["ReferenceKind"][];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of references */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListReferencesResponse"];
                 };
             };
             /** @description Internal server error */
