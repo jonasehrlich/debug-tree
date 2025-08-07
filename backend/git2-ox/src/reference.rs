@@ -3,10 +3,10 @@ use crate::{Commit, Result, error::Error};
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
     feature = "serde",
-    derive(serde::Serialize),
+    derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "lowercase")
 )]
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub enum ReferenceKind {
     Tag,
@@ -35,6 +35,13 @@ impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceKind {
     }
 }
 
+impl<'repo> TryFrom<git2::Reference<'repo>> for ReferenceKind {
+    type Error = Error;
+    fn try_from(reference: git2::Reference) -> Result<Self> {
+        ReferenceKind::try_from(&reference)
+    }
+}
+
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
     feature = "serde",
@@ -46,6 +53,15 @@ impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceKind {
 pub struct ReferenceMetadata {
     name: String,
     kind: ReferenceKind,
+}
+impl ReferenceMetadata {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn kind(&self) -> ReferenceKind {
+        self.kind
+    }
 }
 
 impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceMetadata {
@@ -70,22 +86,44 @@ impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceMetadata {
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub struct ResolvedReference {
-    name: String,
-    kind: ReferenceKind,
-    commit: Commit,
+    #[serde(flatten)]
+    reference: ReferenceMetadata,
+    target: Commit,
+}
+impl ResolvedReference {
+    pub fn reference(&self) -> &ReferenceMetadata {
+        &self.reference
+    }
+
+    pub fn kind(&self) -> ReferenceKind {
+        self.reference.kind()
+    }
+
+    pub fn name(&self) -> &str {
+        self.reference.name()
+    }
+
+    pub fn target(&self) -> &Commit {
+        &self.target
+    }
 }
 
 impl<'repo> TryFrom<&git2::Reference<'repo>> for ResolvedReference {
     type Error = Error;
     fn try_from(reference: &git2::Reference) -> Result<Self> {
-        let r: ReferenceMetadata = reference.try_into()?;
         Ok(Self {
-            name: r.name,
-            kind: r.kind,
-            commit: reference
+            reference: reference.try_into()?,
+            target: reference
                 .peel_to_commit()
                 .map_err(|e| Error::from_ctx_and_error("Failed peeling reference to commit", e))?
                 .into(),
         })
+    }
+}
+
+impl<'repo> TryFrom<git2::Reference<'repo>> for ResolvedReference {
+    type Error = Error;
+    fn try_from(reference: git2::Reference) -> Result<Self> {
+        ResolvedReference::try_from(&reference)
     }
 }

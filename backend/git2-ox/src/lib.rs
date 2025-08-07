@@ -10,8 +10,8 @@ pub mod utils;
 pub use branch::Branch;
 pub use commit::{Commit, CommitLike, CommitWithReferences};
 pub use diff::Diff;
-pub use reference::ReferenceMetadata;
-pub use repository::Repository;
+pub use reference::{ReferenceKind, ReferenceMetadata, ResolvedReference};
+pub use repository::{ReferenceKindFilter, Repository};
 pub use tag::TaggedCommit;
 
 type Result<T> = std::result::Result<T, error::Error>;
