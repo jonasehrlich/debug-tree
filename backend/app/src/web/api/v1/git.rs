@@ -98,14 +98,17 @@ async fn checkout_revision(
 #[serde(rename_all = "camelCase")]
 struct ListCommitsQuery {
     /// string filter for the commits. Filters commits by their ID or summary.
+    #[param(nullable = false)]
     filter: Option<String>,
 
     // serde(flatten) does not work here, see https://github.com/juhaku/utoipa/issues/841
     /// The base revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the first commit is used.
+    #[param(nullable = false)]
     base_rev: Option<String>,
     /// The head revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the current HEAD is used.
+    #[param(nullable = false)]
     head_rev: Option<String>,
 }
 
@@ -148,9 +151,11 @@ async fn list_commits(
 struct CommitRangeQuery {
     /// The base revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the first commit is used.
+    #[param(nullable = false)]
     base_rev: Option<String>,
     /// The head revision of the range, this can be short hash, full hash, a tag,
     /// or any other reference such a branch name. If empty, the current HEAD is used.
+    #[param(nullable = false)]
     head_rev: Option<String>,
 }
 
@@ -192,6 +197,7 @@ async fn get_diff(
 #[serde(rename_all = "camelCase")]
 struct ListTagsQuery {
     /// String filter against which the tag name is matched.
+    #[param(nullable = false)]
     filter: Option<String>,
 }
 
@@ -269,6 +275,7 @@ struct ListBranchesResponse {
 #[serde(rename_all = "camelCase")]
 struct ListBranchesQuery {
     /// string filter against with the branch name is matched
+    #[param(nullable = false)]
     filter: Option<String>,
 }
 

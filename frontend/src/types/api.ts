@@ -551,7 +551,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description string filter against with the branch name is matched */
-                filter?: string | null;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -718,13 +718,13 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description string filter for the commits. Filters commits by their ID or summary. */
-                filter?: string | null;
+                filter?: string;
                 /** @description The base revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the first commit is used. */
-                baseRev?: string | null;
+                baseRev?: string;
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
-                headRev?: string | null;
+                headRev?: string;
             };
             header?: never;
             path?: never;
@@ -757,10 +757,10 @@ export interface operations {
             query?: {
                 /** @description The base revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the first commit is used. */
-                baseRev?: string | null;
+                baseRev?: string;
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
-                headRev?: string | null;
+                headRev?: string;
             };
             header?: never;
             path?: never;
@@ -857,7 +857,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description String filter against which the tag name is matched. */
-                filter?: string | null;
+                filter?: string;
             };
             header?: never;
             path?: never;
