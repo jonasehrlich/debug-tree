@@ -1,4 +1,4 @@
-use crate::Commit;
+use crate::{Commit, ReferenceKind, ResolvedReference, Result, error::Error};
 
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
@@ -28,6 +28,21 @@ impl Branch {
         Self {
             name: name.to_string(),
             head: head.into(),
+        }
+    }
+}
+
+impl TryFrom<ResolvedReference> for Branch {
+    type Error = Error;
+    fn try_from(value: ResolvedReference) -> Result<Self> {
+        let kind = value.reference().kind();
+        if kind == ReferenceKind::Branch {
+            Ok(Self {
+                name: value.name().to_string(),
+                head: value.target().clone(),
+            })
+        } else {
+            Err(Error::from_ctx("Reference is not a branch"))
         }
     }
 }

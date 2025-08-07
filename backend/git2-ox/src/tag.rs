@@ -1,4 +1,4 @@
-use crate::{Commit, Result};
+use crate::{Commit, ReferenceKind, ResolvedReference, Result, error::Error};
 
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
@@ -26,5 +26,20 @@ impl TaggedCommit {
             tag: tag_name.to_string(),
             commit: Commit::try_for_revision(repo, tag_name)?,
         })
+    }
+}
+
+impl TryFrom<ResolvedReference> for TaggedCommit {
+    type Error = Error;
+    fn try_from(value: ResolvedReference) -> Result<Self> {
+        let kind = value.kind();
+        if kind == ReferenceKind::Tag {
+            Ok(TaggedCommit {
+                tag: value.name().to_string(),
+                commit: value.target().clone(),
+            })
+        } else {
+            Err(Error::from_ctx("Reference is not a tag"))
+        }
     }
 }
