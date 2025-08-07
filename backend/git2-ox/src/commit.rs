@@ -1,4 +1,11 @@
-use crate::{Result, utils};
+use std::collections::hash_map;
+
+use crate::{ReferenceMetadata, Result, utils};
+
+pub trait CommitLike {
+    fn id(&self) -> &str;
+    fn summary(&self) -> &str;
+}
 
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
@@ -68,12 +75,12 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
     }
 }
 
-impl Commit {
-    pub fn id(&self) -> &str {
+impl CommitLike for Commit {
+    fn id(&self) -> &str {
         &self.id
     }
 
-    pub fn summary(&self) -> &str {
+    fn summary(&self) -> &str {
         &self.summary
     }
 }
@@ -91,5 +98,77 @@ impl<'repo> Commit {
     /// * `oid` - `Oid` to get the commit for
     pub fn try_for_oid(repo: &'repo git2::Repository, oid: git2::Oid) -> Result<Self> {
         Ok(utils::get_commit_for_oid(repo, oid)?.into())
+    }
+}
+
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize),
+    serde(rename_all = "camelCase")
+)]
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct CommitWithReferences {
+    #[serde(flatten)]
+    commit: Commit,
+    /// References pointing to the commit
+    references: Vec<ReferenceMetadata>,
+}
+
+impl CommitLike for CommitWithReferences {
+    fn id(&self) -> &str {
+        self.commit.id()
+    }
+
+    fn summary(&self) -> &str {
+        self.commit.summary()
+    }
+}
+
+impl CommitWithReferences {
+    pub fn try_from_git2_commit_and_ref_map(
+        commit: &git2::Commit,
+        ref_map: &hash_map::HashMap<git2::Oid, Vec<git2::Reference>>,
+    ) -> Result<CommitWithReferences> {
+        let refs = ref_map
+            .get(&commit.id())
+            .map(|refs| refs.iter().map(ReferenceMetadata::try_from).collect())
+            .unwrap_or_else(|| Ok(vec![]))?;
+
+        Ok(Self {
+            commit: commit.into(),
+            references: refs,
+        })
+    }
+}
+
+impl<'repo> CommitWithReferences {
+    pub fn try_from_oid_and_ref_map(
+        repo: &'repo git2::Repository,
+        oid: git2::Oid,
+        ref_map: &hash_map::HashMap<git2::Oid, Vec<git2::Reference>>,
+    ) -> Result<Self> {
+        CommitWithReferences::try_from_git2_commit_and_ref_map(
+            &utils::get_commit_for_oid(repo, oid)?,
+            ref_map,
+        )
+    }
+
+    pub fn try_from_revision_and_ref_map(
+        repo: &'repo git2::Repository,
+        rev: &str,
+        ref_map: &hash_map::HashMap<git2::Oid, Vec<git2::Reference>>,
+    ) -> Result<Self> {
+        let commit = utils::get_commit_for_revision(repo, rev)?;
+        let refs = ref_map
+            .get(&commit.id())
+            .map(|refs| refs.iter().map(ReferenceMetadata::try_from).collect())
+            .unwrap_or_else(|| Ok(vec![]))?;
+
+        Ok(Self {
+            commit: commit.into(),
+            references: refs,
+        })
     }
 }

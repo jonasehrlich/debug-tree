@@ -1,0 +1,129 @@
+use crate::{Commit, Result, error::Error};
+
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "lowercase")
+)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+#[allow(dead_code)]
+pub enum ReferenceKind {
+    Tag,
+    Branch,
+    Note,
+    RemoteBranch,
+}
+
+impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceKind {
+    type Error = Error;
+    fn try_from(reference: &git2::Reference) -> Result<Self> {
+        if reference.is_tag() {
+            return Ok(ReferenceKind::Tag);
+        }
+        if reference.is_branch() {
+            return Ok(ReferenceKind::Branch);
+        }
+        if reference.is_remote() {
+            return Ok(ReferenceKind::RemoteBranch);
+        }
+        if reference.is_note() {
+            Ok(ReferenceKind::Note)
+        } else {
+            Err(Error::from_ctx("Unknown reference type"))
+        }
+    }
+}
+
+impl<'repo> TryFrom<git2::Reference<'repo>> for ReferenceKind {
+    type Error = Error;
+    fn try_from(reference: git2::Reference) -> Result<Self> {
+        ReferenceKind::try_from(&reference)
+    }
+}
+
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize),
+    serde(rename_all = "camelCase")
+)]
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct ReferenceMetadata {
+    name: String,
+    kind: ReferenceKind,
+}
+impl ReferenceMetadata {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn kind(&self) -> ReferenceKind {
+        self.kind
+    }
+}
+
+impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceMetadata {
+    type Error = Error;
+    fn try_from(reference: &git2::Reference) -> Result<Self> {
+        Ok(Self {
+            name: reference
+                .shorthand()
+                .ok_or_else(|| Error::from_ctx("Invalid UTF-8 in reference name"))?
+                .to_string(),
+            kind: reference.try_into()?,
+        })
+    }
+}
+
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize),
+    serde(rename_all = "camelCase")
+)]
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct ResolvedReference {
+    #[serde(flatten)]
+    reference: ReferenceMetadata,
+    target: Commit,
+}
+impl ResolvedReference {
+    pub fn reference(&self) -> &ReferenceMetadata {
+        &self.reference
+    }
+
+    pub fn kind(&self) -> ReferenceKind {
+        self.reference.kind()
+    }
+
+    pub fn name(&self) -> &str {
+        self.reference.name()
+    }
+
+    pub fn target(&self) -> &Commit {
+        &self.target
+    }
+}
+
+impl<'repo> TryFrom<&git2::Reference<'repo>> for ResolvedReference {
+    type Error = Error;
+    fn try_from(reference: &git2::Reference) -> Result<Self> {
+        Ok(Self {
+            reference: reference.try_into()?,
+            target: reference
+                .peel_to_commit()
+                .map_err(|e| Error::from_ctx_and_error("Failed peeling reference to commit", e))?
+                .into(),
+        })
+    }
+}
+
+impl<'repo> TryFrom<git2::Reference<'repo>> for ResolvedReference {
+    type Error = Error;
+    fn try_from(reference: git2::Reference) -> Result<Self> {
+        ResolvedReference::try_from(&reference)
+    }
+}
