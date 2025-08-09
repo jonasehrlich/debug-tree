@@ -148,7 +148,10 @@ export const fetchDiffs = async (range?: {
     params: { query: range },
   });
   if (error) {
-    throw new ApiError(error, "Error fetching diffs");
+    throw new ApiError(
+      error,
+      `Error fetching diffs for ${range?.baseRev ?? ""}..${range?.headRev ?? ""}`,
+    );
   }
   return data.diff;
 };

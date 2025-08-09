@@ -31,8 +31,8 @@ const CommitDetails = ({ commit }: { commit: Commit | null }) => {
       .then((data) => {
         setDiff(data);
       })
-      .catch(() => {
-        toast.error(`Error fetching Diff for commit ${commit.id.slice(0, 7)}`);
+      .catch((error: unknown) => {
+        notify.error(error);
       });
   }, [commit]);
 
