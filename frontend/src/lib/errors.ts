@@ -1,7 +1,4 @@
-import type { components } from "../types/api";
-
-export type ApiStatusDetailResponse =
-  components["schemas"]["ApiStatusDetailResponse"];
+import type { ApiStatusDetailResponse } from "@/types/api-types";
 
 export class ApiError extends Error {
   public readonly apiResponse: ApiStatusDetailResponse;
@@ -11,7 +8,7 @@ export class ApiError extends Error {
     const message = `${context}: ${response.message}`;
     super(message);
 
-    this.name = "APIError";
+    this.name = "ApiError";
     this.apiResponse = response;
     this.context = context;
   }

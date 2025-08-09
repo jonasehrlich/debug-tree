@@ -2,8 +2,8 @@ import { toast } from "sonner";
 import { ApiError } from "./errors";
 
 export const notify = {
-  success: (message: string) => {
-    toast.success(message);
+  success: (message: string, description?: string) => {
+    toast.success(message, { description });
   },
   error: (error: unknown) => {
     let message = "Unknown Error";
