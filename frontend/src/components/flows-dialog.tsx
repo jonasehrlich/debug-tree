@@ -36,9 +36,9 @@ import { useReactFlow } from "@xyflow/react";
 import { Trash } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { useShallow } from "zustand/react/shallow";
+import { notify } from "../lib/notify";
 import { FilterableScrollArea } from "./filterable-scroll-area";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
@@ -130,7 +130,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     if (selectedFlow) {
       void loadFlow(selectedFlow);
     } else {
-      toast.error("No flow selected");
+      notify.error("No flow selected");
     }
   };
 
@@ -149,10 +149,9 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
       !("current" in reactflowRef) ||
       !reactflowRef.current
     ) {
-      toast.error("No reactflow ref", {
-        description:
-          "Cannot create flow because positions for initial node is unknown",
-      });
+      notify.error(
+        "No reactflow ref: Cannot create flow because positions for initial node is unknown",
+      );
       return;
     }
     if (await createFlow(values.flowName)) {

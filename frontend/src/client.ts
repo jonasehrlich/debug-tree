@@ -1,7 +1,11 @@
+import type { Edge } from "@xyflow/react";
 import log from "loglevel";
 import createClient, { type Middleware } from "openapi-fetch";
 import z from "zod";
+import { ApiError } from "./lib/errors";
 import type { paths } from "./types/api";
+import type { FlowMetadata } from "./types/api-types";
+import type { AppNode } from "./types/nodes";
 
 const logger = log.getLogger("api-client");
 
@@ -98,8 +102,7 @@ export const fetchCommitForRevision = async (
   });
 
   if (error) {
-    const errorMessage = `Error getting current HEAD revision: ${error.message}`;
-    throw new Error(errorMessage);
+    throw new ApiError(error, "Error getting current HEAD revision");
   }
   return { rev: data.id, summary: data.summary, type: "commit" };
 };
@@ -109,9 +112,7 @@ export async function checkoutRevision(revision: string): Promise<void> {
     params: { path: { revision } },
   });
   if (error) {
-    throw new Error(
-      `Error checking out revision ${revision}: ${error.message}`,
-    );
+    throw new ApiError(error, `Error checking out revision ${revision}`);
   }
 }
 
@@ -129,8 +130,7 @@ export const fetchCommits = async (args?: {
     params: { query: args },
   });
   if (error) {
-    const errorMessage = `Error fetching Git commits: ${error.message}`;
-    throw new Error(errorMessage);
+    throw new ApiError(error, "Error fetching Git commits");
   }
   return data.commits;
 };
@@ -148,7 +148,10 @@ export const fetchDiffs = async (range?: {
     params: { query: range },
   });
   if (error) {
-    throw new Error(`Error fetching diffs: ${error.message}`);
+    throw new ApiError(
+      error,
+      `Error fetching diffs for ${range?.baseRev ?? ""}..${range?.headRev ?? ""}`,
+    );
   }
   return data.diff;
 };
@@ -170,8 +173,7 @@ export async function fetchTags(filter?: string): Promise<TagMetadata[]> {
   });
 
   if (error) {
-    const errorMessage = `Error fetching Git tags: ${error.message}`;
-    throw new Error(errorMessage);
+    throw new ApiError(error, "Error fetching Git tags");
   }
 
   return data.tags.map((tag) => ({
@@ -189,8 +191,7 @@ export async function fetchBranches(
   });
 
   if (error) {
-    const errorMessage = `Error fetching Git branches: ${error.message}`;
-    throw new Error(errorMessage);
+    throw new ApiError(error, "Error fetching Git branches");
   }
 
   return data.branches.map((branch) => ({
@@ -220,7 +221,7 @@ export async function createBranch(
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw new ApiError(error, "Error creating branch");
   }
 
   return {
@@ -241,7 +242,7 @@ export async function createTag(
   });
 
   if (error) {
-    throw new Error(error.message);
+    throw new ApiError(error, "Error creating tag");
   }
 
   return {
@@ -258,7 +259,7 @@ export interface GitStatus {
 export async function fetchStatus(): Promise<GitStatus> {
   const { data, error } = await client.GET("/api/v1/git/repository/status", {});
   if (error) {
-    throw new Error(`Error fetching Git status: ${error.message}`);
+    throw new ApiError(error, "Error fetching Git status");
   }
 
   let revision;
@@ -279,4 +280,54 @@ export async function fetchStatus(): Promise<GitStatus> {
   return {
     revision,
   };
+}
+
+export async function createFlow(name: string): Promise<FlowMetadata> {
+  const { data, error } = await client.POST("/api/v1/flows", {
+    body: { name },
+  });
+  if (error) {
+    throw new ApiError(error, "Error creating flow");
+  }
+  return data.flow;
+}
+
+export async function pushFlow(
+  id: string,
+  name: string,
+  nodes: AppNode[],
+  edges: Edge[],
+): Promise<void> {
+  const { error } = await client.POST("/api/v1/flows/{id}", {
+    params: {
+      path: { id },
+    },
+    body: {
+      flow: {
+        name: name,
+        reactflow: { nodes, edges },
+      },
+    },
+  });
+
+  if (error) {
+    throw new ApiError(error, `Error saving flow ${name}`);
+  }
+}
+
+export async function deleteFlow(id: string): Promise<void> {
+  const { error } = await client.DELETE("/api/v1/flows/{id}", {
+    params: { path: { id } },
+  });
+  if (error) {
+    throw new ApiError(error, "Error deleting flows");
+  }
+}
+
+export async function fetchFlows(): Promise<FlowMetadata[]> {
+  const { data, error } = await client.GET("/api/v1/flows", {});
+  if (error) {
+    throw new ApiError(error, "Error fetching flows");
+  }
+  return data.flows;
 }
