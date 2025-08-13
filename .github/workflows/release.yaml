@@ -33,8 +33,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-artifacts/x86_64-unknown-linux-gnu-binary/debug-flow
-            release-artifacts/x86_64-pc-windows-msvc-binary/debug-flow.exe
-            release-artifacts/aarch64-apple-darwin-binary/debug-flow
+            release-artifacts/x86_64-unknown-linux-gnu-binary/debug-flow-x86_64-linux
+            release-artifacts/x86_64-pc-windows-msvc-binary/debug-flow-x86_64-windows.exe
+            release-artifacts/aarch64-apple-darwin-binary/debug-flow-aarch64-macos
           generate_release_notes: true
           draft: false

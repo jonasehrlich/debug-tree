@@ -34,12 +34,15 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary_name: debug-flow
+            release_name: debug-flow-x86_64-linux
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary_name: debug-flow.exe
+            release_name: debug-flow-x86_64-windows.exe
           - os: macos-latest
             target: aarch64-apple-darwin
             binary_name: debug-flow
+            release_name: debug-flow-aarch64-macos
 
     steps:
       - uses: actions/checkout@v4
@@ -63,8 +66,12 @@ jobs:
         run: cargo build --target ${{ matrix.target }}
       - name: build-release
         run: cargo build --release --target ${{ matrix.target }}
+      - name: Rename binary
+        shell: bash
+        run: |
+          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} ${{ matrix.release_name }}
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}-binary
-          path: target/${{ matrix.target }}/release/${{ matrix.binary_name }}
+          path: ${{ matrix.release_name }}
