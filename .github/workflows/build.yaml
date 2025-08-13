@@ -33,13 +33,13 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            binary_name: debug-tree
+            binary_name: debug-flow
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            binary_name: debug-tree.exe
+            binary_name: debug-flow.exe
           - os: macos-latest
             target: aarch64-apple-darwin
-            binary_name: debug-tree
+            binary_name: debug-flow
 
     steps:
       - uses: actions/checkout@v4
