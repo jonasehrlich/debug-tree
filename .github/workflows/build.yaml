@@ -58,10 +58,6 @@ jobs:
         run: npm ci
       - name: Add target
         run: rustup target add ${{ matrix.target }}
-      - name: Check npm availability
-        run: |
-          npm --version
-          node --version
       - name: build-debug
         run: cargo build --target ${{ matrix.target }}
       - name: build-release
