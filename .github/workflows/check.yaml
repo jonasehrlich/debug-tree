@@ -1,11 +1,7 @@
-name: CI
+name: Check
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
+  workflow_call:
   workflow_dispatch:
 
 jobs:
@@ -76,57 +72,3 @@ jobs:
         run: npm ci
       - name: typecheck
         run: npm run typecheck
-
-  test-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
-      - name: Run tests
-        run: cargo test
-
-  test-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Install frontend dependencies
-        run: npm ci
-      - name: test
-        run: npm run test
-
-  build-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v4
-        with:
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - name: Install frontend dependencies
-        run: npm ci
-      - name: Build documentation
-        run: npm run docs:build
-
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - uses: Swatinem/rust-cache@v2
-      - name: Install frontend dependencies
-        run: npm ci
-      - name: build-debug
-        run: cargo build
-      - name: build-release
-        run: cargo build --release
