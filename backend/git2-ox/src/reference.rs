@@ -129,4 +129,59 @@ impl<'repo> TryFrom<git2::Reference<'repo>> for ResolvedReference {
     }
 }
 
-pub(crate) type ReferenceMap<'repo> = hash_map::HashMap<git2::Oid, Vec<git2::Reference<'repo>>>;
+pub type ReferenceMetadatas = Vec<ReferenceMetadata>;
+
+#[derive(Default)]
+pub struct ReferencesMap {
+    map: hash_map::HashMap<git2::Oid, ReferenceMetadatas>,
+}
+
+impl ReferencesMap {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn get_references_for_commit(&self, commit_id: git2::Oid) -> Option<&ReferenceMetadatas> {
+        self.map.get(&commit_id)
+    }
+
+    pub fn try_insert_reference(&mut self, reference: &git2::Reference) -> Result<()> {
+        self.map
+            .entry(
+                reference
+                    .peel_to_commit()
+                    .map_err(|e| {
+                        Error::from_ctx_and_error("Failed to peel reference to commit", e)
+                    })?
+                    .id(),
+            )
+            .or_default()
+            .push(reference.try_into()?);
+        Ok(())
+    }
+}
+
+impl TryFrom<&git2::Repository> for ReferencesMap {
+    type Error = Error;
+
+    fn try_from(repo: &git2::Repository) -> Result<Self> {
+        let mut ref_map = ReferencesMap::new();
+
+        for reference in repo
+            .references()
+            .map_err(|e| Error::from_ctx_and_error("Failed to get references", e))?
+        {
+            let reference =
+                reference.map_err(|e| Error::from_ctx_and_error("Failed to get reference", e))?;
+
+            if let Err(e) = ref_map.try_insert_reference(&reference) {
+                log::error!(
+                    "Error adding reference to reference map {}: {}",
+                    reference.name().unwrap_or("unknown reference"),
+                    e
+                )
+            };
+        }
+        Ok(ref_map)
+    }
+}

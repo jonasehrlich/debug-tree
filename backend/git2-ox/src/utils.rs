@@ -1,4 +1,4 @@
-use crate::{ReferenceMap, Result, error::Error};
+use crate::{Result, error::Error};
 
 pub fn get_commit_for_oid<'repo>(
     repo: &'repo git2::Repository,
@@ -76,32 +76,4 @@ pub fn revwalk_for_range<'repo>(
     }
 
     Ok(revwalk)
-}
-
-/// Get a map mapping OIDs to a vector of references pointing to it
-///
-/// * `repo` - Repository to get the references from
-pub fn get_references_map(repo: &git2::Repository) -> Result<ReferenceMap<'_>> {
-    let mut ref_map = ReferenceMap::new();
-
-    for reference in repo
-        .references()
-        .map_err(|e| Error::from_ctx_and_error("Failed to get references", e))?
-    {
-        let reference =
-            reference.map_err(|e| Error::from_ctx_and_error("Failed to get reference", e))?;
-        ref_map
-            .entry(
-                reference
-                    .peel_to_commit()
-                    .map_err(|e| {
-                        Error::from_ctx_and_error("Failed to peel reference to commit", e)
-                    })?
-                    .id(),
-            )
-            .or_default()
-            .push(reference);
-    }
-
-    Ok(ref_map)
 }

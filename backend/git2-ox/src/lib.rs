@@ -14,6 +14,4 @@ pub use reference::{ReferenceKind, ReferenceMetadata, ResolvedReference};
 pub use repository::{ReferenceKindFilter, Repository};
 pub use tag::TaggedCommit;
 
-use reference::ReferenceMap;
-
 type Result<T> = std::result::Result<T, error::Error>;

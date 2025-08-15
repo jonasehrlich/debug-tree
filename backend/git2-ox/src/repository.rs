@@ -1,5 +1,6 @@
 use crate::commit::CommitWithReferences;
 use crate::error::Error;
+use crate::reference::ReferencesMap;
 use crate::{Branch, Diff, ReferenceKind, ResolvedReference, Result, TaggedCommit, utils};
 use std::path::Path;
 
@@ -50,12 +51,16 @@ impl Repository {
         head_rev: Option<&str>,
     ) -> Result<impl Iterator<Item = Result<CommitWithReferences>>> {
         let revwalk = utils::revwalk_for_range(&self.repo, base_rev, head_rev)?;
-        let ref_map = utils::get_references_map(&self.repo)?;
+        let ref_map = ReferencesMap::try_from(&self.repo)?;
         Ok(revwalk.map(move |oid_result| {
             oid_result
                 .map_err(|e| Error::from_ctx_and_error("Failed to get oid object", e))
                 .and_then(|oid| {
-                    CommitWithReferences::try_from_oid_and_ref_map(&self.repo, oid, &ref_map)
+                    CommitWithReferences::try_from_oid_and_references(
+                        &self.repo,
+                        oid,
+                        ref_map.get_references_for_commit(oid),
+                    )
                 })
         }))
     }
@@ -65,11 +70,8 @@ impl Repository {
     /// * `rev` - Revision to get the commit for. This can be the short hash, full hash, a tag, or any other
     ///   reference such as `HEAD`, a branch name or a tag name
     pub fn get_commit_for_revision(&self, rev: &str) -> Result<CommitWithReferences> {
-        CommitWithReferences::try_from_revision_and_ref_map(
-            &self.repo,
-            rev,
-            &utils::get_references_map(&self.repo)?,
-        )
+        let ref_map = ReferencesMap::try_from(&self.repo)?;
+        CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
     }
 
     /// Checkout a revision
@@ -95,11 +97,12 @@ impl Repository {
             Error::from_ctx_and_error(format!("Failed to set head to revision '{rev}'"), e)
         })?;
 
-        let ref_map = utils::get_references_map(&self.repo)?;
+        let ref_map = ReferencesMap::try_from(&self.repo)?;
 
         // self.repo
         //     .set_head(obj.Ok
         //     .map_err(|e| Error::from_ctx_and_error(format!("Failed to set head to {rev}"), e))?;
+
         CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
     }
 
