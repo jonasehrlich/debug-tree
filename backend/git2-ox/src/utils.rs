@@ -1,6 +1,4 @@
-use crate::Result;
-use crate::error::Error;
-use std::collections::hash_map;
+use crate::{ReferenceMap, Result, error::Error};
 
 pub fn get_commit_for_oid<'repo>(
     repo: &'repo git2::Repository,
@@ -83,10 +81,8 @@ pub fn revwalk_for_range<'repo>(
 /// Get a map mapping OIDs to a vector of references pointing to it
 ///
 /// * `repo` - Repository to get the references from
-pub fn get_references_map<'repo>(
-    repo: &'repo git2::Repository,
-) -> Result<hash_map::HashMap<git2::Oid, Vec<git2::Reference<'repo>>>> {
-    let mut ref_map: hash_map::HashMap<git2::Oid, Vec<git2::Reference>> = hash_map::HashMap::new();
+pub fn get_references_map(repo: &git2::Repository) -> Result<ReferenceMap<'_>> {
+    let mut ref_map = ReferenceMap::new();
 
     for reference in repo
         .references()

@@ -1,4 +1,5 @@
 use crate::{Commit, Result, error::Error};
+use std::collections::hash_map;
 
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
@@ -127,3 +128,5 @@ impl<'repo> TryFrom<git2::Reference<'repo>> for ResolvedReference {
         ResolvedReference::try_from(&reference)
     }
 }
+
+pub(crate) type ReferenceMap<'repo> = hash_map::HashMap<git2::Oid, Vec<git2::Reference<'repo>>>;
