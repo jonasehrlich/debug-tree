@@ -83,9 +83,9 @@ pub fn revwalk_for_range<'repo>(
 /// Get a map mapping OIDs to a vector of references pointing to it
 ///
 /// * `repo` - Repository to get the references from
-pub fn get_references_map(
-    repo: &git2::Repository,
-) -> Result<hash_map::HashMap<git2::Oid, Vec<git2::Reference>>> {
+pub fn get_references_map<'repo>(
+    repo: &'repo git2::Repository,
+) -> Result<hash_map::HashMap<git2::Oid, Vec<git2::Reference<'repo>>>> {
     let mut ref_map: hash_map::HashMap<git2::Oid, Vec<git2::Reference>> = hash_map::HashMap::new();
 
     for reference in repo

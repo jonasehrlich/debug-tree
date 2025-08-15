@@ -8,7 +8,7 @@ pub mod tag;
 pub mod utils;
 
 pub use branch::Branch;
-pub use commit::{Commit, CommitLike, CommitWithReferences};
+pub use commit::{Commit, CommitProperties, CommitWithReferences};
 pub use diff::Diff;
 pub use reference::{ReferenceKind, ReferenceMetadata, ResolvedReference};
 pub use repository::{ReferenceKindFilter, Repository};

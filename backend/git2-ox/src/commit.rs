@@ -2,7 +2,7 @@ use std::collections::hash_map;
 
 use crate::{ReferenceMetadata, Result, utils};
 
-pub trait CommitLike {
+pub trait CommitProperties {
     fn id(&self) -> &str;
     fn summary(&self) -> &str;
 }
@@ -75,7 +75,7 @@ impl<'repo> From<git2::Commit<'repo>> for Commit {
     }
 }
 
-impl CommitLike for Commit {
+impl CommitProperties for Commit {
     fn id(&self) -> &str {
         &self.id
     }
@@ -116,7 +116,7 @@ pub struct CommitWithReferences {
     references: Vec<ReferenceMetadata>,
 }
 
-impl CommitLike for CommitWithReferences {
+impl CommitProperties for CommitWithReferences {
     fn id(&self) -> &str {
         self.commit.id()
     }

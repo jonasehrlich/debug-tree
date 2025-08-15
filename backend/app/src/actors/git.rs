@@ -20,7 +20,7 @@ impl GitActor {
 
     fn filter_commit<CommitLikeT>(filter: &str, commit: &CommitLikeT) -> bool
     where
-        CommitLikeT: git2_ox::CommitLike,
+        CommitLikeT: git2_ox::CommitProperties,
     {
         let id_matches = commit
             .id()
