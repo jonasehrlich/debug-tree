@@ -96,7 +96,7 @@ impl Repository {
         &self,
         base_rev: Option<&str>,
         head_rev: Option<&str>,
-    ) -> Result<git2::Diff> {
+    ) -> Result<git2::Diff<'_>> {
         let head = head_rev.unwrap_or("HEAD");
         let tree = utils::get_tree_for_revision(&self.repo, head)?;
 

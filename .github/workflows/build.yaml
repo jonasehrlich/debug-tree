@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build documentation
+        run: npm run docs:build
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: docs/.vitepress/dist
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary_name: debug-flow
+            release_name: debug-flow-x86_64-linux
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary_name: debug-flow.exe
+            release_name: debug-flow-x86_64-windows.exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary_name: debug-flow
+            release_name: debug-flow-aarch64-macos
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
+      - name: build-debug
+        run: cargo build --target ${{ matrix.target }}
+      - name: build-release
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Rename binary
+        shell: bash
+        run: |
+          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} ${{ matrix.release_name }}
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-binary
+          path: ${{ matrix.release_name }}
