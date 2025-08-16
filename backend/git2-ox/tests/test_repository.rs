@@ -1,4 +1,5 @@
 mod common;
+use git2_ox::CommitProperties;
 
 #[test]
 fn test_try_init() {

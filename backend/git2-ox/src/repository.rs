@@ -1,5 +1,7 @@
+use crate::commit::CommitWithReferences;
 use crate::error::Error;
-use crate::{Branch, Commit, Diff, Result, TaggedCommit, utils};
+use crate::reference::ReferencesMap;
+use crate::{Branch, Diff, ReferenceKind, ResolvedReference, Result, TaggedCommit, utils};
 use std::path::Path;
 
 pub struct Repository {
@@ -47,12 +49,19 @@ impl Repository {
         &self,
         base_rev: Option<&str>,
         head_rev: Option<&str>,
-    ) -> Result<impl Iterator<Item = Result<Commit>>> {
+    ) -> Result<impl Iterator<Item = Result<CommitWithReferences>>> {
         let revwalk = utils::revwalk_for_range(&self.repo, base_rev, head_rev)?;
-        Ok(revwalk.map(|oid_result| {
+        let ref_map = ReferencesMap::try_from(&self.repo)?;
+        Ok(revwalk.map(move |oid_result| {
             oid_result
                 .map_err(|e| Error::from_ctx_and_error("Failed to get oid object", e))
-                .and_then(|oid| Commit::try_for_oid(&self.repo, oid))
+                .and_then(|oid| {
+                    CommitWithReferences::try_from_oid_and_references(
+                        &self.repo,
+                        oid,
+                        ref_map.get_references_for_commit(oid),
+                    )
+                })
         }))
     }
 
@@ -60,15 +69,16 @@ impl Repository {
     ///
     /// * `rev` - Revision to get the commit for. This can be the short hash, full hash, a tag, or any other
     ///   reference such as `HEAD`, a branch name or a tag name
-    pub fn get_commit_for_revision(&self, rev: &str) -> Result<Commit> {
-        Commit::try_for_revision(&self.repo, rev)
+    pub fn get_commit_for_revision(&self, rev: &str) -> Result<CommitWithReferences> {
+        let ref_map = ReferencesMap::try_from(&self.repo)?;
+        CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
     }
 
     /// Checkout a revision
     ///
     /// * `rev` - Revision to checkout. This can be the short hash, full hash, a tag, or any other
     ///   reference such as `HEAD`, a branch name or a tag name
-    pub fn checkout_revision(&self, rev: &str) -> Result<Commit> {
+    pub fn checkout_revision(&self, rev: &str) -> Result<CommitWithReferences> {
         let (object, reference) = self.repo.revparse_ext(rev).map_err(|e| {
             Error::from_ctx_and_error(format!("Failed to parse revision '{rev}'"), e)
         })?;
@@ -86,10 +96,14 @@ impl Repository {
         .map_err(|e| {
             Error::from_ctx_and_error(format!("Failed to set head to revision '{rev}'"), e)
         })?;
+
+        let ref_map = ReferencesMap::try_from(&self.repo)?;
+
         // self.repo
         //     .set_head(obj.Ok
         //     .map_err(|e| Error::from_ctx_and_error(format!("Failed to set head to {rev}"), e))?;
-        Commit::try_for_revision(&self.repo, rev)
+
+        CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
     }
 
     fn git2_diff_for_revisions(
@@ -132,22 +146,13 @@ impl Repository {
     /// Returns an iterator over tags in the repository which names contain `filter`
     ///
     /// * `filter` - Name to filter the tags for
-    pub fn iter_tags(
-        &self,
-        filter: Option<&str>,
-    ) -> Result<impl Iterator<Item = Result<TaggedCommit>>> {
-        let tag_names: Vec<String> = self
-            .repo
-            .tag_names(filter.map(utils::to_safe_glob).as_deref())
-            .map_err(|e| Error::from_ctx_and_error("Failed to get tags", e))?
-            .iter()
-            .flatten()
-            .map(|name| name.to_string())
-            .collect();
-
-        Ok(tag_names
-            .into_iter()
-            .map(move |name| TaggedCommit::try_from_repo_and_tag_name(&self.repo, &name)))
+    pub fn iter_tags(&self, filter: Option<&str>) -> Result<impl Iterator<Item = TaggedCommit>> {
+        Ok(self
+            .iter_references(
+                filter,
+                Some(ReferenceKindFilter::exclude(vec![ReferenceKind::Tag])),
+            )?
+            .filter_map(|r| r.try_into().ok()))
     }
 
     /// Create a lightweight tag with name `name` on `revision`
@@ -188,23 +193,75 @@ impl Repository {
     /// * `filter` - If `Some(filter)` only branches containing `filter` will be returned, if
     ///   `None` all branches will be returned
     pub fn iter_branches(&self, filter: Option<&str>) -> Result<impl Iterator<Item = Branch>> {
+        Ok(self
+            .iter_references(
+                filter,
+                Some(ReferenceKindFilter::include(vec![ReferenceKind::Branch])),
+            )?
+            .filter_map(|r| r.try_into().ok()))
+    }
+
+    /// Return an iterator over references
+    ///
+    /// * `filter` - If `Some(filter)` only references containing `filter` will be returned, if
+    ///   `None` all references will be returned
+    /// * `filter_kinds` - Filter for reference kinds to include or exclude
+    pub fn iter_references(
+        &self,
+        filter: Option<&str>,
+        filter_kinds: Option<ReferenceKindFilter>,
+    ) -> Result<impl Iterator<Item = ResolvedReference>> {
         let filter = filter.unwrap_or("");
 
-        let local_branches = self
+        let refs = self
             .repo
-            .branches(Some(git2::BranchType::Local))
-            .map_err(|e| Error::from_ctx_and_error("Failed to list branches", e))?;
-        Ok(local_branches
+            .references()
+            .map_err(|e| Error::from_ctx_and_error("Failed to get references", e))?;
+
+        Ok(refs
             .filter_map(std::result::Result::ok)
-            .filter_map(move |(b, _)| {
-                let name = b.name().ok()??;
+            .filter_map(move |r| {
+                let ref_kind = ReferenceKind::try_from(&r).ok()?;
+                let ref_kind_ok = match &filter_kinds {
+                    None => true,
+                    Some(ReferenceKindFilter::Include {
+                        include: include_kinds,
+                    }) => include_kinds.contains(&ref_kind),
+                    Some(ReferenceKindFilter::Exclude {
+                        exclude: exclude_kinds,
+                    }) => !exclude_kinds.contains(&ref_kind),
+                };
+                if !ref_kind_ok {
+                    return None;
+                }
+                let name = r.shorthand()?;
                 if !name.contains(filter) {
                     return None;
                 }
-
-                let rev = b.get();
-                let commit = rev.peel_to_commit().ok()?;
-                Some(Branch::from_name_and_commit(name, &commit))
+                ResolvedReference::try_from(r).ok()
             }))
+    }
+}
+
+/// Include or exclude `Reference`s
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Deserialize),
+    serde(rename_all = "camelCase", untagged)
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum ReferenceKindFilter {
+    /// Values to include
+    Include { include: Vec<ReferenceKind> },
+    /// Values to exclude
+    Exclude { exclude: Vec<ReferenceKind> },
+}
+
+impl ReferenceKindFilter {
+    pub fn include(include: Vec<ReferenceKind>) -> Self {
+        Self::Include { include }
+    }
+    pub fn exclude(exclude: Vec<ReferenceKind>) -> Self {
+        Self::Exclude { exclude }
     }
 }

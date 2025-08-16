@@ -1,3 +1,4 @@
+use git2_ox::ReferenceKindFilter;
 use hannibal::prelude::*;
 use std::path::Path;
 
@@ -17,7 +18,10 @@ impl GitActor {
         Ok(Self { repository })
     }
 
-    fn filter_commit(filter: &str, commit: &git2_ox::Commit) -> bool {
+    fn filter_commit<CommitLikeT>(filter: &str, commit: &CommitLikeT) -> bool
+    where
+        CommitLikeT: git2_ox::CommitProperties,
+    {
         let id_matches = commit
             .id()
             .to_string()
@@ -31,7 +35,7 @@ impl GitActor {
     }
 }
 
-#[message(response = Result<git2_ox::Commit, git2_ox::error::Error>)]
+#[message(response = Result<git2_ox::CommitWithReferences, git2_ox::error::Error>)]
 pub struct GetRevision {
     pub revision: String,
 }
@@ -41,12 +45,12 @@ impl Handler<GetRevision> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         msg: GetRevision,
-    ) -> Result<git2_ox::Commit, git2_ox::error::Error> {
+    ) -> Result<git2_ox::CommitWithReferences, git2_ox::error::Error> {
         self.repository.get_commit_for_revision(&msg.revision)
     }
 }
 
-#[message(response = Result<git2_ox::Commit, git2_ox::error::Error>)]
+#[message(response = Result<git2_ox::CommitWithReferences, git2_ox::error::Error>)]
 pub struct CheckoutRevision {
     pub revision: String,
 }
@@ -56,12 +60,12 @@ impl Handler<CheckoutRevision> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         msg: CheckoutRevision,
-    ) -> Result<git2_ox::Commit, git2_ox::error::Error> {
+    ) -> Result<git2_ox::CommitWithReferences, git2_ox::error::Error> {
         self.repository.checkout_revision(&msg.revision)
     }
 }
 
-#[message(response = Result<Vec<git2_ox::Commit>, git2_ox::error::Error>)]
+#[message(response = Result<Vec<git2_ox::CommitWithReferences>, git2_ox::error::Error>)]
 pub struct ListCommits {
     pub base_rev: Option<String>,
     pub head_rev: Option<String>,
@@ -73,7 +77,7 @@ impl Handler<ListCommits> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         msg: ListCommits,
-    ) -> Result<Vec<git2_ox::Commit>, git2_ox::error::Error> {
+    ) -> Result<Vec<git2_ox::CommitWithReferences>, git2_ox::error::Error> {
         let commits_iter = self
             .repository
             .iter_commits(msg.base_rev.as_deref(), msg.head_rev.as_deref())?;
@@ -118,11 +122,7 @@ impl Handler<ListTags> for GitActor {
         _ctx: &mut Context<Self>,
         msg: ListTags,
     ) -> Result<Vec<git2_ox::TaggedCommit>, git2_ox::error::Error> {
-        let tags_iter = self.repository.iter_tags(msg.filter.as_deref())?;
-        let mut tags = Vec::new();
-        for tag_result in tags_iter {
-            tags.push(tag_result?);
-        }
+        let tags = self.repository.iter_tags(msg.filter.as_deref())?.collect();
         Ok(tags)
     }
 }
@@ -184,7 +184,7 @@ impl Handler<CreateBranch> for GitActor {
 
 #[derive(Debug, Clone)]
 pub struct RepositoryStatus {
-    pub head: git2_ox::Commit,
+    pub head: git2_ox::CommitWithReferences,
     pub current_branch: Option<String>,
 }
 
@@ -203,5 +203,25 @@ impl Handler<GetRepositoryStatus> for GitActor {
             head,
             current_branch,
         })
+    }
+}
+
+#[message(response = Result<Vec<git2_ox::ResolvedReference>, git2_ox::error::Error>)]
+pub struct ListReferences {
+    pub filter: Option<String>,
+    pub filter_kinds: Option<ReferenceKindFilter>,
+}
+
+impl Handler<ListReferences> for GitActor {
+    async fn handle(
+        &mut self,
+        _ctx: &mut Context<Self>,
+        msg: ListReferences,
+    ) -> Result<Vec<git2_ox::ResolvedReference>, git2_ox::error::Error> {
+        let references = self
+            .repository
+            .iter_references(msg.filter.as_deref(), msg.filter_kinds)?
+            .collect();
+        Ok(references)
     }
 }
