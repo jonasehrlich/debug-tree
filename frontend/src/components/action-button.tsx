@@ -93,14 +93,20 @@ interface CopyButtonProps {
   /** Value to copy onClick */
   value: string;
   /** Whether to show a tooltip */
-  tooltip?: boolean;
+  tooltip?: boolean | string;
 }
 
 export const CopyButton = ({ value, tooltip = true }: CopyButtonProps) => {
   return (
     <ActionButton
       className="size-6"
-      tooltipContent={tooltip ? "Copy to clipboard" : undefined}
+      tooltipContent={
+        tooltip === true
+          ? "Copy to clipboard"
+          : typeof tooltip === "string"
+            ? tooltip
+            : undefined
+      }
       icon={<Copy />}
       onClick={() => {
         return copyToClipboard(value);

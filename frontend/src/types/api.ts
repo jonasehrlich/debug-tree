@@ -146,6 +146,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/git/references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List references
+         * @description List all references in the repository, optionally filtered by a glob pattern and type.
+         */
+        get: operations["list_references"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/git/repository/status": {
         parameters: {
             query?: never;
@@ -232,6 +252,10 @@ export interface components {
             /** Format: date-time */
             time: string;
         };
+        CommitWithReferences: components["schemas"]["Commit"] & {
+            /** @description References pointing to the commit */
+            references: components["schemas"]["ReferenceMetadata"][];
+        };
         CreateFlowRequest: {
             name: string;
         };
@@ -240,9 +264,7 @@ export interface components {
         };
         Diff: {
             /** @description Map of old source paths to the old content */
-            oldSources: {
-                [key: string]: components["schemas"]["String"];
-            };
+            oldSources: components["schemas"]["HashMap"];
             /** @description Patch between old and new */
             patch: string;
             /** @description Stats of the diff */
@@ -282,6 +304,9 @@ export interface components {
         FullFlowRequestResponse: {
             flow: components["schemas"]["FlowData"];
         };
+        HashMap: {
+            [key: string]: string;
+        };
         ListBranchesResponse: {
             /** @description Found branches */
             branches: components["schemas"]["Branch"][];
@@ -289,7 +314,7 @@ export interface components {
         ListCommitsResponse: {
             /** @description Array of commits between the base and head commit IDs
              *     in reverse chronological order. */
-            commits: components["schemas"]["Commit"][];
+            commits: components["schemas"]["CommitWithReferences"][];
         };
         ListDiffsResponse: {
             /** @description Diff between base and head revision */
@@ -297,6 +322,10 @@ export interface components {
         };
         ListFlowsResponse: {
             flows: components["schemas"]["FlowMetadata"][];
+        };
+        ListReferencesResponse: {
+            /** @description Array of references */
+            references: components["schemas"]["ResolvedReference"][];
         };
         ListTagsResponse: {
             tags: components["schemas"]["TaggedCommit"][];
@@ -307,17 +336,25 @@ export interface components {
             /** @description Nodes of the reactflow state, the types of the nodes are managed on the frontend */
             nodes: unknown[];
         };
+        /** @enum {string} */
+        ReferenceKind: "tag" | "branch" | "note" | "remotebranch";
+        ReferenceMetadata: {
+            kind: components["schemas"]["ReferenceKind"];
+            name: string;
+        };
         RepositoryStatusResponse: {
             /** @description The current branch name, not set if in a detached HEAD state */
             currentBranch?: string | null;
             /** @description The current HEAD commit */
-            head: components["schemas"]["Commit"];
+            head: components["schemas"]["CommitWithReferences"];
+        };
+        ResolvedReference: components["schemas"]["ReferenceMetadata"] & {
+            target: components["schemas"]["Commit"];
         };
         Signature: {
             email: string;
             name: string;
         };
-        String: string;
         TaggedCommit: {
             /** @description Commit the tag is on */
             commit: components["schemas"]["Commit"];
@@ -514,7 +551,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description string filter against with the branch name is matched */
-                filter?: string | null;
+                filter?: string;
             };
             header?: never;
             path?: never;
@@ -681,13 +718,13 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description string filter for the commits. Filters commits by their ID or summary. */
-                filter?: string | null;
+                filter?: string;
                 /** @description The base revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the first commit is used. */
-                baseRev?: string | null;
+                baseRev?: string;
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
-                headRev?: string | null;
+                headRev?: string;
             };
             header?: never;
             path?: never;
@@ -720,10 +757,10 @@ export interface operations {
             query?: {
                 /** @description The base revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the first commit is used. */
-                baseRev?: string | null;
+                baseRev?: string;
                 /** @description The head revision of the range, this can be short hash, full hash, a tag,
                  *     or any other reference such a branch name. If empty, the current HEAD is used. */
-                headRev?: string | null;
+                headRev?: string;
             };
             header?: never;
             path?: never;
@@ -738,6 +775,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListDiffsResponse"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiStatusDetailResponse"];
+                };
+            };
+        };
+    };
+    list_references: {
+        parameters: {
+            query?: {
+                /** @description String filter against with the reference name */
+                filter?: string;
+                /** @description Reference kinds to include, mutually exclusive with `exclude` */
+                include?: components["schemas"]["ReferenceKind"][];
+                /** @description Reference kinds to exclude, mutually exclusive with `include` */
+                exclude?: components["schemas"]["ReferenceKind"][];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of references */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListReferencesResponse"];
                 };
             };
             /** @description Internal server error */
@@ -784,7 +857,7 @@ export interface operations {
         parameters: {
             query?: {
                 /** @description String filter against which the tag name is matched. */
-                filter?: string | null;
+                filter?: string;
             };
             header?: never;
             path?: never;

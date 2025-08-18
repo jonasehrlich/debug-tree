@@ -8,7 +8,7 @@ use crate::{Result, error};
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-pub(crate) struct DiffStats {
+pub struct DiffStats {
     /// Number of files changed
     files_changed: usize,
     /// Number of insertions
@@ -20,6 +20,22 @@ pub(crate) struct DiffStats {
 }
 
 impl DiffStats {
+    pub fn files_changed(&self) -> usize {
+        self.files_changed
+    }
+
+    pub fn insertions(&self) -> usize {
+        self.insertions
+    }
+
+    pub fn deletions(&self) -> usize {
+        self.deletions
+    }
+
+    pub fn total_old_num_lines(&self) -> usize {
+        self.total_old_num_lines
+    }
+
     fn from_stats_and_total_old_num_lines(
         stats: &git2::DiffStats,
         total_old_num_lines: usize,
@@ -36,6 +52,8 @@ impl DiffStats {
 type Path = String;
 type FileContent = String;
 
+type FilesContent = hash_map::HashMap<Path, FileContent>;
+
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
     feature = "serde",
@@ -48,10 +66,22 @@ pub struct Diff {
     /// Stats of the diff
     stats: DiffStats,
     /// Map of old source paths to the old content
-    old_sources: hash_map::HashMap<Path, FileContent>,
+    old_sources: FilesContent,
 }
 
 impl Diff {
+    pub fn patch(&self) -> &str {
+        &self.patch
+    }
+
+    pub fn stats(&self) -> &DiffStats {
+        &self.stats
+    }
+
+    pub fn old_sources(&self) -> &FilesContent {
+        &self.old_sources
+    }
+
     pub fn try_from_repo_and_diff(repo: &git2::Repository, diff: &git2::Diff) -> Result<Self> {
         let mut patch_output = String::new();
         let mut total_num_lines: usize = 0;
