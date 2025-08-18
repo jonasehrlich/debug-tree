@@ -264,9 +264,7 @@ export interface components {
         };
         Diff: {
             /** @description Map of old source paths to the old content */
-            oldSources: {
-                [key: string]: components["schemas"]["String"];
-            };
+            oldSources: components["schemas"]["HashMap"];
             /** @description Patch between old and new */
             patch: string;
             /** @description Stats of the diff */
@@ -305,6 +303,9 @@ export interface components {
         };
         FullFlowRequestResponse: {
             flow: components["schemas"]["FlowData"];
+        };
+        HashMap: {
+            [key: string]: string;
         };
         ListBranchesResponse: {
             /** @description Found branches */
@@ -354,7 +355,6 @@ export interface components {
             email: string;
             name: string;
         };
-        String: string;
         TaggedCommit: {
             /** @description Commit the tag is on */
             commit: components["schemas"]["Commit"];

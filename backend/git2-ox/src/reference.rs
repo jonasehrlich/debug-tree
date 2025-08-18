@@ -87,7 +87,7 @@ impl<'repo> TryFrom<&git2::Reference<'repo>> for ReferenceMetadata {
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub struct ResolvedReference {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     reference: ReferenceMetadata,
     target: Commit,
 }

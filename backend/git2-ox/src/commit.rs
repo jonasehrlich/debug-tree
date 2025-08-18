@@ -108,7 +108,7 @@ impl<'repo> Commit {
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub struct CommitWithReferences {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     commit: Commit,
     /// References pointing to the commit
     references: Vec<ReferenceMetadata>,
