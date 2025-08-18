@@ -21,6 +21,14 @@ impl TaggedCommit {
         }
     }
 
+    pub fn name(&self) -> &str {
+        &self.tag
+    }
+
+    pub fn target(&self) -> &Commit {
+        &self.commit
+    }
+
     pub fn try_from_repo_and_tag_name(repo: &git2::Repository, tag_name: &str) -> Result<Self> {
         Ok(Self {
             tag: tag_name.to_string(),

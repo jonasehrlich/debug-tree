@@ -122,7 +122,12 @@ impl Handler<ListTags> for GitActor {
         _ctx: &mut Context<Self>,
         msg: ListTags,
     ) -> Result<Vec<git2_ox::TaggedCommit>, git2_ox::error::Error> {
-        let tags = self.repository.iter_tags(msg.filter.as_deref())?.collect();
+        let filter = msg.filter.unwrap_or("".to_string());
+        let tags = self
+            .repository
+            .iter_tags()?
+            .filter(|tag| tag.name().to_lowercase().contains(&filter.to_lowercase()))
+            .collect();
         Ok(tags)
     }
 }
@@ -156,9 +161,16 @@ impl Handler<ListBranches> for GitActor {
         _ctx: &mut Context<Self>,
         msg: ListBranches,
     ) -> Result<Vec<git2_ox::Branch>, git2_ox::error::Error> {
+        let filter = msg.filter.unwrap_or("".to_string());
         let branches = self
             .repository
-            .iter_branches(msg.filter.as_deref())?
+            .iter_branches()?
+            .filter(|branch| {
+                branch
+                    .name()
+                    .to_lowercase()
+                    .contains(&filter.to_lowercase())
+            })
             .collect();
         Ok(branches)
     }
@@ -218,9 +230,31 @@ impl Handler<ListReferences> for GitActor {
         _ctx: &mut Context<Self>,
         msg: ListReferences,
     ) -> Result<Vec<git2_ox::ResolvedReference>, git2_ox::error::Error> {
+        let filter = msg.filter.as_deref().unwrap_or("");
+
         let references = self
             .repository
-            .iter_references(msg.filter.as_deref(), msg.filter_kinds)?
+            .iter_references()?
+            .filter_map(|r| {
+                let ref_kind = r.kind();
+
+                let ref_kind_ok = match &msg.filter_kinds {
+                    None => true,
+                    Some(ReferenceKindFilter::Include {
+                        include: include_kinds,
+                    }) => include_kinds.contains(&ref_kind),
+                    Some(ReferenceKindFilter::Exclude {
+                        exclude: exclude_kinds,
+                    }) => !exclude_kinds.contains(&ref_kind),
+                };
+                if !ref_kind_ok {
+                    return None;
+                }
+                if !r.name().contains(filter) {
+                    return None;
+                }
+                Some(r)
+            })
             .collect();
         Ok(references)
     }

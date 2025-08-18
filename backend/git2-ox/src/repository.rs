@@ -151,15 +151,14 @@ impl Repository {
     }
 
     /// Returns an iterator over tags in the repository which names contain `filter`
-    ///
-    /// * `filter` - Name to filter the tags for
-    pub fn iter_tags(&self, filter: Option<&str>) -> Result<impl Iterator<Item = TaggedCommit>> {
-        Ok(self
-            .iter_references(
-                filter,
-                Some(ReferenceKindFilter::exclude(vec![ReferenceKind::Tag])),
-            )?
-            .filter_map(|r| r.try_into().ok()))
+    pub fn iter_tags(&self) -> Result<impl Iterator<Item = TaggedCommit>> {
+        Ok(self.iter_references()?.filter_map(move |r| {
+            if r.kind() == ReferenceKind::Tag {
+                r.try_into().ok()
+            } else {
+                None
+            }
+        }))
     }
 
     /// Create a lightweight tag with name `name` on `revision`
@@ -197,29 +196,18 @@ impl Repository {
 
     /// Return an iterator over local branches containing `filter`
     ///
-    /// * `filter` - If `Some(filter)` only branches containing `filter` will be returned, if
-    ///   `None` all branches will be returned
-    pub fn iter_branches(&self, filter: Option<&str>) -> Result<impl Iterator<Item = Branch>> {
-        Ok(self
-            .iter_references(
-                filter,
-                Some(ReferenceKindFilter::include(vec![ReferenceKind::Branch])),
-            )?
-            .filter_map(|r| r.try_into().ok()))
+    pub fn iter_branches(&self) -> Result<impl Iterator<Item = Branch>> {
+        Ok(self.iter_references()?.filter_map(move |r| {
+            if r.kind() == ReferenceKind::Branch {
+                r.try_into().ok()
+            } else {
+                None
+            }
+        }))
     }
 
     /// Return an iterator over references
-    ///
-    /// * `filter` - If `Some(filter)` only references containing `filter` will be returned, if
-    ///   `None` all references will be returned
-    /// * `filter_kinds` - Filter for reference kinds to include or exclude
-    pub fn iter_references(
-        &self,
-        filter: Option<&str>,
-        filter_kinds: Option<ReferenceKindFilter>,
-    ) -> Result<impl Iterator<Item = ResolvedReference>> {
-        let filter = filter.unwrap_or("");
-
+    pub fn iter_references(&self) -> Result<impl Iterator<Item = ResolvedReference>> {
         let refs = self
             .repo
             .references()
@@ -227,26 +215,7 @@ impl Repository {
 
         Ok(refs
             .filter_map(std::result::Result::ok)
-            .filter_map(move |r| {
-                let ref_kind = ReferenceKind::try_from(&r).ok()?;
-                let ref_kind_ok = match &filter_kinds {
-                    None => true,
-                    Some(ReferenceKindFilter::Include {
-                        include: include_kinds,
-                    }) => include_kinds.contains(&ref_kind),
-                    Some(ReferenceKindFilter::Exclude {
-                        exclude: exclude_kinds,
-                    }) => !exclude_kinds.contains(&ref_kind),
-                };
-                if !ref_kind_ok {
-                    return None;
-                }
-                let name = r.shorthand()?;
-                if !name.contains(filter) {
-                    return None;
-                }
-                ResolvedReference::try_from(r).ok()
-            }))
+            .filter_map(move |r| ResolvedReference::try_from(r).ok()))
     }
 }
 
