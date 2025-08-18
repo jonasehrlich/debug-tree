@@ -235,7 +235,7 @@ fn test_iter_branches() {
 
     let existing_branch_names = t
         .repo()
-        .iter_branches(None)
+        .iter_branches()
         .unwrap()
         .into_iter()
         .map(|b| b.name().to_string());
@@ -246,26 +246,65 @@ fn test_iter_branches() {
         HashSet::from_iter(existing_branch_names),
         expected_branch_names
     );
+}
 
-    let no_branches: Vec<String> = t
-        .repo()
-        .iter_branches(Some("no-such-branch"))
-        .unwrap()
-        .into_iter()
-        .map(|b| b.name().to_string())
-        .collect();
-    assert_eq!(no_branches.len(), 0);
+#[test]
+fn test_iter_tags() {
+    use std::collections::HashSet;
 
-    let filtered_branch_names = t
+    let t = common::TempRepository::try_init().unwrap();
+    t.create_and_commit_random_file();
+    let tag_names = ["foo", "bar", "baz"];
+
+    for tag_name in &tag_names {
+        t.repo()
+            .create_lightweight_tag(tag_name, "HEAD", false)
+            .unwrap();
+    }
+
+    let existing_tag_names = t
         .repo()
-        .iter_branches(Some("ba"))
+        .iter_tags()
         .unwrap()
         .into_iter()
         .map(|b| b.name().to_string());
-    let expected_branch_names: HashSet<String> =
-        HashSet::from_iter(["bar", "baz"].iter().map(|s| s.to_string()));
-    assert_eq!(
-        HashSet::from_iter(filtered_branch_names),
-        expected_branch_names
+    let expected_tag_names: HashSet<String> =
+        HashSet::from_iter(tag_names.iter().map(|s| s.to_string()));
+    assert_eq!(HashSet::from_iter(existing_tag_names), expected_tag_names);
+}
+
+#[test]
+fn test_iter_references() {
+    use std::collections::HashSet;
+
+    let t = common::TempRepository::try_init().unwrap();
+    t.create_and_commit_random_file();
+    let default_branch_name = t.repo().current_branch_name().unwrap();
+    let tag_names = ["t-foo", "t-bar", "t-baz"];
+    let branch_names = ["b-foo", "b-bar", "b-baz"];
+
+    for tag_name in &tag_names {
+        t.repo()
+            .create_lightweight_tag(tag_name, "HEAD", false)
+            .unwrap();
+    }
+
+    for branch_name in &branch_names {
+        t.repo().create_branch(branch_name, "HEAD", false).unwrap();
+    }
+
+    let existing_ref_names = t
+        .repo()
+        .iter_references()
+        .unwrap()
+        .into_iter()
+        .map(|b| b.name().to_string());
+    let mut expected_ref_names: HashSet<String> = HashSet::from_iter(
+        tag_names
+            .iter()
+            .chain(branch_names.iter())
+            .map(|s| s.to_string()),
     );
+    expected_ref_names.insert(default_branch_name);
+    assert_eq!(HashSet::from_iter(existing_ref_names), expected_ref_names);
 }
