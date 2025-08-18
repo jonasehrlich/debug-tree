@@ -141,8 +141,15 @@ impl ReferencesMap {
         Self::default()
     }
 
-    pub fn get_references_for_commit(&self, commit_id: git2::Oid) -> Option<&ReferenceMetadatas> {
+    pub fn get_references_for_commit_oid(
+        &self,
+        commit_id: git2::Oid,
+    ) -> Option<&ReferenceMetadatas> {
         self.map.get(&commit_id)
+    }
+
+    pub fn get_references_for_commit_id(&self, commit_id: &str) -> Option<&ReferenceMetadatas> {
+        self.map.get(&git2::Oid::from_str(commit_id).ok()?)
     }
 
     pub fn try_insert_reference(&mut self, reference: &git2::Reference) -> Result<()> {

@@ -1,8 +1,4 @@
-use crate::{
-    ReferenceMetadata, Result,
-    reference::{ReferenceMetadatas, ReferencesMap},
-    utils,
-};
+use crate::{ReferenceMetadata, Result, reference::ReferenceMetadatas, utils};
 
 pub trait CommitProperties {
     fn id(&self) -> &str;
@@ -91,14 +87,14 @@ impl<'repo> Commit {
     /// Try to create a `Commit` from an revision string
     /// * `repo` - Reference to the repository
     /// * `rev` - Revision to get the commit for
-    pub fn try_for_revision(repo: &'repo git2::Repository, rev: &str) -> Result<Self> {
+    pub fn try_from_revision(repo: &'repo git2::Repository, rev: &str) -> Result<Self> {
         Ok(utils::get_commit_for_revision(repo, rev)?.into())
     }
 
     /// Try to create a `Commit` from an `git2::Oid` object
     /// * `repo` - Reference to the repository
     /// * `oid` - `Oid` to get the commit for
-    pub fn try_for_oid(repo: &'repo git2::Repository, oid: git2::Oid) -> Result<Self> {
+    pub fn try_from_oid(repo: &'repo git2::Repository, oid: git2::Oid) -> Result<Self> {
         Ok(utils::get_commit_for_oid(repo, oid)?.into())
     }
 }
@@ -135,7 +131,7 @@ impl CommitWithReferences {
     ) -> Result<CommitWithReferences> {
         Ok(Self {
             commit: commit.into(),
-            references: references.cloned().unwrap_or_else(Vec::new),
+            references: references.cloned().unwrap_or_default(),
         })
     }
 }
@@ -152,20 +148,13 @@ impl<'repo> CommitWithReferences {
         )
     }
 
-    pub fn try_from_revision_and_ref_map(
-        repo: &'repo git2::Repository,
-        rev: &str,
-        ref_map: &ReferencesMap,
+    pub fn from_commit_and_references(
+        commit: &Commit,
+        references: Option<&ReferenceMetadatas>,
     ) -> Result<Self> {
-        let commit = utils::get_commit_for_revision(repo, rev)?;
-        let oid = commit.id();
-
         Ok(Self {
-            commit: commit.into(),
-            references: ref_map
-                .get_references_for_commit(oid)
-                .cloned()
-                .unwrap_or_else(Vec::new),
+            commit: commit.clone(),
+            references: references.cloned().unwrap_or_default(),
         })
     }
 }

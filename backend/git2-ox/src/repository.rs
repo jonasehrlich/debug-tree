@@ -1,7 +1,7 @@
-use crate::commit::CommitWithReferences;
+use crate::commit::{CommitProperties, CommitWithReferences};
 use crate::error::Error;
 use crate::reference::ReferencesMap;
-use crate::{Branch, Diff, ReferenceKind, ResolvedReference, Result, TaggedCommit, utils};
+use crate::{Branch, Commit, Diff, ReferenceKind, ResolvedReference, Result, TaggedCommit, utils};
 use std::path::Path;
 
 pub struct Repository {
@@ -59,7 +59,7 @@ impl Repository {
                     CommitWithReferences::try_from_oid_and_references(
                         &self.repo,
                         oid,
-                        ref_map.get_references_for_commit(oid),
+                        ref_map.get_references_for_commit_oid(oid),
                     )
                 })
         }))
@@ -71,7 +71,11 @@ impl Repository {
     ///   reference such as `HEAD`, a branch name or a tag name
     pub fn get_commit_for_revision(&self, rev: &str) -> Result<CommitWithReferences> {
         let ref_map = ReferencesMap::try_from(&self.repo)?;
-        CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
+        let commit = Commit::try_from_revision(&self.repo, rev)?;
+        CommitWithReferences::from_commit_and_references(
+            &commit,
+            ref_map.get_references_for_commit_id(commit.id()),
+        )
     }
 
     /// Checkout a revision
@@ -102,8 +106,11 @@ impl Repository {
         // self.repo
         //     .set_head(obj.Ok
         //     .map_err(|e| Error::from_ctx_and_error(format!("Failed to set head to {rev}"), e))?;
-
-        CommitWithReferences::try_from_revision_and_ref_map(&self.repo, rev, &ref_map)
+        let commit = Commit::try_from_revision(&self.repo, rev)?;
+        CommitWithReferences::from_commit_and_references(
+            &commit,
+            ref_map.get_references_for_commit_id(commit.id()),
+        )
     }
 
     fn git2_diff_for_revisions(

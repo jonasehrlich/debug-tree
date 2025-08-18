@@ -24,7 +24,7 @@ impl TaggedCommit {
     pub fn try_from_repo_and_tag_name(repo: &git2::Repository, tag_name: &str) -> Result<Self> {
         Ok(Self {
             tag: tag_name.to_string(),
-            commit: Commit::try_for_revision(repo, tag_name)?,
+            commit: Commit::try_from_revision(repo, tag_name)?,
         })
     }
 }
