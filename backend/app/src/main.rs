@@ -38,7 +38,12 @@ async fn main() {
     let args = Cli::parse();
     let flows_dir = debug_flow::flow::FlowsDir::new(args.flows_dir.dir.clone())
         .expect("Error creating debug flow directory");
-    debug_flow::web::serve("localhost", args.port, args.frontend_proxy_port, flows_dir)
-        .await
-        .unwrap();
+    let server =
+        debug_flow::web::serve("localhost", args.port, args.frontend_proxy_port, flows_dir);
+
+    let url = format!("http://localhost:{}", args.port);
+    if open::that(&url).is_err() {
+        log::warn!("Failed to open browser. Please visit {url} manually.");
+    }
+    server.await.unwrap();
 }
