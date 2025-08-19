@@ -48,7 +48,7 @@ In the development build of the backend application, the requests for the fronte
 server. To run the backend, run
 
 ```sh
-cargo run -- serve
+cargo run
 ```
 
 This will serve the application on port 8000. See `cargo run -- serve --help` for more command line flags.
