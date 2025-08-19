@@ -26,13 +26,24 @@ impl fmt::Debug for Error {
 /// Abstraction for a directory containing debug flows
 #[derive(Clone)]
 pub struct FlowsDir {
+    /// Path of the git repository
+    git_repo: path::PathBuf,
     /// Path of the debug flow directory
     path: path::PathBuf,
 }
 
 impl FlowsDir {
-    pub fn new(path: path::PathBuf) -> Result<FlowsDir, Error> {
-        let p = FlowsDir { path };
+    const DIR_NAME: &str = "debug_flows";
+    pub fn try_new<P>(git_repo: P) -> Result<FlowsDir, Error>
+    where
+        P: AsRef<std::path::Path>,
+    {
+        let git_repo = git_repo.as_ref();
+        let path = git_repo.join(Self::DIR_NAME);
+        let p = FlowsDir {
+            git_repo: git_repo.to_path_buf(),
+            path,
+        };
         match p.create_if_not_exists() {
             Ok(()) => Ok(p),
             Err(e) => Err(e),
@@ -40,8 +51,13 @@ impl FlowsDir {
     }
 
     /// Get a reference to the path of the debug flow dir
-    pub fn path(&self) -> &path::PathBuf {
+    pub fn path(&self) -> &path::Path {
         &self.path
+    }
+
+    /// Get the path of the git repository
+    pub fn git_repo(&self) -> &path::Path {
+        &self.git_repo
     }
 
     /// Create the debug flow directory if it does not exist
