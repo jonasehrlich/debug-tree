@@ -6,7 +6,7 @@ use std::path::PathBuf;
 #[command(version, about, long_about = None)]
 struct Cli {
     /// Path to git repository
-    #[arg(long, default_value = "./")]
+    #[arg(default_value = "./")]
     repo: PathBuf,
     /// Port to bind the server to, use 0 to let the operating system select a free port
     #[arg(short, long, default_value_t = 8000)]
