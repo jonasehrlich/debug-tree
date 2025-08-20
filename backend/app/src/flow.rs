@@ -33,7 +33,7 @@ pub struct FlowsDir {
 }
 
 impl FlowsDir {
-    const DIR_NAME: &str = "debug_flows";
+    const DIR_NAME: &str = ".debug-flow";
     pub fn try_new<P>(git_repo: P) -> Result<FlowsDir, Error>
     where
         P: AsRef<std::path::Path>,
