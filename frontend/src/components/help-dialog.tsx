@@ -26,7 +26,7 @@ export const HelpDialog = () => {
   return (
     <Dialog open={isHelpDialogOpen} onOpenChange={setIsHelpDialogOpen}>
       <DialogContent
-        className="sm:max-w-2xl prose"
+        className="prose sm:max-w-2xl"
         aria-description="Help"
         aria-describedby={undefined}
       >
@@ -64,7 +64,7 @@ export const HelpDialog = () => {
         <h4>Show Git Graph</h4>
         <p>
           For <i>StatusNodes</i> which have a Git reference assigned to them,
-          click the <Pin className="inline bg-accent rounded-sm" size="1em" />{" "}
+          click the <Pin className="bg-accent inline rounded-sm" size="1em" />{" "}
           icon in the footer of the node to pin the revision. A panel will
           appear in the lower-right corner of the screen. After a second
           revision is pinned, teh Git Graph can be displayed by clicking on the{" "}
@@ -103,11 +103,11 @@ export const KeybindingsDialog = () => {
           <DialogTitle>Keybindings</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 border-accent p-2">
+        <div className="border-accent flex flex-col gap-4 p-2">
           {Object.entries(keybindings).map(([key, value]) => {
             return (
-              <div key={key} className="flex space-x-3 items-center">
-                <kbd className="px-2 py-1 bg-accent rounded-md min-w-12 text-center text-sm">
+              <div key={key} className="flex items-center space-x-3">
+                <kbd className="bg-accent min-w-12 rounded-md px-2 py-1 text-center text-sm">
                   {value.repr}
                 </kbd>
                 <div>{value.description}</div>

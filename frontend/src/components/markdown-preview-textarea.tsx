@@ -35,7 +35,7 @@ export const MarkdownPreviewTextarea = ({
       <TabsContent value="preview">
         <div
           className={cn(
-            "prose prose-markdown max-w-none border-input rounded-md dark:bg-input/30 rounded-md border bg-transparent px-3 py-2 shadow-xs",
+            "prose prose-markdown border-input dark:bg-input/30 max-w-none rounded-md border bg-transparent px-3 py-2 shadow-xs",
             commonClassNames,
           )}
         >

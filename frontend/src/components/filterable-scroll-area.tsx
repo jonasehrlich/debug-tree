@@ -36,14 +36,14 @@ function FilterableScrollArea({
           }}
           value={filterTerm}
           onKeyDown={handleKeyDown}
-          className="relative border-t border-l rounded-t-md border-r ring-0 selection:bg-primary dark:bg-input/30 rounded-t-[inherit] selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:ring-0 disabled:opacity-50 md:text-sm border-input flex h-10 w-full px-4 py-1 shadow-xy transition-[color,box-shadow] outline-none mb-0 "
+          className="selection:bg-primary dark:bg-input/30 selection:text-primary-foreground placeholder:text-muted-foreground border-input shadow-xy relative mb-0 flex h-10 w-full rounded-t-[inherit] rounded-t-md border-t border-r border-l px-4 py-1 ring-0 transition-[color,box-shadow] outline-none focus-visible:ring-0 disabled:opacity-50 md:text-sm"
         />
         {filterTerm && (
           <button
             onClick={() => {
               setFilterTerm("");
             }}
-            className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted"
+            className="text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5"
           >
             <XCircle className="h-4 w-4" />
             <span className="sr-only">Clear</span>

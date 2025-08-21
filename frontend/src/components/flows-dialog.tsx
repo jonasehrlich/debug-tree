@@ -194,7 +194,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="sm:max-w-[500px] p-0 overflow-hidden"
+        className="overflow-hidden p-0 sm:max-w-[500px]"
         showCloseButton={currentFlow !== null}
       >
         <div className="flex flex-col">
@@ -209,7 +209,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
             <div className="grid gap-4 py-4">
               <h4 className="mb-4 text-sm leading-none font-medium">Flows</h4>
               <FilterableScrollArea
-                className="h-72 rounded-md border dark:bg-input/30 "
+                className="dark:bg-input/30 h-72 rounded-md border"
                 filterTerm={filterTerm}
                 setFilterTerm={setFilterTerm}
                 placeholder="Filter"
@@ -225,7 +225,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
                     <div
                       key={flow.id}
                       className={cn(
-                        "p-2 px-4 border-b cursor-pointer hover:bg-secondary/80 dark:hover:bg-secondary/80 flex items-center justify-between text-sm select-none",
+                        "hover:bg-secondary/80 dark:hover:bg-secondary/80 flex cursor-pointer items-center justify-between border-b p-2 px-4 text-sm select-none",
                         {
                           "bg-secondary": selectedFlow === flow.id,
                         },
@@ -271,14 +271,14 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
                     </div>
                   ))
                 ) : (
-                  <div className="text-center p-2 text-muted-foreground">
+                  <div className="text-muted-foreground p-2 text-center">
                     No flows found.
                   </div>
                 )}
               </FilterableScrollArea>{" "}
             </div>
             {/* --- SECTION ONE FOOTER --- */}
-            <div className="pt-4 mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex justify-end gap-2 pt-4">
               <Button
                 type="submit"
                 disabled={selectedFlow === null}
@@ -321,7 +321,7 @@ export const FlowsDialog: React.FC<FlowsDialogProps> = ({
                     </FormItem>
                   )}
                 />
-                <div className="pt-4 mt-4 flex justify-end gap-2">
+                <div className="mt-4 flex justify-end gap-2 pt-4">
                   <Button
                     disabled={
                       !form.formState.isValid || form.formState.isSubmitting

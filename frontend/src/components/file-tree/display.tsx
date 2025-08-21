@@ -47,11 +47,11 @@ export const TreeDisplay = ({
       {
         // Only render header for non-root directories
         <div
-          className="flex items-center gap-1 py-1 rounded-md hover:bg-muted pr-2"
+          className="hover:bg-muted flex items-center gap-1 rounded-md py-1 pr-2"
           onClick={toggleOpen}
         >
           <div
-            className="flex gap-1 shrink-0 stroke-zinc-400"
+            className="flex shrink-0 gap-1 stroke-zinc-400"
             style={levelDependentStyles}
           >
             {isOpen ? (
@@ -124,7 +124,7 @@ export const FileDisplay = ({
   );
   return (
     <li
-      className="py-1 rounded-md hover:bg-muted pr-2"
+      className="hover:bg-muted rounded-md py-1 pr-2"
       onClick={() => {
         onFileClick(`${basePath ? basePath + "/" : ""}${fileName}`);
       }}

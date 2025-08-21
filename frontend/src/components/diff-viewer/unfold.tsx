@@ -59,21 +59,21 @@ const UnfoldDecoration = ({
       {...props}
       className={cn(
         props.className,
-        "text-muted-foreground font-sans items-center",
+        "text-muted-foreground items-center font-sans",
       )}
     >
       <Tooltip>
         <TooltipTrigger asChild>
           <div
             onClick={expand}
-            className="flex items-center justify-center h-full cursor-pointer dark:bg-blue-950 dark:hover:bg-blue-700 bg-blue-200 hover:bg-blue-100"
+            className="flex h-full cursor-pointer items-center justify-center bg-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-700"
           >
             {iconType}
           </div>
         </TooltipTrigger>
         <TooltipContent>{tooltipText}</TooltipContent>
       </Tooltip>
-      <div className="px-2 dark:bg-blue-950/40 bg-blue-100/40 font-sans">
+      <div className="bg-blue-100/40 px-2 font-sans dark:bg-blue-950/40">
         &nbsp;
       </div>
     </Decoration>

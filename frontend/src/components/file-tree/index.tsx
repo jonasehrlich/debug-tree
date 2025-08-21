@@ -29,7 +29,7 @@ export const FileTree = ({ paths, onFileClick }: FileTreeProps) => {
   }, [filteredPaths]);
 
   return (
-    <div className="flex flex-col shrink-0 border rounded-md w-2xs sm:w-xs lg:w-sm ">
+    <div className="flex w-2xs shrink-0 flex-col rounded-md border sm:w-xs lg:w-sm">
       <div className="border-b p-2">
         <SearchInput
           value={filter}
@@ -41,7 +41,7 @@ export const FileTree = ({ paths, onFileClick }: FileTreeProps) => {
           clearable
         />
       </div>
-      <div className="flex overflow-auto text-nowrap select-none py-1">
+      <div className="flex overflow-auto py-1 text-nowrap select-none">
         {Object.keys(groupedAndOptimizedTree.children).length === 0 && (
           <div className="text-muted-foreground p-4 text-sm">
             {filter ? (
@@ -53,7 +53,7 @@ export const FileTree = ({ paths, onFileClick }: FileTreeProps) => {
         )}
 
         {
-          <ul className="text-sm list-none">
+          <ul className="list-none text-sm">
             {Object.keys(groupedAndOptimizedTree.children)
               .sort()
               .map((dirName) => (

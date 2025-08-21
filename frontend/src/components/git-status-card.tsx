@@ -21,12 +21,12 @@ export function GitStatusCard({ status, footer }: GitStatusCardProps) {
 
   return (
     <Card className="w-80 gap-4">
-      <CardHeader className="flex flex-row justify-between items-center">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Git Status</CardTitle>
         <Badge variant="default">
           {isDetached ? (
             <span className="flex items-center gap-1">
-              <OctagonAlert className="w-4 h-4" />
+              <OctagonAlert className="h-4 w-4" />
               Detached HEAD
             </span>
           ) : (
@@ -36,7 +36,7 @@ export function GitStatusCard({ status, footer }: GitStatusCardProps) {
       </CardHeader>
       <CardContent className="space-y-1 text-sm">
         <div>
-          <div className="truncate font-medium font-mono max-w-full overflow-hidden whitespace-nowrap">
+          <div className="max-w-full truncate overflow-hidden font-mono font-medium whitespace-nowrap">
             {formatGitRevision(revision)}
           </div>
         </div>

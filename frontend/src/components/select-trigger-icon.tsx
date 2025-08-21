@@ -24,7 +24,7 @@ export const SelectTriggerIcon = ({
       className={cn(
         buttonVariants({ variant, size, className }),
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center",
-        "*:data-[slot=select-value]:gap-2 cursor-pointer",
+        "cursor-pointer *:data-[slot=select-value]:gap-2",
       )}
       {...props}
     >

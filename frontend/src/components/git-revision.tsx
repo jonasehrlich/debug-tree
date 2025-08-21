@@ -45,9 +45,9 @@ export const GitRevision = ({ revision }: GitRevisionProps) => {
   }, [revision]);
 
   return (
-    <div className={cn("flex flex-1 items-center text-muted-foreground")}>
+    <div className={cn("text-muted-foreground flex flex-1 items-center")}>
       <GitRevisionIcon revision={revision} size={16} />
-      <span className="flex-1 font-mono px-3  truncate align-middle">
+      <span className="flex-1 truncate px-3 align-middle font-mono">
         {formattedRev}
       </span>
       <ActionButton
