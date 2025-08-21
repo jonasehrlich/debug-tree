@@ -56,12 +56,43 @@ impl AppState {
     }
 }
 
-pub async fn serve(
+/// Serves the web application, including the API and frontend.
+///
+/// This function sets up and starts the web server. It binds to the specified host and port,
+/// initializes the application state (including the `FlowsDir` and `GitActor`),
+/// configures API documentation (RapiDoc), and serves the frontend.
+///
+/// In debug builds, the frontend is served via a reverse proxy to a Vite development server.
+/// In release builds, the frontend is served statically from embedded assets.
+///
+/// # Arguments
+///
+/// * `host` - The host address to bind to (e.g., "localhost").
+/// * `port` - The port to bind to.
+/// * `frontend_proxy_port` - The port of the frontend development server (only used in debug builds).
+/// * `flows_dir` - The `FlowsDir` instance, providing access to debug flow data.
+/// * `on_bind` - A closure that is called once the server successfully binds to the address.
+///
+/// # Returns
+///
+/// A `Result` indicating success or an error.
+///
+/// # Errors
+///
+/// Returns an error if:
+/// - The `AppState` cannot be created (e.g., issues with `FlowsDir` or `GitActor`).
+/// - The server fails to bind to the specified address.
+/// - The `axum::serve` operation encounters an error.
+pub async fn serve<F>(
     host: &str,
     port: u16,
     frontend_proxy_port: u16,
     flows_dir: crate::flow::FlowsDir,
-) -> Result<(), Box<dyn std::error::Error>> {
+    on_bind: F,
+) -> Result<(), Box<dyn std::error::Error>>
+where
+    F: Fn(),
+{
     let app_state = AppState::try_new(flows_dir)?;
 
     let rapidoc_path = "/api-docs";
@@ -86,6 +117,7 @@ pub async fn serve(
         listener.local_addr().unwrap(),
         rapidoc_path
     );
+    on_bind();
     axum::serve(listener, app)
         // .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
         .await?;
