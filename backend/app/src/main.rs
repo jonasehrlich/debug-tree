@@ -19,6 +19,9 @@ struct Cli {
     /// Port on localhost to proxy all fallback requests to, only available in debug builds
     #[arg(long, default_value_t = 5173, hide = cfg!(not(debug_assertions)))]
     frontend_proxy_port: u16,
+    /// Do not open the website in the default browser
+    #[arg(long, default_value_t = false)]
+    no_browser: bool,
 }
 
 #[tokio::main]
@@ -30,12 +33,21 @@ async fn main() {
     let args = Cli::parse();
     let flows_dir = debug_flow::flow::FlowsDir::try_new(args.repo)
         .expect("Error creating debug flow directory");
-    let server =
-        debug_flow::web::serve("localhost", args.port, args.frontend_proxy_port, flows_dir);
+    let server = debug_flow::web::serve(
+        "localhost",
+        args.port,
+        args.frontend_proxy_port,
+        flows_dir,
+        || {
+            if !args.no_browser {
+                let url = format!("http://localhost:{}", args.port);
 
-    let url = format!("http://localhost:{}", args.port);
-    if open::that(&url).is_err() {
-        log::warn!("Failed to open browser. Please visit {url} manually.");
-    }
+                if open::that(&url).is_err() {
+                    log::warn!("Failed to open browser. Please visit {url} manually.");
+                }
+            }
+        },
+    );
+
     server.await.unwrap();
 }
