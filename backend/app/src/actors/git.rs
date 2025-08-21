@@ -1,4 +1,3 @@
-use git2_ox::ReferenceKindFilter;
 use hannibal::prelude::*;
 use std::path::Path;
 
@@ -194,13 +193,7 @@ impl Handler<CreateBranch> for GitActor {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct RepositoryStatus {
-    pub head: git2_ox::CommitWithReferences,
-    pub current_branch: Option<String>,
-}
-
-#[message(response = Result<RepositoryStatus, git2_ox::error::Error>)]
+#[message(response = Result<git2_ox::Status, git2_ox::error::Error>)]
 pub struct GetRepositoryStatus;
 
 impl Handler<GetRepositoryStatus> for GitActor {
@@ -208,20 +201,15 @@ impl Handler<GetRepositoryStatus> for GitActor {
         &mut self,
         _ctx: &mut Context<Self>,
         _msg: GetRepositoryStatus,
-    ) -> Result<RepositoryStatus, git2_ox::error::Error> {
-        let head = self.repository.get_commit_for_revision("HEAD")?;
-        let current_branch = self.repository.current_branch_name();
-        Ok(RepositoryStatus {
-            head,
-            current_branch,
-        })
+    ) -> Result<git2_ox::Status, git2_ox::error::Error> {
+        self.repository.status()
     }
 }
 
 #[message(response = Result<Vec<git2_ox::ResolvedReference>, git2_ox::error::Error>)]
 pub struct ListReferences {
     pub filter: Option<String>,
-    pub filter_kinds: Option<ReferenceKindFilter>,
+    pub filter_kinds: Option<git2_ox::ReferenceKindFilter>,
 }
 
 impl Handler<ListReferences> for GitActor {
@@ -240,10 +228,10 @@ impl Handler<ListReferences> for GitActor {
 
                 let ref_kind_ok = match &msg.filter_kinds {
                     None => true,
-                    Some(ReferenceKindFilter::Include {
+                    Some(git2_ox::ReferenceKindFilter::Include {
                         include: include_kinds,
                     }) => include_kinds.contains(&ref_kind),
-                    Some(ReferenceKindFilter::Exclude {
+                    Some(git2_ox::ReferenceKindFilter::Exclude {
                         exclude: exclude_kinds,
                     }) => !exclude_kinds.contains(&ref_kind),
                 };

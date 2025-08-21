@@ -2,7 +2,7 @@ use crate::{actors, web, web::api};
 
 use axum::extract::{Path, Query, State};
 use axum::{Json, routing};
-use git2_ox::{ReferenceKind, ReferenceKindFilter, ResolvedReference, commit};
+use git2_ox::{ReferenceKind, ReferenceKindFilter, ResolvedReference, Status, commit};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -341,10 +341,8 @@ async fn create_branch(
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct RepositoryStatusResponse {
-    /// The current HEAD commit
-    head: git2_ox::CommitWithReferences,
-    /// The current branch name, not set if in a detached HEAD state
-    current_branch: Option<String>,
+    #[serde(flatten)]
+    status: Status,
 }
 
 #[utoipa::path(
@@ -363,10 +361,7 @@ async fn get_repository_status(
     let actor = state.git_actor();
     let msg = actors::git::GetRepositoryStatus;
     let status = actor.call(msg).await??;
-    Ok(Json(RepositoryStatusResponse {
-        head: status.head,
-        current_branch: status.current_branch,
-    }))
+    Ok(Json(RepositoryStatusResponse { status }))
 }
 
 #[derive(Deserialize, IntoParams)]

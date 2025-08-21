@@ -1,7 +1,11 @@
+use git2::IntoCString;
+
 use crate::commit::{CommitProperties, CommitWithReferences};
 use crate::error::Error;
 use crate::reference::ReferencesMap;
-use crate::{Branch, Commit, Diff, ReferenceKind, ResolvedReference, Result, TaggedCommit, utils};
+use crate::{
+    Branch, Commit, Diff, ReferenceKind, ResolvedReference, Result, Status, TaggedCommit, utils,
+};
 use std::path::Path;
 
 pub struct Repository {
@@ -216,6 +220,34 @@ impl Repository {
         Ok(refs
             .filter_map(std::result::Result::ok)
             .filter_map(move |r| ResolvedReference::try_from(r).ok()))
+    }
+
+    /// Get the status of the repository
+    pub fn status(&self) -> Result<Status> {
+        self.try_into()
+    }
+
+    /// Add all paths matching the pathspecs to the index
+    /// See `git2::Index::add_all for reference`
+    /// * `pathspecs` - List of file names or shell glob patterns that will matched against files in the repository’s
+    ///   working directory. Each file that matches will be added to the index (either updating an existing entry or
+    ///   adding a new entry).
+    pub fn add_all<T, I>(&self, pathspecs: I) -> Result<()>
+    where
+        T: AsRef<str> + IntoCString,
+        I: IntoIterator<Item = T>,
+    {
+        let mut index = self
+            .repo()
+            .index()
+            .map_err(|e| Error::from_ctx_and_error("Failed getting the index", e))?;
+        index
+            .add_all(pathspecs, git2::IndexAddOption::DEFAULT, None)
+            .map_err(|e| Error::from_ctx_and_error("Failed adding path to index", e))?;
+        index
+            .write()
+            .map_err(|e| Error::from_ctx_and_error("Failed writing index path to index", e))?;
+        Ok(())
     }
 }
 

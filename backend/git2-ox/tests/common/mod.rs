@@ -24,10 +24,15 @@ impl TempRepository {
         self.temp_dir.path()
     }
 
-    pub fn create_and_commit_random_file(&self) -> (FileName, CommitId) {
+    pub fn create_random_file(&self) -> FileName {
         let file_name = Uuid::new_v4().to_string();
         let file_path = self.path().join(&file_name);
         std::fs::write(&file_path, "random content").unwrap();
+        file_name
+    }
+
+    pub fn create_and_commit_random_file(&self) -> (FileName, CommitId) {
+        let file_name = self.create_random_file();
 
         let mut index = self.repo.repo().index().unwrap();
         index.add_path(std::path::Path::new(&file_name)).unwrap();
