@@ -10,3 +10,4 @@ export type CommitWithReferences =
 export type ReferenceMetadata = components["schemas"]["ReferenceMetadata"];
 export type ReferenceType = components["schemas"]["ReferenceKind"];
 export type Diff = components["schemas"]["Diff"];
+export type RepositoryStatus = components["schemas"]["Status"];
