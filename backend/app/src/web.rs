@@ -38,12 +38,8 @@ struct AppState {
 
 impl AppState {
     pub fn try_new(flows_dir: flow::FlowsDir) -> Result<Self, Box<dyn std::error::Error>> {
-        let repo_dir = flows_dir
-            .path()
-            .parent()
-            .ok_or("Could not get git repository (parent directory of flows directory)")?;
-
-        let git_actor = crate::actors::git::GitActor::try_from_path(repo_dir)?.spawn();
+        let repo = flows_dir.git_repo();
+        let git_actor = crate::actors::git::GitActor::try_from_path(repo)?.spawn();
 
         Ok(Self {
             flows_dir,
