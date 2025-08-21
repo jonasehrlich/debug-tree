@@ -1,11 +1,16 @@
 use clap::Parser;
 use std::path::PathBuf;
 
-/// Debug Tree CLI
 #[derive(Parser)]
-#[command(version, about, long_about = None)]
+#[command(
+    version,
+    about = "A tool for visualizing and debugging Git repository history as an interactive tree",
+    long_about = "Debug Tree provides an interactive web interface for exploring Git repository history. \
+                  It serves a local web server that visualizes commits, branches, and repository structure \
+                  in an easy-to-navigate tree format, perfect for debugging complex Git workflows."
+)]
 struct Cli {
-    /// Path to git repository
+    /// Path to a git repository
     #[arg(default_value = "./")]
     repo: PathBuf,
     /// Port to bind the server to, use 0 to let the operating system select a free port

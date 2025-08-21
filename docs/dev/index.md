@@ -51,7 +51,7 @@ server. To run the backend, run
 cargo run
 ```
 
-This will serve the application on port 8000. See `cargo run -- serve --help` for more command line flags.
+This will serve the application on port 8000. See `cargo run -- --help` for more command line flags.
 
 ### API
 
