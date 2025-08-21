@@ -181,6 +181,11 @@ impl TryFrom<&git2::Repository> for ReferencesMap {
             let reference =
                 reference.map_err(|e| Error::from_ctx_and_error("Failed to get reference", e))?;
 
+            if reference.name() == Some("refs/stash") {
+                // Manually ignore stash reference
+                continue;
+            }
+
             if let Err(e) = ref_map.try_insert_reference(&reference) {
                 log::error!(
                     "Error adding reference to reference map {}: {}",
