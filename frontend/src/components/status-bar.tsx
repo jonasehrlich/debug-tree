@@ -4,13 +4,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import type { ApiError } from "@/lib/errors";
 import { notify } from "@/lib/notify";
+import { TypedEventSource } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
 import type { RepositoryStatus } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
+import log from "loglevel";
 import {
   FileDiff,
   FileInput,
@@ -28,6 +29,8 @@ import { useShallow } from "zustand/react/shallow";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+
+const _logger = log.getLogger("status-bar");
 
 const StatusBarItem = ({
   className,
@@ -213,7 +216,7 @@ const selector = (state: AppState) => ({
   displayPanel: state.pinnedGitRevisions[0] !== null || state.gitStatus != null,
 });
 
-const PinnedRevisionsStatusBarItem = () => {
+export const PinnedRevisionsStatusBarItem = () => {
   const { pinnedGitRevisions, clearPinnedGitRevisions, hasRevisions } =
     useStore(useShallow(selector));
   const { setIsGitDialogOpen } = useUiStore(useShallow(uiSelector));
@@ -285,6 +288,11 @@ const PinnedRevisionsStatusBarItem = () => {
   );
 };
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type GitStatusEventMap = {
+  "git-status": RepositoryStatus; // custom event payload
+};
+
 export const StatusBar = ({
   className,
   ...props
@@ -298,29 +306,23 @@ export const StatusBar = ({
       .then((data) => {
         setRepositoryStatus(data);
       })
-      .catch((err: ApiError) => {
-        notify.error(err.message);
+      .catch((err: unknown) => {
+        notify.error(err);
       });
 
-    // Register
-    const es = new EventSource("/api/v1/git/repository/status/stream");
-
-    es.addEventListener("git-status", (e) => {
-      const data = (e as MessageEvent).data;
-
-      console.log("sse event", data);
-      try {
-        const msg: RepositoryStatus = JSON.parse(data);
-        console.log("new repository status", msg);
-        setRepositoryStatus(msg); // prepend latest
-      } catch (err) {
-        console.error("Failed to parse SSE JSON:", err);
-      }
+    const es = new TypedEventSource<GitStatusEventMap>(
+      "/api/v1/git/repository/status/stream",
+    );
+    es.onOpen(() => {
+      _logger.info("SSE connection established");
     });
-
-    es.onerror = (err) => {
-      console.error("EventSource error:", err);
-    };
+    es.onError(() => {
+      _logger.warn("SSE connection lost");
+    });
+    es.on("git-status", (ev) => {
+      console.log("new repository status", ev.data);
+      setRepositoryStatus(ev.data); // prepend latest
+    });
 
     return () => {
       es.close();
