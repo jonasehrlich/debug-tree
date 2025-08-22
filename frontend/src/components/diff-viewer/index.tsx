@@ -40,7 +40,7 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
   if (!diff || diff.stats.filesChanged === 0) {
     // TODO check invalid diffs
     return (
-      <div className="text-center p-2 text-muted-foreground select-none">
+      <div className="text-muted-foreground p-2 text-center select-none">
         No diffs to display
       </div>
     );
@@ -53,9 +53,9 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
   }));
 
   return (
-    <div className="flex-grow min-h-0 flex flex-col space-x-4">
+    <div className="flex min-h-0 flex-grow flex-col space-x-4">
       {/* Control elements for the diff */}
-      <div className="shrink-0 flex items-center gap-2 mb-4">
+      <div className="mb-4 flex shrink-0 items-center gap-2">
         <Button
           variant="outline"
           onClick={() => {
@@ -84,7 +84,7 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
         />
       </div>
 
-      <div className="flex flex-grow rounded-md overflow-hidden space-x-4">
+      <div className="flex flex-grow space-x-4 overflow-hidden rounded-md">
         {isFileTreeOpen && (
           <FileTree
             paths={paths}
@@ -95,7 +95,7 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
         )}
         <div
           ref={containerRef}
-          className="flex-grow overflow-y-auto space-y-4 rounded-md"
+          className="flex-grow space-y-4 overflow-y-auto rounded-md"
         >
           {files.map((file, idx) => (
             <DiffFile
@@ -120,15 +120,15 @@ export const DiffViewer = ({ diff }: { diff?: ApiDiff }) => {
 export const SimpleInlineDiffViewer = ({ diff }: { diff?: ApiDiff }) => {
   if (!diff || diff.stats.filesChanged === 0) {
     return (
-      <div className="text-center p-2 text-muted-foreground select-none">
+      <div className="text-muted-foreground p-2 text-center select-none">
         No diffs to display
       </div>
     );
   }
   const files = parseDiff(diff.patch);
   return (
-    <div className="flex-grow min-h-0 flex flex-col space-x-4 rounded-md overflow-hidden">
-      <div className="flex-grow overflow-y-auto space-y-4 rounded-md">
+    <div className="flex min-h-0 flex-grow flex-col space-x-4 overflow-hidden rounded-md">
+      <div className="flex-grow space-y-4 overflow-y-auto rounded-md">
         {files.map((file, idx) => (
           <DiffFile
             key={idx}

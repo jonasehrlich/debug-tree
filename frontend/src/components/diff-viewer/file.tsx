@@ -46,7 +46,7 @@ const DiffFileHeader = ({
   setIsDiffOpen: (c: boolean) => void;
 }) => {
   return (
-    <div className="flex justify-between items-center top-0 z-10 p-2 sticky bg-card dark:bg-card select-none shadow-sm text-xs text-muted-foreground">
+    <div className="bg-card dark:bg-card text-muted-foreground sticky top-0 z-10 flex items-center justify-between p-2 text-xs shadow-sm select-none">
       <div className="flex items-center space-x-2">
         <Button
           className="size-6"
@@ -154,7 +154,7 @@ export const DiffFile = React.memo(
     return (
       <div
         ref={ref}
-        className="border rounded-md overflow-hidden divide-y text-xs"
+        className="divide-y overflow-hidden rounded-md border text-xs"
       >
         <DiffFileHeader
           file={file}
@@ -165,7 +165,7 @@ export const DiffFile = React.memo(
         {isDiffOpen &&
           (renderDiff ? (
             file.type === "rename" ? (
-              <div className="p-4 flex justify-center text-muted-foreground text-sm">
+              <div className="text-muted-foreground flex justify-center p-4 text-sm">
                 File was renamed without changes
               </div>
             ) : (
@@ -174,7 +174,7 @@ export const DiffFile = React.memo(
               </Diff>
             )
           ) : (
-            <div className="flex flex-col justify-center items-center space-y-4 p-4 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex flex-col items-center justify-center space-y-4 p-4 text-sm">
               <div>This diff is large, load it manually.</div>
               <Button
                 onClick={() => {

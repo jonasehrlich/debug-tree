@@ -128,12 +128,12 @@ export const AsyncCombobox = <ItemType,>({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn("justify-between flex", fontFamily, buttonClasses)}
+          className={cn("flex justify-between", fontFamily, buttonClasses)}
         >
-          <div className="flex-1 truncate overflow-hidden whitespace-nowrap text-ellipsis text-left">
+          <div className="flex-1 truncate overflow-hidden text-left text-ellipsis whitespace-nowrap">
             {value ? renderValue(value) : placeholder}
           </div>
-          <ChevronsUpDown className=" ml-2 size-4 opacity-50 justify-end" />
+          <ChevronsUpDown className="ml-2 size-4 justify-end opacity-50" />
         </Button>
       </PopoverTrigger>
       {value && (
@@ -172,7 +172,7 @@ export const AsyncCombobox = <ItemType,>({
                             }}
                           >
                             <div className="flex w-full items-center justify-between">
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0 flex-1">
                                 {renderDropdownItem(item)}
                               </div>
                               <div className="flex items-center justify-center">

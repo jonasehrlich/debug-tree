@@ -11,7 +11,7 @@ interface BadgeGroupProps {
 export const BadgeGroup = React.memo(
   ({ segments, ...props }: BadgeGroupProps & BadgeProps) => {
     return (
-      <span className="gap-0 inline-flex items-stretch">
+      <span className="inline-flex items-stretch gap-0">
         {segments.map((segment, idx) => {
           const classNames = [];
           if (idx !== 0) {

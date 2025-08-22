@@ -25,7 +25,7 @@ export const GitStats = ({
     <>
       {insertedLines !== 0 && (
         <span
-          className="text-emerald-600 font-semibold select-none"
+          className="font-semibold text-emerald-600 select-none"
           {...insertedProps}
         >
           +{insertedLines}
@@ -33,7 +33,7 @@ export const GitStats = ({
       )}
       {deletedLines !== 0 && (
         <span
-          className="text-red-600 dark:text-red-800 font-semibold select-none"
+          className="font-semibold text-red-600 select-none dark:text-red-800"
           {...deletedProps}
         >
           -{deletedLines}
@@ -89,14 +89,14 @@ export const GitStatsChart = React.memo(
     return (
       <div
         {...props}
-        className={cn("flex space-x-1 items-center", props.className)}
+        className={cn("flex items-center space-x-1", props.className)}
       >
         <GitStats insertedLines={insertedLines} deletedLines={deletedLines} />
         <div className="flex w-full gap-1" role="img">
           {segments.map((colorClass, index) => (
             <div
               key={index}
-              className={cn("h-full flex-1 size-2 rounded-xs", colorClass)}
+              className={cn("size-2 h-full flex-1 rounded-xs", colorClass)}
             />
           ))}
         </div>

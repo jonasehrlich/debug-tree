@@ -34,7 +34,7 @@ export const ButtonGroup = React.memo(
     buttons,
   }: ButtonGroupProps<ButtonKey> & VariantProps<typeof buttonVariants>) => {
     return (
-      <div className={cn("inline-flex overflow-hidden border rounded-md")}>
+      <div className={cn("inline-flex overflow-hidden rounded-md border")}>
         {buttons.map((button, index) => {
           const isFirst = index === 0;
           const isLast = index === buttons.length - 1;

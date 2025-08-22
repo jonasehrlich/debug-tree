@@ -41,14 +41,14 @@ const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
 
   if (!commit) {
     return (
-      <div className="text-muted-foreground text-sm text-center">
+      <div className="text-muted-foreground text-center text-sm">
         Select a commit to see its details
       </div>
     );
   }
   return (
     <div className="flex-grow flex-col space-y-2 overflow-y-auto">
-      <div className="font-semibold items-center flex justify-between">
+      <div className="flex items-center justify-between font-semibold">
         <div className="font-mono">
           {commit.id.slice(0, 7)} {commit.summary}
         </div>
@@ -60,7 +60,7 @@ const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
                 <Info />
               </Button>
             </HoverCardTrigger>
-            <HoverCardContent className="text-xs font-mono">
+            <HoverCardContent className="font-mono text-xs">
               <p>
                 <strong>Date:</strong> {new Date(commit.time).toLocaleString()}
               </p>
@@ -80,7 +80,7 @@ const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
           </HoverCard>
         </div>
       </div>
-      <div className="flex text-xs font-italic text-muted-foreground italic">
+      <div className="font-italic text-muted-foreground flex text-xs italic">
         committed{" "}
         {formatDistanceToNow(commit.time, {
           addSuffix: true,
@@ -99,7 +99,7 @@ const CommitDetails = ({ commit }: { commit: CommitWithReferences | null }) => {
           <Markdown children={commit.body} />
         </div>
       )}
-      <div className="overflow-hidden text-xs text-muted-foreground font-mono"></div>
+      <div className="text-muted-foreground overflow-hidden font-mono text-xs"></div>
       <SimpleInlineDiffViewer diff={diff ?? undefined} />
     </div>
   );
@@ -160,10 +160,10 @@ export const GitDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent
-        className="w-[80vw] h-[80vh] sm:max-w-[80vw] min-w-md p-0 flex flex-col"
+        className="flex h-[80vh] w-[80vw] min-w-md flex-col p-0 sm:max-w-[80vw]"
         aria-describedby={undefined}
       >
-        <DialogHeader className="p-6 pb-4 shrink-0">
+        <DialogHeader className="shrink-0 p-6 pb-4">
           <DialogTitle>Git Graph and Diff</DialogTitle>
           <div className="flex flex-wrap gap-2 select-none">
             <Badge variant="secondary" className="font-mono">
@@ -177,10 +177,10 @@ export const GitDialog = () => {
           The main content area uses flex-grow to fill available space and min-h-0
           to prevent its children from overflowing the dialog boundaries.
         */}
-        <div className="flex-grow px-6 pb-6 min-h-0">
+        <div className="min-h-0 flex-grow px-6 pb-6">
           <Tabs
             defaultValue="tab-graph"
-            className="w-full h-full flex flex-col"
+            className="flex h-full w-full flex-col"
           >
             <GhTabsList className="shrink-0 justify-between">
               <div>
@@ -214,10 +214,10 @@ export const GitDialog = () => {
               Each TabsContent panel must also grow and have min-h-0 to ensure
               its internal scrolling elements behave correctly.
             */}
-            <TabsContent value="tab-graph" className="flex-grow min-h-0 pt-4">
-              <div className="flex flex-col md:flex-row h-full gap-4">
+            <TabsContent value="tab-graph" className="min-h-0 flex-grow pt-4">
+              <div className="flex h-full flex-col gap-4 md:flex-row">
                 {/* Left Column */}
-                <div className="w-full md:w-3/8 max-h-[150px] md:max-h-full">
+                <div className="max-h-[150px] w-full md:max-h-full md:w-3/8">
                   <ScrollArea className="h-full rounded-md border text-sm">
                     {gitData?.commits.length ? (
                       <div className="divide-y">
@@ -225,8 +225,8 @@ export const GitDialog = () => {
                           <div
                             key={commit.id}
                             className={cn(
-                              "text-xs flex py-1 px-2 items-center cursor-pointer hover:bg-secondary/80",
-                              "dark:hover:bg-secondary/80 select-none cursor-pointer",
+                              "hover:bg-secondary/80 flex cursor-pointer items-center px-2 py-1 text-xs",
+                              "dark:hover:bg-secondary/80 cursor-pointer select-none",
                               {
                                 "bg-secondary":
                                   selectedCommit?.id === commit.id,
@@ -243,11 +243,11 @@ export const GitDialog = () => {
                               }
                             }}
                           >
-                            <GitCommitVertical className="shrink-0 " />
+                            <GitCommitVertical className="shrink-0" />
                             <div className="flex flex-col gap-1">
                               <div className="flex flex-wrap gap-1">
                                 {commit.summary}
-                                <div className="text-xs flex text-muted-foreground">
+                                <div className="text-muted-foreground flex text-xs">
                                   {formatDistanceToNow(commit.time, {
                                     addSuffix: true,
                                   })}
@@ -268,7 +268,7 @@ export const GitDialog = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center p-2 text-muted-foreground select-none">
+                      <div className="text-muted-foreground p-2 text-center select-none">
                         No commits to display
                       </div>
                     )}
@@ -276,7 +276,7 @@ export const GitDialog = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="w-full md:w-5/8 space-y-2 border flex-col flex-grow min-h-0 flex rounded-md p-2 overflow-hidden">
+                <div className="flex min-h-0 w-full flex-grow flex-col space-y-2 overflow-hidden rounded-md border p-2 md:w-5/8">
                   <CommitDetails commit={selectedCommit} />
                 </div>
               </div>
@@ -284,7 +284,7 @@ export const GitDialog = () => {
 
             <TabsContent
               value="tab-diff"
-              className="flex-grow min-h-0 flex flex-col pt-4"
+              className="flex min-h-0 flex-grow flex-col pt-4"
             >
               <DiffViewer diff={gitData?.diff} />
             </TabsContent>

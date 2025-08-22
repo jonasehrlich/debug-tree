@@ -24,19 +24,19 @@ export const IconInput = ({
   return (
     <div className="relative w-full">
       {/* Icon */}
-      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+      <Icon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
       <Input
         value={value}
         onChange={onChange}
         {...props}
-        className="pl-10 pr-10"
+        className="pr-10 pl-10"
       />
 
       {/* Clear Button */}
       {clearable && value && (
         <button
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
         >
           <X className="h-4 w-4" />
         </button>

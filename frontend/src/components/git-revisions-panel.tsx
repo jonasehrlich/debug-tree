@@ -93,8 +93,8 @@ export const GitRevisionsPanel = () => {
                 {pinnedGitRevisions.map(
                   (rev, index) =>
                     rev && (
-                      <div key={index} className="py-2 flex justify-between">
-                        <span className="font-mono block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                      <div key={index} className="flex justify-between py-2">
+                        <span className="block max-w-full overflow-hidden font-mono text-ellipsis whitespace-nowrap">
                           {formatGitRevision(rev)}
                         </span>
                         <CopyButton value={rev.rev} tooltip={false} />

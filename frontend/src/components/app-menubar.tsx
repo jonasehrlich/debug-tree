@@ -125,12 +125,7 @@ export const AppMenubar = ({ reactflowRef }: AppMenubarProps) => {
         <div className="relative">
           <MenubarTrigger>File</MenubarTrigger>
           {hasUnsavedChanges && (
-            <span
-              className="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4
-                           h-3 w-3 rounded-full bg-pink-600
-                           flex items-center justify-center text-white text-xs font-bold
-                           border-2 border-background"
-            ></span>
+            <span className="border-background absolute top-0 right-0 flex h-3 w-3 translate-x-1/4 -translate-y-1/4 transform items-center justify-center rounded-full border-2 bg-pink-600 text-xs font-bold text-white"></span>
           )}
         </div>
         <MenubarContent>

@@ -33,12 +33,12 @@ import { Select, SelectTrigger, SelectValue } from "./ui/select";
 
 const GitRevCommandItem = (m: GitMetadata) => {
   return (
-    <div className="flex flex-col justify-between h-full w-full">
+    <div className="flex h-full w-full flex-col justify-between">
       <div className="flex items-center space-x-2 truncate">
         <GitRevisionIcon revision={m} />
-        <span className="font-bold truncate">{formatGitRevision(m)}</span>
+        <span className="truncate font-bold">{formatGitRevision(m)}</span>
       </div>
-      <div className="text-xs text-muted-foreground">{m.summary}</div>
+      <div className="text-muted-foreground text-xs">{m.summary}</div>
     </div>
   );
 };
