@@ -373,7 +373,8 @@ async fn repository_status_sse_handler(
     State(state): State<web::AppState>,
 ) -> response::sse::Sse<impl Stream<Item = Result<response::sse::Event, std::convert::Infallible>>>
 {
-    let rx = state.git_status_tx().subscribe();
+    let tx = state.git_status_tx();
+    let rx = tx.subscribe();
     // wrap into a stream and map to SSE Events
     let stream = tokio_stream::wrappers::BroadcastStream::new(rx).filter_map(|msg| async move {
         match msg {
@@ -392,6 +393,14 @@ async fn repository_status_sse_handler(
             }
         }
     });
+
+    let actor = state.git_actor();
+    let msg = actors::git::GetRepositoryStatus;
+    if let Ok(Ok(status)) = actor.call(msg).await {
+        let _ = tx
+            .send(status)
+            .inspect_err(|e| log::error!("Error sending initial git status: {e}"));
+    }
 
     response::sse::Sse::new(stream).keep_alive(
         response::sse::KeepAlive::new()

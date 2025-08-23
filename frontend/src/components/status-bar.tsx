@@ -1,10 +1,8 @@
-import { fetchRepositoryStatus } from "@/client";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { notify } from "@/lib/notify";
 import { TypedEventSource } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
@@ -39,8 +37,8 @@ const StatusBarItem = ({
   return (
     <div
       className={cn(
-        "flex items-center items-center gap-1 px-2 h-full",
-        "[&>svg]:w-3 [&>svg]:h-3 text-sm",
+        "flex h-full items-center gap-1 px-2",
+        "text-sm [&>svg]:h-3 [&>svg]:w-3",
         // "[&>svg]:w-3 [&>svg]:h-3 text-xs",
         className,
       )}
@@ -85,7 +83,7 @@ const GitStatusFileList = ({
         return (
           <div
             className={cn(
-              "flex gap-1 font-mono text-sm items-center pl-1",
+              "flex items-center gap-1 pl-1 font-mono text-sm",
               className,
             )}
             {...props}
@@ -232,7 +230,7 @@ export const PinnedRevisionsStatusBarItem = () => {
                 {pinnedGitRevisions.map(
                   (rev, index) =>
                     rev && (
-                      <div key={index} className="py-2 flex items-center">
+                      <div key={index} className="flex items-center py-2">
                         {formatGitRevision(rev)}
                         {/* <CopyButton value={rev.rev} tooltip={false}  /> */}
                       </div>
@@ -301,14 +299,14 @@ export const StatusBar = ({
     React.useState<null | RepositoryStatus>(null);
 
   React.useEffect(() => {
-    // First fetch the repository status when the component is mounted
-    fetchRepositoryStatus()
-      .then((data) => {
-        setRepositoryStatus(data);
-      })
-      .catch((err: unknown) => {
-        notify.error(err);
-      });
+    // // First fetch the repository status when the component is mounted
+    // fetchRepositoryStatus()
+    //   .then((data) => {
+    //     setRepositoryStatus(data);
+    //   })
+    //   .catch((err: unknown) => {
+    //     notify.error(err);
+    //   });
 
     const es = new TypedEventSource<GitStatusEventMap>(
       "/api/v1/git/repository/status/stream",
@@ -336,7 +334,7 @@ export const StatusBar = ({
   return (
     <div
       className={cn(
-        "bg-background flex h-9 items-center rounded-md border shadow-xs overflow-hidden cursor-default divide-solid divide-x",
+        "bg-background flex h-9 cursor-default items-center divide-x divide-solid overflow-hidden rounded-md border shadow-xs",
         className,
       )}
       {...props}
