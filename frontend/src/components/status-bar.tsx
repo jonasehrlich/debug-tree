@@ -3,6 +3,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { notify } from "@/lib/notify";
 import { TypedEventSource } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
@@ -82,6 +83,7 @@ const GitStatusFileList = ({
       {paths.map((path) => {
         return (
           <div
+            key={path}
             className={cn(
               "flex items-center gap-1 pl-1 font-mono text-sm",
               className,
@@ -298,16 +300,10 @@ export const StatusBar = ({
   const [repositoryStatus, setRepositoryStatus] =
     React.useState<null | RepositoryStatus>(null);
 
-  React.useEffect(() => {
-    // // First fetch the repository status when the component is mounted
-    // fetchRepositoryStatus()
-    //   .then((data) => {
-    //     setRepositoryStatus(data);
-    //   })
-    //   .catch((err: unknown) => {
-    //     notify.error(err);
-    //   });
+  const [eventSource, setEventSource] =
+    React.useState<TypedEventSource<GitStatusEventMap> | null>(null);
 
+  const connect = () => {
     const es = new TypedEventSource<GitStatusEventMap>(
       "/api/v1/git/repository/status/stream",
     );
@@ -315,16 +311,26 @@ export const StatusBar = ({
       _logger.info("SSE connection established");
     });
     es.onError(() => {
-      _logger.warn("SSE connection lost");
+      if (es.isClosed()) {
+        _logger.warn("SSE connection lost");
+        notify.error("Event source connection lost");
+      }
     });
     es.on("git-status", (ev) => {
-      console.log("new repository status", ev.data);
+      _logger.info("new repository status", ev.data);
       setRepositoryStatus(ev.data); // prepend latest
     });
+    setEventSource(es);
+  };
 
+  React.useEffect(() => {
+    connect();
     return () => {
-      es.close();
+      if (eventSource) {
+        eventSource.close();
+      }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (repositoryStatus === null) {

@@ -14,7 +14,7 @@ pub fn setup_watchers<P: AsRef<std::path::Path>>(
         delay,
         move |res: Result<Vec<DebouncedEvent>, notify::Error>| match res {
             Ok(evs) => {
-                log::info!("Changes detected in watched paths");
+                log::debug!("Detected changes in watched paths");
                 let _ = tx.send(evs);
             }
             Err(e) => {

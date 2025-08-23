@@ -11,7 +11,7 @@ pub trait CommitProperties {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 struct Signature {
     name: String,
@@ -43,8 +43,7 @@ impl From<Git2Time> for chrono::DateTime<chrono::Utc> {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Clone, Debug)]
-#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Commit {
     id: String,
     summary: String,
@@ -105,7 +104,7 @@ impl<'repo> Commit {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub struct CommitWithReferences {
     #[cfg_attr(feature = "serde", serde(flatten))]

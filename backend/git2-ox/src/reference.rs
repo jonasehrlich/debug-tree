@@ -49,8 +49,7 @@ impl<'repo> TryFrom<git2::Reference<'repo>> for ReferenceKind {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Clone, Debug)]
-#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ReferenceMetadata {
     name: String,
     kind: ReferenceKind,

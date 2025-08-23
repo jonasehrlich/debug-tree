@@ -8,7 +8,7 @@ type Files = Vec<String>;
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct TreeStatus {
     /// Added files
     new_files: Files,
@@ -48,7 +48,7 @@ impl TreeStatus {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Status {
     /// Name of the current branch, not set if `is_detached_head` is true
     current_branch: Option<String>,

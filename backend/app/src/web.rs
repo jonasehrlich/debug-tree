@@ -141,6 +141,7 @@ where
     let (_debouncer, fs_rx) = fswatcher::setup_watchers(&paths, std::time::Duration::from_secs(1));
 
     tokio::spawn(async move {
+        let mut previous_status: Option<git2_ox::Status> = None;
         loop {
             let res = fs_rx.recv();
             match res {
@@ -149,7 +150,28 @@ where
                     let actor = app_state.git_actor();
                     let msg = actors::git::GetRepositoryStatus;
                     let status = actor.call(msg).await.unwrap().unwrap();
-                    let _ = app_state.git_status_tx().send(status);
+                    log::debug!(
+                        "Received FS event: worktree {:?}, index: {:?}",
+                        status.worktree(),
+                        status.index()
+                    );
+
+                    let status_changed = match previous_status {
+                        None => true,
+                        Some(ref s) => *s != status,
+                    };
+
+                    if status_changed {
+                        previous_status = Some(status.clone());
+                        let tx = app_state.git_status_tx();
+                        let num_rx = tx.receiver_count();
+                        match tx.send(status) {
+                            Ok(_) => log::debug!("Sent git status to channel ({num_rx})"),
+                            Err(e) => {
+                                log::error!("Error sending status to channel ({num_rx}): {e}")
+                            }
+                        }
+                    }
                 }
                 Err(errs) => {
                     log::error!("watch error: {errs:?}")
