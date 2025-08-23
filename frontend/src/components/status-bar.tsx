@@ -3,14 +3,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { notify } from "@/lib/notify";
-import { TypedEventSource } from "@/lib/sse";
+import { useEventStream } from "@/hooks/use-event-stream";
 import { cn } from "@/lib/utils";
 import { useStore, useUiStore } from "@/store";
 import type { RepositoryStatus } from "@/types/api-types";
 import { formatGitRevision } from "@/types/nodes";
 import type { AppState, UiState } from "@/types/state";
-import log from "loglevel";
 import {
   FileDiff,
   FileInput,
@@ -28,8 +26,6 @@ import { useShallow } from "zustand/react/shallow";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-
-const _logger = log.getLogger("status-bar");
 
 const StatusBarItem = ({
   className,
@@ -149,7 +145,7 @@ const ChangesStatusBarItem = React.memo(
             )}
           </StatusBarItem>
         </PopoverTrigger>
-        <PopoverContent className="w-fit space-y-1">
+        <PopoverContent className="w-fit cursor-default space-y-1">
           {indexChanges > 0 && (
             <>
               <h4 className="font-medium">Index</h4>
@@ -297,43 +293,15 @@ export const StatusBar = ({
   className,
   ...props
 }: React.ComponentProps<"div">) => {
-  const [repositoryStatus, setRepositoryStatus] =
-    React.useState<null | RepositoryStatus>(null);
-
-  const [eventSource, setEventSource] =
-    React.useState<TypedEventSource<GitStatusEventMap> | null>(null);
-
-  const connect = () => {
-    const es = new TypedEventSource<GitStatusEventMap>(
-      "/api/v1/git/repository/status/stream",
-    );
-    es.onOpen(() => {
-      _logger.info("SSE connection established");
-    });
-    es.onError(() => {
-      if (es.isClosed()) {
-        _logger.warn("SSE connection lost");
-        notify.error("Event source connection lost");
-      }
-    });
-    es.on("git-status", (ev) => {
-      _logger.info("new repository status", ev.data);
-      setRepositoryStatus(ev.data); // prepend latest
-    });
-    setEventSource(es);
-  };
+  const { events, subscribe } = useEventStream<GitStatusEventMap>(
+    "/api/v1/git/repository/status/stream",
+  );
 
   React.useEffect(() => {
-    connect();
-    return () => {
-      if (eventSource) {
-        eventSource.close();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    subscribe("git-status");
+  }, [subscribe]);
 
-  if (repositoryStatus === null) {
+  if (!events["git-status"]) {
     return null;
   }
 
@@ -345,8 +313,8 @@ export const StatusBar = ({
       )}
       {...props}
     >
-      <BranchStatusBarItem status={repositoryStatus} />
-      <ChangesStatusBarItem status={repositoryStatus} />
+      <BranchStatusBarItem status={events["git-status"]} />
+      <ChangesStatusBarItem status={events["git-status"]} />
       {/* <PinnedRevisionsStatusBarItem /> */}
     </div>
   );
