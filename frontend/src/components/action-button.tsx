@@ -1,4 +1,4 @@
-import { copyToClipboard } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
 import React from "react";
 import { Button } from "./ui/button";
@@ -94,12 +94,17 @@ interface CopyButtonProps {
   value: string;
   /** Whether to show a tooltip */
   tooltip?: boolean | string;
+  className?: string;
 }
 
-export const CopyButton = ({ value, tooltip = true }: CopyButtonProps) => {
+export const CopyButton = ({
+  value,
+  tooltip = true,
+  className = undefined,
+}: CopyButtonProps) => {
   return (
     <ActionButton
-      className="size-6"
+      className={cn("size-6", className)}
       tooltipContent={
         tooltip === true
           ? "Copy to clipboard"

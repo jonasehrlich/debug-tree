@@ -1,8 +1,9 @@
 use crate::{actors, web, web::api};
 
 use axum::extract::{Path, Query, State};
-use axum::{Json, routing};
-use git2_ox::{ReferenceKind, ReferenceKindFilter, ResolvedReference, commit};
+use axum::{Json, response, routing};
+use futures_util::stream::{Stream, StreamExt};
+use git2_ox::{ReferenceKind, ReferenceKindFilter, ResolvedReference, Status, commit};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -17,6 +18,10 @@ pub fn router() -> routing::Router<web::AppState> {
         .route("/tags", routing::get(list_tags).post(create_tag))
         .route("/branches", routing::get(list_branches).post(create_branch))
         .route("/repository/status", routing::get(get_repository_status))
+        .route(
+            "/repository/status/stream",
+            routing::any(repository_status_sse_handler),
+        )
         .route("/references", routing::get(list_references))
 }
 
@@ -341,10 +346,8 @@ async fn create_branch(
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct RepositoryStatusResponse {
-    /// The current HEAD commit
-    head: git2_ox::CommitWithReferences,
-    /// The current branch name, not set if in a detached HEAD state
-    current_branch: Option<String>,
+    #[serde(flatten)]
+    status: Status,
 }
 
 #[utoipa::path(
@@ -363,10 +366,50 @@ async fn get_repository_status(
     let actor = state.git_actor();
     let msg = actors::git::GetRepositoryStatus;
     let status = actor.call(msg).await??;
-    Ok(Json(RepositoryStatusResponse {
-        head: status.head,
-        current_branch: status.current_branch,
-    }))
+    Ok(Json(RepositoryStatusResponse { status }))
+}
+
+async fn repository_status_sse_handler(
+    State(state): State<web::AppState>,
+) -> response::sse::Sse<impl Stream<Item = Result<response::sse::Event, std::convert::Infallible>>>
+{
+    log::info!("Received SSE request");
+    let tx = state.git_status_tx();
+    let rx = tx.subscribe();
+    // wrap into a stream and map to SSE Events
+    let stream = tokio_stream::wrappers::BroadcastStream::new(rx).filter_map(|msg| async move {
+        match msg {
+            Ok(payload) => {
+                log::info!("Received Git status from channel");
+                let ev = response::sse::Event::default()
+                    .event("git-status")
+                    .json_data(payload)
+                    .inspect_err(|e| log::error!("Error serializing Git status {e}"))
+                    .ok()?;
+
+                Some(Ok(ev))
+            }
+            Err(e) => {
+                log::error!("{e}");
+                // drop silently; next message will arrive
+                None
+            }
+        }
+    });
+
+    let actor = state.git_actor();
+    let msg = actors::git::GetRepositoryStatus;
+    if let Ok(Ok(status)) = actor.call(msg).await {
+        let _ = tx
+            .send(status)
+            .inspect_err(|e| log::error!("Error sending initial Git status: {e}"));
+    }
+
+    response::sse::Sse::new(stream).keep_alive(
+        response::sse::KeepAlive::new()
+            .interval(std::time::Duration::from_secs(15))
+            .text("keep-alive-text"),
+    )
 }
 
 #[derive(Deserialize, IntoParams)]

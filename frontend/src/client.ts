@@ -252,15 +252,21 @@ export async function createTag(
   };
 }
 
-export interface GitStatus {
-  /** current checked out branch/ commit (detached HEAD) */
-  revision: BranchMetadata | CommitMetadata;
-}
-export async function fetchStatus(): Promise<GitStatus> {
+export const fetchRepositoryStatus = async () => {
   const { data, error } = await client.GET("/api/v1/git/repository/status", {});
   if (error) {
     throw new ApiError(error, "Error fetching Git status");
   }
+  return data;
+};
+
+export interface GitStatus {
+  /** current checked out branch/ commit (detached HEAD) */
+  revision: BranchMetadata | CommitMetadata;
+}
+
+export async function fetchStatus(): Promise<GitStatus> {
+  const data = await fetchRepositoryStatus();
 
   let revision;
   if (data.currentBranch) {

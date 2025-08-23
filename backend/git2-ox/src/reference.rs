@@ -49,8 +49,7 @@ impl<'repo> TryFrom<git2::Reference<'repo>> for ReferenceKind {
     derive(serde::Serialize),
     serde(rename_all = "camelCase")
 )]
-#[derive(Clone, Debug)]
-#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ReferenceMetadata {
     name: String,
     kind: ReferenceKind,
@@ -180,6 +179,11 @@ impl TryFrom<&git2::Repository> for ReferencesMap {
         {
             let reference =
                 reference.map_err(|e| Error::from_ctx_and_error("Failed to get reference", e))?;
+
+            if reference.name() == Some("refs/stash") {
+                // Manually ignore stash reference
+                continue;
+            }
 
             if let Err(e) = ref_map.try_insert_reference(&reference) {
                 log::error!(

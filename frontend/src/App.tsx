@@ -20,6 +20,7 @@ import { GitDialog } from "./components/git-dialog";
 import { GitRevisionsPanel } from "./components/git-revisions-panel";
 import { HelpDialog, KeybindingsDialog } from "./components/help-dialog";
 import { ActionNode, StatusNode } from "./components/nodes";
+import { StatusBar } from "./components/status-bar";
 import { Toaster } from "./components/ui/sonner";
 import { keybindings } from "./keybindings";
 import { isApple } from "./lib/utils";
@@ -228,6 +229,9 @@ export const App = () => {
         <CreateNodeDialog />
         <GitDialog />
         <GitRevisionsPanel />
+        <Panel position="bottom-left">
+          <StatusBar />
+        </Panel>
       </ReactFlow>
       <Toaster
         position="bottom-right"

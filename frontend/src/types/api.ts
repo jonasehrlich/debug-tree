@@ -342,12 +342,7 @@ export interface components {
             kind: components["schemas"]["ReferenceKind"];
             name: string;
         };
-        RepositoryStatusResponse: {
-            /** @description The current branch name, not set if in a detached HEAD state */
-            currentBranch?: string | null;
-            /** @description The current HEAD commit */
-            head: components["schemas"]["CommitWithReferences"];
-        };
+        RepositoryStatusResponse: components["schemas"]["Status"];
         ResolvedReference: components["schemas"]["ReferenceMetadata"] & {
             target: components["schemas"]["Commit"];
         };
@@ -355,12 +350,39 @@ export interface components {
             email: string;
             name: string;
         };
+        Status: {
+            /** @description Paths with conflicts */
+            conflicts: components["schemas"]["Vec"];
+            /** @description Name of the current branch, not set if `is_detached_head` is true */
+            currentBranch?: string | null;
+            /** @description The commit current HEAD points to */
+            head: components["schemas"]["CommitWithReferences"];
+            /** @description Status of the index */
+            index: components["schemas"]["TreeStatus"];
+            /** @description Whether the head is detached */
+            isDetachedHead: boolean;
+            /** @description Whether the worktree or index have changes */
+            isDirty: boolean;
+            /** @description Status in the worktree */
+            worktree: components["schemas"]["TreeStatus"];
+        };
         TaggedCommit: {
             /** @description Commit the tag is on */
             commit: components["schemas"]["Commit"];
             /** @description Tag on the commit */
             tag: string;
         };
+        TreeStatus: {
+            /** @description Deleted files */
+            deletedFiles: components["schemas"]["Vec"];
+            /** @description Modified files */
+            modifiedFiles: components["schemas"]["Vec"];
+            /** @description Added files */
+            newFiles: components["schemas"]["Vec"];
+            /** @description Renamed files */
+            renamedFiles: components["schemas"]["Vec"];
+        };
+        Vec: string[];
     };
     responses: never;
     parameters: never;
