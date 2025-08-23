@@ -29,3 +29,10 @@ chrono = { version = "^0.4.41", features = ["serde"] }
 hannibal = "^0.12"
 axum-extra = { version = "0.10.1", features = ["query"] }
 open = "5.3"
+notify-debouncer-mini = "0.7.0"
+notify = "8.2.0"
+tokio-stream = { version = "0.1.17", features = ["sync"] }
+futures-util = { version = "0.3.31", default-features = false, features = [
+    "std",
+    "sink",
+] }
